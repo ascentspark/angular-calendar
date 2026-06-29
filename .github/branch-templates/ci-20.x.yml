@@ -1,12 +1,12 @@
-# CI for the 22.x line (this is `main`). Each maintenance branch (21.x, 20.x)
-# carries its own copy of this file with its job renamed to `Angular 21` / `Angular 20`
-# and `node-version` set to that line's Node — so every line is gated by a distinct,
-# requireable check. See docs/REPO-HARDENING.md.
+# TEMPLATE — not an active workflow. When the `20.x` maintenance line is cut,
+# copy this to `.github/workflows/ci.yml` ON THE `20.x` BRANCH (replacing main's).
+# Its check name is `Angular 20` so it can be required independently in the ruleset.
+# Node 20: Angular 20 supports Node ^20.11 || ^22; pinned to 20 for the maintenance line.
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: ['20.x']
   pull_request:
   workflow_dispatch:
 
@@ -15,13 +15,13 @@ permissions:
 
 jobs:
   build-test:
-    name: Angular 22
+    name: Angular 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: npm
       - run: npm ci
       - run: npx ng build angular-calendar

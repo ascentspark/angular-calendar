@@ -286,9 +286,15 @@ maps calendar tokens to a host's own design-system variables — **verified thro
 host `--brand` token recolours the calendar accent — today pill — to pink while status colours and
 unbridged tokens keep their derived values). **CI-only release:** `release.yml` (tag-triggered
 build→test→`npm publish --provenance`) + `RELEASING.md` runbook + `ci.yml`/`codeql.yml` present.
-**Remaining:** Storybook (per-state, a11y addon, visual regression) and the multi-line
-(20.x/21.x) repo hardening (per-branch CI check names, multi-target Dependabot, branch ruleset) —
-both deferred until the maintenance branches are cut and the API stabilises.
+**Multi-line repo hardening in place** (`docs/REPO-HARDENING.md`): `main` CI renamed to the
+line-specific check **`Angular 22`**; CodeQL already triggers on `main` + `[0-9]*.x`; **multi-target
+Dependabot** (one npm entry per line via `target-branch`, ignoring Angular-major everywhere + TS-major
+on 21.x/20.x); an importable **branch ruleset** (`.github/rulesets/release-lines.json` — restrict
+deletions + block force-pushes over `~DEFAULT_BRANCH` + `[0-9]*.x`, admin bypass) with
+`scripts/apply-ruleset.sh`; and **maintenance-branch CI templates** (`Angular 21` / `Angular 20`,
+under `.github/branch-templates/`) — all forward-compatible, activating when the `21.x`/`20.x`
+branches are cut (runbook documented). **Remaining:** Storybook (per-state, a11y addon, visual
+regression) — covered today by the SSR demo + the Playwright/axe e2e gate; tracked as optional.
 
 Public docs (`README`, `ARCHITECTURE.md`, `THEMING.md`, `MIGRATION.md`, `SECURITY.md`),
 Storybook (per-state, a11y addon, visual-regression), demo app (SSR-safe), optional
@@ -352,7 +358,9 @@ view in light + dark via the Playwright gate).
 |------|-------|--------------|
 | **Large-fleet virtualization** (windowing 100 resources × 2000 events on the timeline) | 4 / 7 | The view-models are pure + memoized off the render path, so moderate datasets (dozens of resources, hundreds of events) render fast today. Robust windowing of the timeline's frozen-column + sticky-multi-header + `display:contents` grid is a dedicated `@angular/cdk` virtual-scroll integration; rushing it would risk the verified drag/a11y/layout. Tracked as its own perf pass. |
 | **Storybook** (per-state stories + visual-regression) | 8 | The build plan marks this "could-skip later." Visual-state and a11y coverage is already provided by the SSR demo (every view, both themes, live base/accent) plus the Playwright + axe-core e2e gate; Storybook would duplicate that surface. |
-| **Multi-line repo hardening** (per-branch CI check names, multi-target Dependabot, branch ruleset for `21.x`/`20.x`) | 8 | The `21.x` / `20.x` maintenance branches do not exist yet (charter: cut when the library stabilises). Per-branch CI/rulesets cannot target branches that aren't created; `main` (22.x) has full CI + CodeQL + the tagged-publish `release.yml` today. |
+
+(Multi-line repo hardening is **done** — the CI/Dependabot/ruleset/templates are in place on `main`
+and activate when `21.x`/`20.x` are cut; see Phase 8 and `docs/REPO-HARDENING.md`.)
 | **Touch long-press tuning / timeline edge-resize** | 5 | Touch drag works now (Pointer Events + `touch-action:none`); long-press delay tuning and horizontal edge-resize on timeline blocks are refinements on top of the shipped move gesture. |
 
 All other charter / SPEC requirements are delivered.
