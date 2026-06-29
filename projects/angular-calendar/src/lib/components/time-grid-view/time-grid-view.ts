@@ -16,7 +16,6 @@ import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
 import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
 import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zoned-date-time';
 import type { CalendarEvent } from '../../core/model/calendar-event';
-import type { TimeAxisOrientation } from '../../core/model/view';
 import { buildTimeGridView } from '../../core/view-model/build-time-grid-view';
 import { RECURRENCE_ADAPTER } from '../../core/recurrence/recurrence-adapter';
 import { expandRecurringEvents } from '../../core/recurrence/expand-recurring-events';
@@ -61,7 +60,7 @@ const FALLBACK_ACCENT = '#3b82f6';
  * {@link buildTimeGridView} model: a time gutter, an all-day band, day columns
  * with side-by-side packed timed events, working-hours shading hooks, and a live
  * now-indicator. Theme-agnostic `--cal-*`; OnPush; date math delegated to the
- * adapter. `orientation` toggles time-on-Y (vertical) vs time-on-X (horizontal).
+ * adapter.
  */
 @Component({
   selector: 'cal-time-grid',
@@ -71,8 +70,6 @@ const FALLBACK_ACCENT = '#3b82f6';
   templateUrl: './time-grid-view.html',
   styleUrl: './time-grid-view.css',
   host: {
-    '[class.cal-tg--horizontal]': "orientation() === 'horizontal'",
-    '[class.cal-tg--vertical]': "orientation() === 'vertical'",
     '[class.cal-tg--compact]': "density() === 'compact'",
   },
 })
@@ -89,7 +86,6 @@ export class CalTimeGridView<TMeta = unknown> {
   readonly viewDate = input.required<Date | ZonedDateTime>();
   readonly days = input<number>(7);
   readonly anchorToWeek = input<boolean>(true);
-  readonly orientation = input<TimeAxisOrientation>('vertical');
   /** Vertical density: `'compact'` shrinks hour rows and type for dense schedules. */
   readonly density = input<'comfortable' | 'compact'>('comfortable');
   readonly today = input<Date | ZonedDateTime | null>(null);
@@ -146,7 +142,7 @@ export class CalTimeGridView<TMeta = unknown> {
       viewDate: this.adapter.toZoned(this.viewDate(), zone),
       days: this.days(),
       weekStartsOn: this.weekStartsOn() ?? this.config.weekStartsOn,
-      orientation: this.orientation(),
+      orientation: 'vertical' as const,
       slotMinutes: this.slotMinutes() ?? this.config.slotMinutes,
       dayStartMinutes: this.dayStartMinutes() ?? this.config.dayStartMinutes,
       dayEndMinutes: this.dayEndMinutes() ?? this.config.dayEndMinutes,

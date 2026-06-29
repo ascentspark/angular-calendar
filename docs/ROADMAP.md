@@ -98,7 +98,7 @@ labels.
 **Exit:** month-view + year-view components + e2e + axe-clean + screenshot baselines
 (light/dark/RTL); year view verified under a non-Gregorian `calendarSystem`.
 
-## Phase 3 — Week / Day time-grid (both orientations) 🟡 IN PROGRESS
+## Phase 3 — Week / Day time-grid (vertical; days-as-rows via week-rows preset) 🟡 IN PROGRESS
 
 **Done:** `buildTimeGridView` (day-window clipping, sweep-line side-by-side packing via
 `packColumns`, all-day band via `packRows`, multi-day spans, work-week `excludeDays`,
@@ -107,13 +107,19 @@ now-indicator offset, hourly ticks — 116→121 tests incl. DST). `<cal-time-gr
 events with lane geometry, live now-line, slot click→`slotSelected`, `eventClicked`,
 overridable `*calEventTemplate`, theming). Demo Week + Day views — **visually verified via
 Playwright** (week light): correct time placement, status colours, all-day band, now-line,
-weekend shading. **Remaining:** thin `<cal-week-view>`/`<cal-day-view>` selector wrappers
-(currently `<cal-time-grid days=7/1>`); **horizontal orientation** CSS (vertical done; host
-class toggles, X-axis layout pending); working-hours/off-hours shading bands (model has the
-`shade` slot, builder emits `[]` for now); keyboard nav across slots; axe + screenshot gate.
+weekend shading. **Density** (`'comfortable' | 'compact'`) shrinks hour rows for dense schedules
+(verified via UI). **Keyboard** slot/event nav incl. grab-and-move/resize + `F2` rename; axe-zero
+gated. **Scope decision (locked):** the time-grid is the **vertical** (time-on-Y) week/day view; the
+**horizontal / days-as-rows** layout is delivered by the resource timeline + the **week-rows preset**
+(verified) rather than a transposed time-grid — one well-tested path per layout instead of a
+half-functional `orientation` toggle. The dead `orientation` input was therefore **removed** (no
+"presence without function"). The canonical week/day API is `<cal-time-grid [days]="7|1">`; thin
+`<cal-week-view>`/`<cal-day-view>` aliases are intentionally **not** added (YAGNI — minimal semver'd
+surface). **Remaining:** none — Phase 3 scope met.
 
-`<cal-week-view>` / `<cal-day-view>` with `orientation` toggle (time on X or Y), now-line,
-all-day band, working-hours shading, side-by-side lane packing, slot granularity.
+`<cal-time-grid [days]="7|1">` (vertical, time-on-Y): now-line, all-day band, working-hours
+shading, side-by-side lane packing, slot granularity, density. Days-as-rows (time-on-X) is the
+week-rows timeline preset (Phase 9).
 
 **Exit:** both orientations render correctly; now-indicator ticks; axe-clean; screenshots.
 
