@@ -80,6 +80,17 @@ export {
   type YearViewArgs,
 } from './lib/core/view-model/year-view-model';
 export { buildYearView } from './lib/core/view-model/build-year-view';
+export {
+  type PositionedEvent,
+  type ShadeBand,
+} from './lib/core/view-model/positioned-event';
+export {
+  type TimeColumn,
+  type TimeTick,
+  type TimeGridViewModel,
+  type TimeGridViewArgs,
+} from './lib/core/view-model/time-grid-view-model';
+export { buildTimeGridView } from './lib/core/view-model/build-time-grid-view';
 
 // ── Accessibility ───────────────────────────────────────────────────────────
 export { CalCalendarA11y } from './lib/a11y/cal-calendar-a11y';
