@@ -136,7 +136,17 @@ and `<cal-agenda-view>`.
 **Exit:** 100 resources × 2,000 events virtualized at ≥55 fps (bench); Timeline-Year renders
 a full year virtualized; axe-clean; screenshots.
 
-## Phase 5 — Interactions
+## Phase 5 — Interactions 🟡 IN PROGRESS
+
+**Done:** pure drag-preview engine (`computeDragTimes` — move/resize/create snap math, min-duration,
+direction-agnostic create; property-tested) + `EventChange`/`EventChangeRequest` model.
+**Drag-move + edge-resize on the time-grid** via Pointer Events: `dragState` signal, live `computed`
+preview (no event mutation), snap to `snapMinutes`, `validateChange` veto, tap-vs-drag threshold,
+`setPointerCapture` (guarded), `touch-action:none` for touch. Demo wired so week/day drag updates the
+store — **verified via real mouse drag in Playwright** (Morning standup moved 09:00→12:00, snapped,
+others unchanged). **159 unit tests.** **Remaining:** drag-create (empty-grid drag → new event),
+CDK external drag-in (unassigned list → lane), inline title edit (F2/Enter), full keyboard drag/resize,
+touch long-press tuning, and extending move/resize to the timeline view.
 
 Custom Pointer-Events engine: drag-move, drag-create, edge resize, snap, touch long-press,
 `dragState` signal + `computed` preview, `validateChange` veto, cancellable async commit
