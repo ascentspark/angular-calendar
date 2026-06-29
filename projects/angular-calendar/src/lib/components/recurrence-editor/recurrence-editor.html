@@ -1,0 +1,84 @@
+<div class="cal-rec">
+  <div class="cal-rec__row">
+    <label class="cal-rec__label" for="cal-rec-freq">Repeat</label>
+    <select
+      id="cal-rec-freq"
+      class="cal-rec__select"
+      (change)="setFreq($any($event.target).value)"
+    >
+      @for (f of freqs; track f) {
+        <option [value]="f" [selected]="f === currentFreq()">{{ f }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="cal-rec__row">
+    <label class="cal-rec__label" for="cal-rec-interval">Every</label>
+    <input
+      id="cal-rec-interval"
+      class="cal-rec__num"
+      type="number"
+      min="1"
+      [value]="intervalValue"
+      (change)="setInterval($any($event.target).value)"
+    />
+    <span class="cal-rec__unit">{{ currentFreq() }} interval</span>
+  </div>
+
+  @if (currentFreq() === 'weekly') {
+    <div class="cal-rec__row">
+      <span class="cal-rec__label">On</span>
+      <div class="cal-rec__days" role="group" aria-label="Days of week">
+        @for (wd of weekdays; track wd.value) {
+          <button
+            type="button"
+            class="cal-rec__day"
+            [class.cal-rec__day--on]="isWeekdaySelected(wd.value)"
+            [attr.aria-pressed]="isWeekdaySelected(wd.value)"
+            [attr.aria-label]="'Weekday ' + wd.value"
+            (click)="toggleWeekday(wd.value)"
+          >
+            {{ wd.label }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="cal-rec__row">
+    <span class="cal-rec__label">Ends</span>
+    <div class="cal-rec__ends" role="radiogroup" aria-label="Ends">
+      <label class="cal-rec__radio">
+        <input
+          type="radio"
+          name="cal-rec-end"
+          [checked]="endType === 'never'"
+          (change)="setEndType('never')"
+        />
+        Never
+      </label>
+      <label class="cal-rec__radio">
+        <input
+          type="radio"
+          name="cal-rec-end"
+          [checked]="endType === 'count'"
+          (change)="setEndType('count')"
+        />
+        After
+        <input
+          class="cal-rec__num"
+          type="number"
+          min="1"
+          [value]="countValue"
+          [disabled]="endType !== 'count'"
+          (change)="setCount($any($event.target).value)"
+        />
+        times
+      </label>
+    </div>
+  </div>
+
+  <p class="cal-rec__preview" aria-live="polite">
+    <code>{{ rule() || '(no recurrence)' }}</code>
+  </p>
+</div>

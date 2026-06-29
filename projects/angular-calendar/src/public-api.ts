@@ -156,6 +156,7 @@ export { CalYearView } from './lib/components/year-view/year-view';
 export { CalTimeGridView } from './lib/components/time-grid-view/time-grid-view';
 export { CalTimelineView } from './lib/components/timeline-view/timeline-view';
 export { CalAgendaView } from './lib/components/agenda-view/agenda-view';
+export { CalRecurrenceEditor } from './lib/components/recurrence-editor/recurrence-editor';
 
 // ── Interactions ────────────────────────────────────────────────────────────
 export {
