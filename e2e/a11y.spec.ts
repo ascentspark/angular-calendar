@@ -46,3 +46,22 @@ for (const mode of MODES) {
     });
   }
 }
+
+test('month "+N more" overflow popover has no axe violations', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('[data-testid="view-month"]').click();
+  await page.locator('.cal-day__more').first().click();
+  await page.locator('.cal-more').waitFor();
+  await page.locator('.cal-more__item').nth(2).hover(); // exercise the sunk hover bg
+  await page.waitForTimeout(120);
+
+  const results = await new AxeBuilder({ page })
+    .include('main.app')
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+
+  expect(
+    results.violations,
+    results.violations.map((v) => `${v.id} (${v.nodes.length})`).join(', '),
+  ).toEqual([]);
+});

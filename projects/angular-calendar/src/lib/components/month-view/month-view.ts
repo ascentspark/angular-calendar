@@ -9,6 +9,7 @@ import {
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
@@ -175,11 +176,19 @@ export class CalMonthView<TMeta = unknown> {
     }
   });
 
+  private readonly morePanel = viewChild<ElementRef<HTMLElement>>('morePanel');
+
   constructor() {
     effect(() => applyTheme(this.host.nativeElement, this.theme(), this.tokenBridge));
     effect(() => {
       const period = this.viewModel().period;
       this.viewPeriodChanged.emit(period);
+    });
+    // Move focus into the overflow popover when it opens (a11y).
+    effect(() => {
+      if (this.openMoreEpoch() !== null) {
+        this.morePanel()?.nativeElement.focus();
+      }
     });
   }
 
@@ -328,6 +337,58 @@ export class CalMonthView<TMeta = unknown> {
   protected onDayClick(day: MonthDay<TMeta>): void {
     this.selectedEpoch.set(day.date.epochMs);
     this.daySelected.emit({ date: day.date });
+  }
+
+  /** Epoch of the day whose "+N more" popover is open, or null. */
+  protected readonly openMoreEpoch = signal<number | null>(null);
+  /** Element to restore focus to when the popover closes. */
+  private moreTrigger: HTMLElement | null = null;
+
+  protected isMoreOpen(day: MonthDay<TMeta>): boolean {
+    return this.openMoreEpoch() === day.date.epochMs;
+  }
+
+  /** Open the overflow popover for a day, listing every event covering it. */
+  protected openMore(day: MonthDay<TMeta>, dom: Event): void {
+    dom.stopPropagation();
+    this.moreTrigger = dom.currentTarget as HTMLElement;
+    this.openMoreEpoch.set(day.date.epochMs);
+  }
+
+  protected closeMore(): void {
+    if (this.openMoreEpoch() === null) {
+      return;
+    }
+    this.openMoreEpoch.set(null);
+    this.moreTrigger?.focus();
+    this.moreTrigger = null;
+  }
+
+  /** A11y label for the popover (the day's date). */
+  protected morePopoverLabel(day: MonthDay<TMeta>): string {
+    return this.a11y.dayLabel(day.date);
+  }
+
+  /** Localized "h:mm a" (or "All day") prefix for an event in the popover. */
+  protected morePopoverTime(event: CalendarEvent<TMeta>): string {
+    if (event.allDay === true) {
+      return this.intl.allDay;
+    }
+    const zone = this.resolvedZone();
+    return this.adapter.format(this.adapter.toZoned(event.start, zone), 'h:mm a', this.resolvedLocale());
+  }
+
+  /** Header date for the popover, e.g. "Wed 17". */
+  protected morePopoverDateLabel(day: MonthDay<TMeta>): string {
+    return this.adapter.format(day.date, 'EEE d', this.resolvedLocale(), this.resolvedSystem());
+  }
+
+  /** Status colour token for a popover row's leading dot. */
+  protected eventDotColor(event: CalendarEvent<TMeta>): string {
+    if (event.status === undefined) {
+      return 'var(--cal-accent)';
+    }
+    return `var(--cal-event-${sanitizeStatusKey(event.status)}, var(--cal-accent))`;
   }
 
   protected trackWeek(index: number): number {

@@ -11,6 +11,7 @@ const at = (iso: string): ZonedDateTime => ({ epochMs: Date.parse(iso), zone });
 async function render(inputs: Record<string, unknown>): Promise<{
   el: HTMLElement;
   cmp: CalMonthView;
+  fixture: ReturnType<typeof TestBed.createComponent<CalMonthView>>;
 }> {
   TestBed.configureTestingModule({
     providers: [provideCalendar(withDateAdapter(provideDateFnsAdapter()))],
@@ -21,11 +22,41 @@ async function render(inputs: Record<string, unknown>): Promise<{
   }
   await fixture.whenStable();
   fixture.detectChanges();
-  return { el: fixture.nativeElement as HTMLElement, cmp: fixture.componentInstance };
+  return { el: fixture.nativeElement as HTMLElement, cmp: fixture.componentInstance, fixture };
 }
 
 describe('CalMonthView', () => {
   beforeEach(() => TestBed.resetTestingModule());
+
+  it('opens a "+N more" popover listing every event on the day', async () => {
+    // Five same-day events with maxLanes=3 → 2 hidden → "+2 more".
+    const day = (n: number, title: string): CalendarEvent => ({
+      id: `e${n}`,
+      title,
+      start: at(`2026-06-15T1${n}:00:00Z`),
+      end: at(`2026-06-15T1${n}:30:00Z`),
+    });
+    const { el, fixture } = await render({
+      events: [day(1, 'One'), day(2, 'Two'), day(3, 'Three'), day(4, 'Four'), day(5, 'Five')],
+      viewDate: at('2026-06-15T12:00:00Z'),
+      weekStartsOn: 0,
+      maxLanes: 3,
+    });
+    const more = el.querySelector<HTMLButtonElement>('.cal-day__more')!;
+    expect(more).not.toBeNull();
+    expect(more.textContent).toContain('2'); // +2 more
+    expect(el.querySelector('.cal-more')).toBeNull();
+
+    more.click();
+    fixture.detectChanges();
+
+    const popover = el.querySelector('.cal-more');
+    expect(popover).not.toBeNull();
+    expect(popover!.getAttribute('role')).toBe('dialog');
+    // All five events listed, start-sorted.
+    const titles = [...el.querySelectorAll('.cal-more__title')].map((t) => t.textContent?.trim());
+    expect(titles).toEqual(['One', 'Two', 'Three', 'Four', 'Five']);
+  });
 
   it('renders 7 weekday headers and a full grid of gridcells', async () => {
     const { el } = await render({

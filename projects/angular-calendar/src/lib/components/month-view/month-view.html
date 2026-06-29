@@ -67,11 +67,46 @@
                   type="button"
                   class="cal-day__more"
                   [attr.aria-label]="moreLabel(day.overflowCount)"
-                  (click)="onDayClick(day)"
+                  [attr.aria-expanded]="isMoreOpen(day)"
+                  (click)="openMore(day, $event)"
                 >
                   {{ intl.moreLabel(day.overflowCount) }}
                 </button>
               }
+            }
+
+            @if (isMoreOpen(day)) {
+              <div class="cal-more__backdrop" (click)="closeMore()" aria-hidden="true"></div>
+              <div
+                #morePanel
+                class="cal-more"
+                role="dialog"
+                aria-modal="true"
+                tabindex="-1"
+                [attr.aria-label]="morePopoverLabel(day)"
+                (keydown.escape)="closeMore(); $event.stopPropagation()"
+                (click)="$event.stopPropagation()"
+              >
+                <div class="cal-more__head">
+                  <span class="cal-more__date">{{ morePopoverDateLabel(day) }}</span>
+                  <button type="button" class="cal-more__close" aria-label="Close" (click)="closeMore()">×</button>
+                </div>
+                <ul class="cal-more__list">
+                  @for (event of day.dayEvents; track event.id) {
+                    <li>
+                      <button
+                        type="button"
+                        class="cal-more__item"
+                        (click)="onEventClick(event, $event); closeMore()"
+                      >
+                        <span class="cal-more__dot" [style.background]="eventDotColor(event)"></span>
+                        <span class="cal-more__time">{{ morePopoverTime(event) }}</span>
+                        <span class="cal-more__title">{{ event.title }}</span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              </div>
             }
           }
         </div>
