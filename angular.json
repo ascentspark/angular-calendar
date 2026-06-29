@@ -32,7 +32,8 @@
             "providersFile": "projects/angular-calendar/src/test-setup.ts",
             "coverage": true,
             "coverageInclude": [
-              "projects/angular-calendar/src/lib/**/*.ts"
+              "projects/angular-calendar/src/lib/**/*.ts",
+              "projects/angular-calendar/*/src/**/*.ts"
             ],
             "coverageExclude": [
               "**/*.spec.ts",
