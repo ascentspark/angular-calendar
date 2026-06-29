@@ -14,6 +14,9 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4300',
     trace: 'on-first-retry',
+    // Disable CSS transitions so axe measures settled colours (not a mid-transition
+    // blend), and to honour users who request reduced motion.
+    reducedMotion: 'reduce',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
