@@ -128,8 +128,8 @@ lives solely as an Actions secret. `RELEASING.md` runbook documents tag→Action
 
 **Exit:** GitHub Community Standards green; CI/CodeQL clean on all three lines; the release
 workflow performs a successful tagged publish (verified on npm) with **no manual step**;
-print/print-to-PDF produces correct paginated output (e2e); docs site builds;
-`git grep -i 'claude\|anthropic'` returns nothing shipped.
+print/print-to-PDF produces correct paginated output (e2e); docs site builds; the shipped
+tree contains no build-tool or assistant fingerprints.
 
 ## Phase 9 — Field-service proof surface (consumer demo)
 

@@ -1,0 +1,32 @@
+name: ✨ Feature request
+description: Propose a new capability or API.
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use-case
+      description: What are you trying to do, and why is it hard or impossible today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-api
+    attributes:
+      label: Proposed API shape
+      description: Sketch the inputs/outputs/templates you'd expect (signal-first).
+      render: typescript
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: belongs
+    attributes:
+      label: Does this belong in this library or upstream?
+      options:
+        - This library
+        - Angular CDK / framework
+        - A consumer-side preset/template layer
+        - Not sure
+    validations:
+      required: true
