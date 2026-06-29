@@ -106,3 +106,4 @@ export {
 // ── Components ───────────────────────────────────────────────────────────────
 export { CalMonthView } from './lib/components/month-view/month-view';
 export { CalYearView } from './lib/components/year-view/year-view';
+export { CalTimeGridView } from './lib/components/time-grid-view/time-grid-view';

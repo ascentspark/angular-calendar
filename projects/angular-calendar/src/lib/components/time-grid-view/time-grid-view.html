@@ -1,0 +1,99 @@
+@let vm = viewModel();
+<div
+  class="cal-tg"
+  [style.--cal-tg-cols]="vm.columns.length"
+  [style.--cal-tg-hours]="(vm.dayEndMinutes - vm.dayStartMinutes) / 60"
+  [style.--cal-tg-allday-lanes]="allDayLanes()"
+>
+  <!-- Header: corner + column day headers -->
+  <div class="cal-tg__corner" aria-hidden="true"></div>
+  <div class="cal-tg__headers" role="row">
+    @for (h of columnHeaders(); track $index) {
+      <div
+        class="cal-tg__colhead"
+        role="columnheader"
+        [class.cal-tg__colhead--today]="h.isToday"
+        [class.cal-tg__colhead--weekend]="h.isWeekend"
+      >
+        <span class="cal-tg__colhead-wd">{{ h.weekday }}</span>
+        <span class="cal-tg__colhead-day">{{ h.day }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- All-day band -->
+  <div class="cal-tg__allday-gutter" aria-hidden="true">all-day</div>
+  <div
+    class="cal-tg__allday"
+    role="row"
+    aria-label="All-day events"
+    [style.grid-template-columns]="'repeat(' + vm.columns.length + ', 1fr)'"
+  >
+    @for (chip of vm.allDay; track trackChip($index, chip)) {
+      <button
+        type="button"
+        class="cal-tg__chip"
+        [style]="chipStyle(chip)"
+        [attr.aria-label]="eventLabel(chip.event)"
+        (click)="onEventClick(chip.event, $event)"
+      >
+        <span class="cal-tg__chip-title">{{ chip.event.title }}</span>
+      </button>
+    }
+  </div>
+
+  <!-- Time gutter -->
+  <div class="cal-tg__gutter">
+    @for (tick of vm.ticks; track tick.minutes) {
+      <div class="cal-tg__tick" [style.--tick-pos]="tick.offset * 100 + '%'">
+        <span class="cal-tg__tick-label">{{ tick.label }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- Day columns -->
+  <div class="cal-tg__cols" role="grid" aria-label="Time grid">
+    @for (column of vm.columns; track trackColumn($index, column)) {
+      <div
+        class="cal-tg__col"
+        role="gridcell"
+        [class.cal-tg__col--today]="column.isToday"
+        [class.cal-tg__col--weekend]="column.isWeekend"
+        [attr.aria-label]="a11y.dayLabel(column.date)"
+        (click)="onColumnClick(column, $event)"
+      >
+        @for (tick of vm.ticks; track tick.minutes) {
+          <div class="cal-tg__line" [style.--tick-pos]="tick.offset * 100 + '%'" aria-hidden="true"></div>
+        }
+
+        @for (ev of column.events; track trackEvent($index, ev)) {
+          <button
+            type="button"
+            class="cal-tg__event"
+            [class.cal-tg__event--continues-before]="ev.continuesBefore"
+            [class.cal-tg__event--continues-after]="ev.continuesAfter"
+            [class]="ev.event.cssClass ?? ''"
+            [style]="eventStyle(ev)"
+            [attr.aria-label]="eventLabel(ev.event)"
+            (click)="onEventClick(ev.event, $event)"
+          >
+            @if (eventTemplate(); as tpl) {
+              <ng-container
+                [ngTemplateOutlet]="tpl.template"
+                [ngTemplateOutletContext]="{ $implicit: ev.event }"
+              />
+            } @else {
+              <span class="cal-tg__event-title">{{ ev.event.title }}</span>
+            }
+          </button>
+        }
+
+        @if (column.nowOffset !== null) {
+          <div class="cal-tg__now" [style]="nowStyle(column.nowOffset)" aria-hidden="true">
+            <span class="cal-tg__now-dot"></span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
