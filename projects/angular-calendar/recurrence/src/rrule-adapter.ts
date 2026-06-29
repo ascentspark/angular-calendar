@@ -104,7 +104,11 @@ export class RruleRecurrenceAdapter implements RecurrenceAdapter {
     if (parts.end.type === 'count') {
       options.count = parts.end.count;
     } else if (parts.end.type === 'until') {
-      options.until = new Date(parts.end.until.epochMs);
+      // UNTIL must live in the same naive wall-clock space the series is expanded
+      // in, so convert it to the until's wall-clock components as a naive-UTC date.
+      const u = parts.end.until;
+      const wall = formatInTimeZone(new Date(u.epochMs), u.zone, WALL_FMT);
+      options.until = new Date(`${wall}Z`);
     }
     const str = RRule.optionsToString(options);
     return str.replace(/^RRULE:/, '');
