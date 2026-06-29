@@ -1,0 +1,62 @@
+name: 🐛 Bug report
+description: Report a reproducible problem in the library.
+labels: ["bug", "needs-triage"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of the bug and what you expected instead.
+    validations:
+      required: true
+  - type: input
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: A link to a StackBlitz or minimal repo that reproduces the issue. Required.
+      placeholder: https://stackblitz.com/edit/...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Library version
+      placeholder: "@ascentsparksoftware/angular-calendar@22.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: angular-major
+    attributes:
+      label: Angular major
+      options: ["22", "21", "20"]
+    validations:
+      required: true
+  - type: dropdown
+    id: change-detection
+    attributes:
+      label: Change detection
+      options: ["zoneless", "zone.js"]
+    validations:
+      required: true
+  - type: input
+    id: peer-deps
+    attributes:
+      label: Relevant peer-dependency versions
+      placeholder: "@angular/core, @angular/cdk, date-fns, rrule …"
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "OS, browser, Node version"
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      render: shell
+  - type: checkboxes
+    id: not-security
+    attributes:
+      label: Confirmation
+      options:
+        - label: This is not a security report (security issues go to SECURITY.md privately).
+          required: true

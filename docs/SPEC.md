@@ -299,8 +299,8 @@ export interface TimeHeaderRow { readonly groupBy: 'year'|'month'|'week'|'day'|'
 
 ## 7. Theming engine (`--cal-*`, OKLCH)
 
-Mirrors the in-house image editor. See `CLAUDE.md` §5 and `docs/THEMING.md` (to be authored
-in Phase 8). Public theming API exported from `public-api.ts`:
+Mirrors the in-house image editor's `deriveTheme`/`applyTheme` contract. See
+`docs/THEMING.md` (authored in Phase 8). Public theming API exported from `public-api.ts`:
 
 ```ts
 export type CalThemeMode = 'light' | 'dark';
