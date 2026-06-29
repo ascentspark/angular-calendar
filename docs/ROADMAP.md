@@ -111,7 +111,21 @@ all-day band, working-hours shading, side-by-side lane packing, slot granularity
 
 **Exit:** both orientations render correctly; now-indicator ticks; axe-clean; screenshots.
 
-## Phase 4 — Resource / timeline view
+## Phase 4 — Resource / timeline view 🟡 IN PROGRESS
+
+**Done:** cycle-safe `flattenResources` (tree → depth-ordered, collapse-aware). `buildTimelineView`
+(continuous multi-day range, multi-level declarative headers day/hour/week/month, per-resource
+lanes with sweep-line sub-lane packing, off-hours shading from `workHours`, block-out shading
+from `isBlock`, now-indicator). `<cal-timeline-view>` dispatch board (single-scroll grid with
+sticky time headers + frozen resource column, resource-tree expand/collapse, positioned event
+blocks with status colours, off-hours/block shading, now-line, slot click → `slotSelected`,
+`eventClicked`, overridable `*calEventTemplate`/`*calResourceHeader`). `buildAgendaView` +
+`<cal-agenda-view>` (day-grouped list, all-day-first ordering, status dots, empty-day handling,
+hide-empty). **148 unit tests**; **visually verified via Playwright** (timeline dispatch board +
+agenda, light) — resource tree, job blocks on correct lanes/times, off-hours shading, now-line,
+collapse all correct. **Remaining:** CDK virtual-scroll for large fleets (100 res × 2000 ev
+≥55 fps bench); **Timeline-Year** range mode; thin `<cal-week-view>`/`<cal-day-view>` selectors;
+axe + screenshot gate.
 
 `<cal-timeline-view>`: resources × time, declarative multi-level time headers, resource
 tree (group/expand), per-resource work hours / block-out shading, pixel↔time projection,
