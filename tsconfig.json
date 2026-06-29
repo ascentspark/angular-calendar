@@ -10,6 +10,9 @@
       ],
       "@ascentsparksoftware/angular-calendar/recurrence": [
         "./projects/angular-calendar/recurrence/src/public-api.ts"
+      ],
+      "@ascentsparksoftware/angular-calendar/export": [
+        "./projects/angular-calendar/export/src/public-api.ts"
       ]
     },
     "strict": true,
