@@ -270,3 +270,16 @@
   color: var(--cal-ink);
   outline: 2px solid var(--cal-ring);
 }
+
+/* Print: faithful colours, no interactive chrome, avoid clipping events. */
+@media print {
+  .cal-tg__resize,
+  .cal-tg__now {
+    display: none;
+  }
+  .cal-tg__event {
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

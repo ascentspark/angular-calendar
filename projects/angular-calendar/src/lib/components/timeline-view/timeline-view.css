@@ -202,3 +202,15 @@
     transition: none !important;
   }
 }
+
+/* Print: faithful colours, hide the live now-line. */
+@media print {
+  .cal-tl__now {
+    display: none;
+  }
+  .cal-tl__event {
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

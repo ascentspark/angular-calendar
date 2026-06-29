@@ -13,6 +13,12 @@
       <button type="button" class="btn" (click)="toggleMode()" data-testid="toggle-mode">
         {{ mode() === 'light' ? '🌙 Dark' : '☀️ Light' }}
       </button>
+      <div class="seg" role="group" aria-label="Export">
+        <button type="button" class="btn" (click)="printSchedule()" data-testid="export-print">🖨 Print</button>
+        <button type="button" class="btn" (click)="exportCsv()" data-testid="export-csv">CSV</button>
+        <button type="button" class="btn" (click)="exportExcel()" data-testid="export-excel">Excel</button>
+        <button type="button" class="btn" (click)="exportIcs()" data-testid="export-ics">ICS</button>
+      </div>
     </div>
   </header>
 

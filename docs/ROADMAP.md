@@ -207,13 +207,19 @@ perf budgets pass in CI; bundle-size budget passes.
 ## Phase 8 — Docs, Storybook, demo, optional token bridge, publish 🟡 IN PROGRESS
 
 **Done:** `/export` secondary entry with **RFC 5545 ICS** (UTC/all-day/RRULE, escaping,
-line-folding) and **RFC 4180 CSV** serialisation, both pure + unit-tested. Public
-`docs/ARCHITECTURE.md` + `docs/THEMING.md` (plus existing README/SECURITY/CONTRIBUTING/
-CODE_OF_CONDUCT/CHANGELOG from Phase 1). SSR-safe demo app exercising all six views + theme
-toggle. **Remaining:** Storybook (per-state, a11y addon, visual regression), print / print-to-PDF
-(`withPrint`/`print()` + print stylesheet), Excel export, `MIGRATION.md`, optional
-`withTokenBridge()`, multi-line repo hardening (Dependabot/CI/CodeQL/ruleset), and the CI-only
-`release.yml` tagged-publish workflow + `RELEASING.md`.
+line-folding) and **RFC 4180 CSV** serialisation, both pure + unit-tested. **Print / print-to-PDF**
+— pure `eventsToPrintHtml` (day-grouped agenda, zone/locale/12-24h aware, HTML-escaped, empty-state),
+`CAL_PRINT_STYLES`, SSR-safe `printDocument` (opens + prints), and the injectable `CalPrintService`
++ `provideCalendarPrint(defaults)` (the `withPrint()` deliverable, located in `/export` so core stays
+DOM-free) — plus `@media print` rules on month/time-grid/timeline (exact colours, hide live chrome,
+page-break-friendly). **Excel export** — dependency-free SpreadsheetML 2003 (`eventsToExcelXml`,
+typed `DateTime` cells, XML-escaped) that Excel/Sheets/LibreOffice open natively. **All export paths
+verified through the demo UI** (Print → paginated agenda screenshot; CSV/Excel/ICS → real downloads
+inspected: valid SpreadsheetML, RFC 4180, VCALENDAR). Public `docs/ARCHITECTURE.md` + `docs/THEMING.md`
+(plus existing README/SECURITY/CONTRIBUTING/CODE_OF_CONDUCT/CHANGELOG from Phase 1). SSR-safe demo app
+exercising all six views + theme toggle + export toolbar. **Remaining:** Storybook (per-state, a11y
+addon, visual regression), `MIGRATION.md`, optional `withTokenBridge()`, multi-line repo hardening
+(Dependabot/CI/CodeQL/ruleset), and the CI-only `release.yml` tagged-publish workflow + `RELEASING.md`.
 
 Public docs (`README`, `ARCHITECTURE.md`, `THEMING.md`, `MIGRATION.md`, `SECURITY.md`),
 Storybook (per-state, a11y addon, visual-regression), demo app (SSR-safe), optional
