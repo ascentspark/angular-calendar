@@ -1,0 +1,5 @@
+dist
+coverage
+.angular
+out-tsc
+projects/**/package.json
