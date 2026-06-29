@@ -143,3 +143,34 @@ describe('CalTimelineView — slot selection', () => {
     expect(resourceId).toBe('t1');
   });
 });
+
+describe('CalTimelineView — external drop', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('emits externalDrop with resource id, time, and payload', async () => {
+    const { el, cmp } = await render({
+      events: [],
+      resources,
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      dayStartMinutes: 0,
+      dayEndMinutes: 1440,
+      headerGroupings: ['hour'],
+    });
+    let drop: { resourceId: string; data: string } | null = null;
+    cmp.externalDrop.subscribe((d) => (drop = d));
+    const row = el.querySelector<HTMLElement>('.cal-tl__row')!;
+    row.getBoundingClientRect = () =>
+      ({ height: 40, top: 0, left: 0, right: 1000, bottom: 40, width: 1000, x: 0, y: 0, toJSON() {} }) as DOMRect;
+    const evt = new Event('drop', { bubbles: true });
+    Object.defineProperty(evt, 'clientX', { value: 500 });
+    Object.defineProperty(evt, 'clientY', { value: 20 });
+    Object.defineProperty(evt, 'dataTransfer', {
+      value: { getData: (t: string) => (t === 'text/plain' ? 'job-42' : ''), dropEffect: '' },
+    });
+    row.dispatchEvent(evt);
+    expect(drop).not.toBeNull();
+    expect(drop!.resourceId).toBe('t1');
+    expect(drop!.data).toBe('job-42');
+  });
+});
