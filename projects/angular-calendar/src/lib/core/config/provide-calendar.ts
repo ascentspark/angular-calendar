@@ -1,5 +1,6 @@
 import {
   EnvironmentProviders,
+  InjectionToken,
   makeEnvironmentProviders,
   Provider,
 } from '@angular/core';
@@ -8,6 +9,7 @@ import {
   DEFAULT_CALENDAR_CONFIG,
   type CalendarConfig,
 } from './calendar-config';
+import type { CalTokenBridge } from '../../theme/apply-theme';
 
 /** Discriminates the optional building blocks passed to {@link provideCalendar}. */
 export type CalendarFeatureKind =
@@ -16,7 +18,16 @@ export type CalendarFeatureKind =
   | 'recurrence'
   | 'locale'
   | 'virtualization'
-  | 'print';
+  | 'print'
+  | 'token-bridge';
+
+/**
+ * Optional bridge mapping `--cal-*` tokens to the host's own design-system CSS
+ * variables. Injected by every view; when present each view defers the bridged
+ * colours to the host instead of its derived theme. Registered via
+ * {@link withTokenBridge}.
+ */
+export const CAL_TOKEN_BRIDGE = new InjectionToken<CalTokenBridge>('CAL_TOKEN_BRIDGE');
 
 /**
  * An opt-in calendar feature. Produced by the `with*` helpers and passed to
@@ -68,4 +79,29 @@ export function withDateAdapter(
   providers: EnvironmentProviders | Provider,
 ): CalendarFeature {
   return { kind: 'date-adapter', providers: [providers] };
+}
+
+/**
+ * Drive calendar colours from the host application's own design tokens. Each key
+ * is a `--cal-*` property; each value is the consumer's CSS variable to defer to
+ * (bare `--brand-500` or wrapped `var(--brand-500)`). Example:
+ *
+ * ```ts
+ * provideCalendar(
+ *   withTokenBridge({
+ *     '--cal-accent': '--brand-500',
+ *     '--cal-bg': '--surface',
+ *     '--cal-ink': '--text',
+ *   }),
+ * )
+ * ```
+ *
+ * Bridged tokens win over the derived theme; unbridged tokens keep their derived
+ * values, so a partial map is fine.
+ */
+export function withTokenBridge(bridge: CalTokenBridge): CalendarFeature {
+  return {
+    kind: 'token-bridge',
+    providers: [{ provide: CAL_TOKEN_BRIDGE, useValue: bridge }],
+  };
 }

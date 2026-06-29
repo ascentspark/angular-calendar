@@ -40,4 +40,38 @@ describe('applyTheme', () => {
     applyTheme(host, b);
     expect(host.style.getPropertyValue('--cal-bg')).toBe(b['--cal-bg']);
   });
+
+  describe('token bridge', () => {
+    it('overrides bridged tokens with var() refs while keeping unbridged derived values', () => {
+      const host = document.createElement('div');
+      const tokens = deriveTheme('#ffffff', '#3b82f6', 'light');
+      applyTheme(host, tokens, { '--cal-accent': '--brand-500' });
+      expect(host.style.getPropertyValue('--cal-accent')).toBe('var(--brand-500)');
+      // an unbridged token keeps its derived value
+      expect(host.style.getPropertyValue('--cal-bg')).toBe(tokens['--cal-bg']);
+    });
+
+    it('passes through an already-wrapped var() reference unchanged', () => {
+      const host = document.createElement('div');
+      applyTheme(host, deriveTheme('#ffffff', '#3b82f6', 'light'), {
+        '--cal-bg': 'var(--surface, #fff)',
+      });
+      expect(host.style.getPropertyValue('--cal-bg')).toBe('var(--surface, #fff)');
+    });
+
+    it('is applied after the theme, so the bridge always wins on re-apply', () => {
+      const host = document.createElement('div');
+      const bridge = { '--cal-accent': '--brand-500' };
+      applyTheme(host, deriveTheme('#ffffff', '#3b82f6', 'light'), bridge);
+      applyTheme(host, deriveTheme('#0b0b0c', '#22c55e', 'dark'), bridge);
+      expect(host.style.getPropertyValue('--cal-accent')).toBe('var(--brand-500)');
+    });
+
+    it('ignores a null/empty bridge', () => {
+      const host = document.createElement('div');
+      const tokens = deriveTheme('#ffffff', '#3b82f6', 'light');
+      applyTheme(host, tokens, null);
+      expect(host.style.getPropertyValue('--cal-accent')).toBe(tokens['--cal-accent']);
+    });
+  });
 });

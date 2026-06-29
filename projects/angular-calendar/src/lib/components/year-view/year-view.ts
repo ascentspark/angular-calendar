@@ -16,6 +16,7 @@ import type { CalendarEvent } from '../../core/model/calendar-event';
 import { buildYearView } from '../../core/view-model/build-year-view';
 import type { YearDay } from '../../core/view-model/year-view-model';
 import { applyTheme } from '../../theme/apply-theme';
+import { CAL_TOKEN_BRIDGE } from '../../core/config/provide-calendar';
 import { deriveTheme, type CalThemeMode } from '../../theme/derive-theme';
 import { CalCalendarA11y } from '../../a11y/cal-calendar-a11y';
 
@@ -38,6 +39,7 @@ export class CalYearView<TMeta = unknown> {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly adapter = inject(DATE_ADAPTER);
   private readonly config = inject(CALENDAR_CONFIG);
+  private readonly tokenBridge = inject(CAL_TOKEN_BRIDGE, { optional: true });
   readonly a11y = inject(CalCalendarA11y);
 
   readonly events = input.required<readonly CalendarEvent<TMeta>[]>();
@@ -114,7 +116,7 @@ export class CalYearView<TMeta = unknown> {
   });
 
   constructor() {
-    effect(() => applyTheme(this.host.nativeElement, this.theme()));
+    effect(() => applyTheme(this.host.nativeElement, this.theme(), this.tokenBridge));
   }
 
   protected dayNumber(day: YearDay): string {

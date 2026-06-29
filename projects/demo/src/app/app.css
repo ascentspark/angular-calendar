@@ -1,5 +1,8 @@
 :host {
   display: block;
+  /* Host design-system accent token. The calendar consumes this via the
+     token bridge (see app.config.ts) instead of the accentColor input. */
+  --brand: #e11d8f;
 }
 
 .page {
