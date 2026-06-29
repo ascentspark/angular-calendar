@@ -74,7 +74,7 @@ export class App {
     filterByStatus(this.events(), this.activeStatuses()),
   );
   protected readonly filteredJobs = computed(() =>
-    filterByStatus(this.jobs, this.activeStatuses()),
+    filterByStatus(this.jobs(), this.activeStatuses()),
   );
 
   protected readonly events = signal<CalendarEvent[]>([
@@ -162,7 +162,7 @@ export class App {
     },
   ];
 
-  protected readonly jobs: CalendarEvent[] = [
+  protected readonly jobs = signal<CalendarEvent[]>([
     {
       id: 'j1',
       title: 'AC install — 14 Oak St',
@@ -219,7 +219,40 @@ export class App {
       end: z('2026-06-15T20:00:00Z'),
       status: 'cancelled',
     },
-  ];
+  ]);
+
+  /** Unassigned jobs the dispatcher can drag onto a tech's lane. */
+  protected readonly unscheduled = signal<{ id: string; title: string }[]>([
+    { id: 'u1', title: 'Emergency leak — 7 Birch' },
+    { id: 'u2', title: 'Quote visit — 19 Ash' },
+  ]);
+
+  protected onDragStart(jobId: string, dom: DragEvent): void {
+    dom.dataTransfer?.setData('text/plain', jobId);
+    if (dom.dataTransfer) {
+      dom.dataTransfer.effectAllowed = 'copy';
+    }
+  }
+
+  /** Assign a dropped unassigned job to the target lane at the drop time. */
+  protected onExternalDrop(e: { date: { epochMs: number; zone: string }; resourceId: string; data: string }): void {
+    const job = this.unscheduled().find((u) => u.id === e.data);
+    if (job === undefined) {
+      return;
+    }
+    this.unscheduled.update((list) => list.filter((u) => u.id !== job.id));
+    this.jobs.update((list) => [
+      ...list,
+      {
+        id: job.id,
+        title: job.title,
+        resourceIds: [e.resourceId],
+        start: e.date,
+        end: { epochMs: e.date.epochMs + 60 * 60_000, zone: e.date.zone },
+        status: 'scheduled',
+      },
+    ]);
+  }
 
   protected toggleMode(): void {
     this.mode.update((m) => (m === 'light' ? 'dark' : 'light'));

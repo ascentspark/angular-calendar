@@ -78,6 +78,21 @@
         />
       }
       @case ('timeline') {
+        @if (unscheduled().length > 0) {
+          <div class="unsched" aria-label="Unassigned jobs">
+            <span class="unsched__label">Unassigned — drag onto a lane:</span>
+            @for (job of unscheduled(); track job.id) {
+              <div
+                class="unsched__item"
+                draggable="true"
+                [attr.data-testid]="'unsched-' + job.id"
+                (dragstart)="onDragStart(job.id, $event)"
+              >
+                {{ job.title }}
+              </div>
+            }
+          </div>
+        }
         <cal-timeline-view
           [events]="filteredJobs()"
           [resources]="resources"
@@ -92,6 +107,7 @@
           [themeMode]="mode()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
+          (externalDrop)="onExternalDrop($event)"
         >
           <!-- Rich, consumer-defined job card (charter §1): title + status badge -->
           <ng-template calEventTemplate let-job>
