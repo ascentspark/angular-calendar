@@ -170,3 +170,70 @@ function makePointerXY(type: string, pointerId: number, clientX: number, clientY
     return e;
   }
 }
+
+describe('CalTimeGridView — resize & veto', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('emits kind "resize" when dragging the bottom handle', async () => {
+    const ev: CalendarEvent = { id: 'a', title: 'X', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T14:00:00Z') };
+    const { el, cmp } = await render({
+      events: [ev],
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      anchorToWeek: false,
+      dayStartMinutes: 0,
+      dayEndMinutes: 1440,
+    });
+    let change: { kind: string } | null = null;
+    cmp.eventChanged.subscribe((c) => (change = c));
+    const handle = el.querySelector<HTMLElement>('.cal-tg__resize--end')!;
+    handle.closest<HTMLElement>('.cal-tg__col')!.getBoundingClientRect = () =>
+      ({ height: 1440, top: 0, left: 0, right: 0, bottom: 1440, width: 100, x: 0, y: 0, toJSON() {} }) as DOMRect;
+    handle.dispatchEvent(makePointer('pointerdown', 1, 100));
+    handle.dispatchEvent(makePointer('pointermove', 1, 160));
+    handle.dispatchEvent(makePointer('pointerup', 1, 160));
+    expect(change).not.toBeNull();
+    expect(change!.kind).toBe('resize');
+  });
+
+  it('does not emit when validateChange vetoes the move', async () => {
+    const ev: CalendarEvent = { id: 'a', title: 'X', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T14:00:00Z') };
+    const { el, cmp } = await render({
+      events: [ev],
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      anchorToWeek: false,
+      dayStartMinutes: 0,
+      dayEndMinutes: 1440,
+      validateChange: () => false,
+    });
+    let emitted = false;
+    cmp.eventChanged.subscribe(() => (emitted = true));
+    const eventEl = el.querySelector<HTMLButtonElement>('.cal-tg__event')!;
+    eventEl.closest<HTMLElement>('.cal-tg__col')!.getBoundingClientRect = () =>
+      ({ height: 1440, top: 0, left: 0, right: 0, bottom: 1440, width: 100, x: 0, y: 0, toJSON() {} }) as DOMRect;
+    eventEl.dispatchEvent(makePointer('pointerdown', 1, 100));
+    eventEl.dispatchEvent(makePointer('pointermove', 1, 160));
+    eventEl.dispatchEvent(makePointer('pointerup', 1, 160));
+    expect(emitted).toBe(false);
+  });
+
+  it('emits slotSelected on a plain tap of an empty column', async () => {
+    const { el, cmp } = await render({
+      events: [],
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      anchorToWeek: false,
+      dayStartMinutes: 0,
+      dayEndMinutes: 1440,
+    });
+    let slot = 0;
+    cmp.slotSelected.subscribe(() => (slot += 1));
+    const col = el.querySelector<HTMLElement>('.cal-tg__col')!;
+    col.getBoundingClientRect = () =>
+      ({ height: 1440, top: 0, left: 0, right: 100, bottom: 1440, width: 100, x: 0, y: 0, toJSON() {} }) as DOMRect;
+    col.dispatchEvent(makePointerXY('pointerdown', 1, 0, 540));
+    col.dispatchEvent(makePointerXY('pointerup', 1, 0, 540));
+    expect(slot).toBe(1);
+  });
+});
