@@ -4,6 +4,9 @@
   background: var(--cal-bg);
   color: var(--cal-ink);
   font-family: inherit;
+  /* Fill a tall container; the 12 mini-months scroll when taller than it. */
+  block-size: 100%;
+  overflow-y: auto;
 }
 
 .cal-year__grid {

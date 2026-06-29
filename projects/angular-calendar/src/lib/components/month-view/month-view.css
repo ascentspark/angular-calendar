@@ -1,5 +1,6 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
   container-type: inline-size;
   background: var(--cal-bg);
   color: var(--cal-ink);
@@ -15,6 +16,10 @@
   flex-direction: column;
   border-block-start: 1px solid var(--cal-grid-line);
   border-inline-start: 1px solid var(--cal-grid-line);
+  /* Grow to fill the host (a flex column); the weeks then share the height. With
+     an unconstrained host this is a no-op and weeks keep their intrinsic size. */
+  flex: 1 1 auto;
+  min-block-size: 0;
 }
 
 .cal-month__weekdays {
@@ -38,8 +43,10 @@
 .cal-month__week {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  /* Reserve room for the head + the week's lane rows. */
+  /* Reserve room for the head + the week's lane rows, then grow to share the
+     remaining height evenly so the grid fills a tall container. */
   min-block-size: calc(var(--cal-day-head) + var(--cal-week-lanes, 0) * var(--cal-chip-row) + 0.5rem);
+  flex: 1 1 auto;
 }
 
 .cal-day {

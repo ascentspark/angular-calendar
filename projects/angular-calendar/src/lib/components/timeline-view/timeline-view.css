@@ -1,5 +1,8 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  overflow: hidden;
   background: var(--cal-bg);
   color: var(--cal-ink);
   font-family: inherit;
@@ -10,7 +13,10 @@
 
 .cal-tl {
   overflow: auto;
-  max-block-size: 70vh;
+  /* Fill the host (which is sized by its container); falls back to content height
+     when the host is unconstrained. */
+  flex: 1 1 auto;
+  min-block-size: 0;
   border: 1px solid var(--cal-grid-line);
 }
 
