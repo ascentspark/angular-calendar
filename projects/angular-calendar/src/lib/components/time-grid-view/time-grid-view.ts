@@ -17,6 +17,8 @@ import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zone
 import type { CalendarEvent } from '../../core/model/calendar-event';
 import type { TimeAxisOrientation } from '../../core/model/view';
 import { buildTimeGridView } from '../../core/view-model/build-time-grid-view';
+import { RECURRENCE_ADAPTER } from '../../core/recurrence/recurrence-adapter';
+import { expandRecurringEvents } from '../../core/recurrence/expand-recurring-events';
 import type { PositionedChip } from '../../core/view-model/positioned-chip';
 import type { PositionedEvent } from '../../core/view-model/positioned-event';
 import type { TimeColumn } from '../../core/view-model/time-grid-view-model';
@@ -72,6 +74,7 @@ export class CalTimeGridView<TMeta = unknown> {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly adapter = inject(DATE_ADAPTER);
   private readonly config = inject(CALENDAR_CONFIG);
+  private readonly recurrence = inject(RECURRENCE_ADAPTER, { optional: true });
   readonly a11y = inject(CalCalendarA11y);
 
   readonly events = input.required<readonly CalendarEvent<TMeta>[]>();
@@ -123,9 +126,8 @@ export class CalTimeGridView<TMeta = unknown> {
     const nowValue = this.now();
     const exclude = this.excludeDays();
     const weekend = this.weekendDays();
-    return buildTimeGridView<TMeta>(this.adapter, {
+    const args = {
       viewDate: this.adapter.toZoned(this.viewDate(), zone),
-      events: this.events(),
       days: this.days(),
       weekStartsOn: this.weekStartsOn() ?? this.config.weekStartsOn,
       orientation: this.orientation(),
@@ -138,8 +140,29 @@ export class CalTimeGridView<TMeta = unknown> {
       ...(nowValue !== null ? { now: this.adapter.toZoned(nowValue, zone) } : {}),
       ...(exclude !== null ? { excludeDays: exclude } : {}),
       ...(weekend !== null ? { weekendDays: weekend } : {}),
-    });
+    };
+    const events = this.expandedEvents(zone, args);
+    return buildTimeGridView<TMeta>(this.adapter, { ...args, events });
   });
+
+  /** Expand recurring events against the grid window when a recurrence adapter is present. */
+  private expandedEvents(
+    zone: string,
+    args: Omit<Parameters<typeof buildTimeGridView<TMeta>>[1], 'events'>,
+  ): readonly CalendarEvent<TMeta>[] {
+    const raw = this.events();
+    if (this.recurrence === null || !raw.some((e) => e.recurrenceRule !== undefined)) {
+      return raw;
+    }
+    const probe = buildTimeGridView<TMeta>(this.adapter, { ...args, events: [] });
+    return expandRecurringEvents<TMeta>(raw, {
+      recurrence: this.recurrence,
+      dates: this.adapter,
+      windowStart: probe.period.start,
+      windowEnd: probe.period.end,
+      zone,
+    });
+  }
 
   /** Number of all-day band lanes (for reserving band height). */
   protected readonly allDayLanes = computed(() => {
