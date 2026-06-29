@@ -35,13 +35,56 @@ export class App {
   };
 
   protected readonly events: CalendarEvent[] = [
-    { id: '1', title: 'Morning standup', start: z('2026-06-15T13:00:00Z'), end: z('2026-06-15T13:30:00Z'), status: 'scheduled' },
-    { id: '2', title: 'Design review', start: z('2026-06-15T18:00:00Z'), end: z('2026-06-15T19:00:00Z'), status: 'done' },
-    { id: '3', title: 'Sprint planning', start: z('2026-06-15T20:00:00Z'), end: z('2026-06-15T21:00:00Z'), status: 'active' },
-    { id: '4', title: 'Retro', start: z('2026-06-15T21:30:00Z'), end: z('2026-06-15T22:00:00Z'), status: 'cancelled' },
-    { id: '5', title: 'Conference (3 days)', start: z('2026-06-09T13:00:00Z'), end: z('2026-06-12T21:00:00Z'), status: 'active' },
-    { id: '6', title: 'Release', start: z('2026-06-22T14:00:00Z'), end: z('2026-06-22T15:00:00Z'), status: 'scheduled' },
-    { id: '7', title: 'Holiday', allDay: true, start: z('2026-06-19T04:00:00Z'), end: z('2026-06-20T04:00:00Z'), status: 'done' },
+    {
+      id: '1',
+      title: 'Morning standup',
+      start: z('2026-06-15T13:00:00Z'),
+      end: z('2026-06-15T13:30:00Z'),
+      status: 'scheduled',
+    },
+    {
+      id: '2',
+      title: 'Design review',
+      start: z('2026-06-15T18:00:00Z'),
+      end: z('2026-06-15T19:00:00Z'),
+      status: 'done',
+    },
+    {
+      id: '3',
+      title: 'Sprint planning',
+      start: z('2026-06-15T20:00:00Z'),
+      end: z('2026-06-15T21:00:00Z'),
+      status: 'active',
+    },
+    {
+      id: '4',
+      title: 'Retro',
+      start: z('2026-06-15T21:30:00Z'),
+      end: z('2026-06-15T22:00:00Z'),
+      status: 'cancelled',
+    },
+    {
+      id: '5',
+      title: 'Conference (3 days)',
+      start: z('2026-06-09T13:00:00Z'),
+      end: z('2026-06-12T21:00:00Z'),
+      status: 'active',
+    },
+    {
+      id: '6',
+      title: 'Release',
+      start: z('2026-06-22T14:00:00Z'),
+      end: z('2026-06-22T15:00:00Z'),
+      status: 'scheduled',
+    },
+    {
+      id: '7',
+      title: 'Holiday',
+      allDay: true,
+      start: z('2026-06-19T04:00:00Z'),
+      end: z('2026-06-20T04:00:00Z'),
+      status: 'done',
+    },
   ];
 
   protected toggleMode(): void {
