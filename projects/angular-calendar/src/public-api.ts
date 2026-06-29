@@ -95,6 +95,15 @@ export {
   flattenResources,
   type FlatResource,
 } from './lib/core/view-model/flatten-resources';
+export {
+  type TimeHeaderCell,
+  type TimeHeaderUnit,
+  type TimeHeaderRow,
+  type ResourceRow,
+  type TimelineViewModel,
+  type TimelineViewArgs,
+} from './lib/core/view-model/timeline-view-model';
+export { buildTimelineView } from './lib/core/view-model/build-timeline-view';
 
 // ── Accessibility ───────────────────────────────────────────────────────────
 export { CalCalendarA11y } from './lib/a11y/cal-calendar-a11y';
