@@ -16,6 +16,8 @@ import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
 import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zoned-date-time';
 import type { CalendarEvent } from '../../core/model/calendar-event';
 import { buildMonthView } from '../../core/view-model/build-month-view';
+import { RECURRENCE_ADAPTER } from '../../core/recurrence/recurrence-adapter';
+import { expandRecurringEvents } from '../../core/recurrence/expand-recurring-events';
 import type { MonthDay } from '../../core/view-model/month-view-model';
 import type { PositionedChip } from '../../core/view-model/positioned-chip';
 import { applyTheme } from '../../theme/apply-theme';
@@ -47,6 +49,7 @@ export class CalMonthView<TMeta = unknown> {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly adapter = inject(DATE_ADAPTER);
   private readonly config = inject(CALENDAR_CONFIG);
+  private readonly recurrence = inject(RECURRENCE_ADAPTER, { optional: true });
   readonly a11y = inject(CalCalendarA11y);
 
   // ── data inputs ─────────────────────────────────────────────────────────
@@ -113,15 +116,38 @@ export class CalMonthView<TMeta = unknown> {
     const todayValue = this.today();
     const weekend = this.weekendDays();
     const lanes = this.maxLanes();
-    return buildMonthView<TMeta>(this.adapter, {
+    const weekStartsOn = this.weekStartsOn() ?? this.config.weekStartsOn;
+    const baseArgs = {
       viewDate,
-      events: this.events(),
-      weekStartsOn: this.weekStartsOn() ?? this.config.weekStartsOn,
+      weekStartsOn,
       ...(todayValue !== null ? { today: this.adapter.toZoned(todayValue, zone) } : {}),
       ...(lanes !== null ? { maxLanes: lanes } : {}),
       ...(weekend !== null ? { weekendDays: weekend } : {}),
-    });
+    };
+    const events = this.expandedEvents(zone, weekStartsOn, viewDate);
+    return buildMonthView<TMeta>(this.adapter, { ...baseArgs, events });
   });
+
+  /** Expand recurring events against the grid window when a recurrence adapter is present. */
+  private expandedEvents(
+    zone: string,
+    weekStartsOn: number,
+    viewDate: ZonedDateTime,
+  ): readonly CalendarEvent<TMeta>[] {
+    const raw = this.events();
+    if (this.recurrence === null || !raw.some((e) => e.recurrenceRule !== undefined)) {
+      return raw;
+    }
+    // Probe the grid window (events don't affect the period) then expand into it.
+    const probe = buildMonthView<TMeta>(this.adapter, { viewDate, events: [], weekStartsOn });
+    return expandRecurringEvents<TMeta>(raw, {
+      recurrence: this.recurrence,
+      dates: this.adapter,
+      windowStart: probe.period.start,
+      windowEnd: probe.period.end,
+      zone,
+    });
+  }
 
   /** Weekday header labels (short) in the configured locale + calendar system. */
   protected readonly weekdayLabels = computed(() => {

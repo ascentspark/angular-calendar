@@ -89,6 +89,14 @@ export class App {
       end: z('2026-06-20T04:00:00Z'),
       status: 'done',
     },
+    {
+      id: '8',
+      title: 'Weekly 1:1',
+      start: z('2026-06-17T17:00:00Z'),
+      end: z('2026-06-17T17:30:00Z'),
+      status: 'scheduled',
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=WE',
+    },
   ]);
 
   // ── Resource timeline (dispatch board) sample data ──────────────────────

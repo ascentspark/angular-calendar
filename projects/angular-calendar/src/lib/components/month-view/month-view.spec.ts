@@ -164,3 +164,39 @@ describe('CalMonthView — keyboard navigation', () => {
     expect(tabbable.length).toBe(1);
   });
 });
+
+import { provideRruleAdapter } from '@ascentsparksoftware/angular-calendar/recurrence';
+
+describe('CalMonthView — recurrence', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('expands a recurring event into multiple chips across the month', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideCalendar(withDateAdapter(provideDateFnsAdapter())),
+        provideRruleAdapter(),
+      ],
+    });
+    const fixture = TestBed.createComponent(CalMonthView);
+    fixture.componentRef.setInput('events', [
+      {
+        id: 'weekly',
+        title: 'Weekly sync',
+        start: at('2026-06-15T13:00:00Z'),
+        end: at('2026-06-15T13:30:00Z'),
+        recurrenceRule: 'FREQ=WEEKLY;BYDAY=MO;COUNT=3',
+      },
+    ]);
+    fixture.componentRef.setInput('viewDate', at('2026-06-15T12:00:00Z'));
+    fixture.componentRef.setInput('weekStartsOn', 0);
+    fixture.componentRef.setInput('timezone', 'America/New_York');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    // 3 Monday occurrences (Jun 15, 22, 29) → 3 chips
+    const chips = [...el.querySelectorAll('.cal-chip__title')].filter((c) =>
+      c.textContent?.includes('Weekly sync'),
+    );
+    expect(chips.length).toBe(3);
+  });
+});

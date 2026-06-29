@@ -10,6 +10,7 @@ import {
   withDefaults,
 } from '@ascentsparksoftware/angular-calendar';
 import { provideDateFnsAdapter } from '@ascentsparksoftware/angular-calendar/date-fns';
+import { provideRruleAdapter } from '@ascentsparksoftware/angular-calendar/recurrence';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,5 +21,6 @@ export const appConfig: ApplicationConfig = {
       withDateAdapter(provideDateFnsAdapter()),
       withDefaults({ timezone: 'America/New_York', weekStartsOn: 0 }),
     ),
+    provideRruleAdapter(),
   ],
 };
