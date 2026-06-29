@@ -60,13 +60,12 @@
   font: inherit;
 }
 .seg__btn--on {
-  background: currentColor;
+  background: #18181b;
+  color: #fff;
 }
-.seg__btn--on {
-  color: var(--seg-on-text, #fff);
-}
-.page:not(.page--dark) .seg__btn--on {
-  --seg-on-text: #fff;
+.page--dark .seg__btn--on {
+  background: #fafafa;
+  color: #18181b;
 }
 
 .page__filters {
@@ -157,4 +156,17 @@
   border-radius: 0.5rem;
   background: color-mix(in srgb, var(--cal-accent, #3b82f6) 12%, transparent);
   font-size: 0.85rem;
+}
+
+.job__avatar {
+  flex: 0 0 auto;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #fff;
 }

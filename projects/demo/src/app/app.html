@@ -7,6 +7,7 @@
         <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'week'" (click)="setView('week')" data-testid="view-week">Week</button>
         <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'day'" (click)="setView('day')" data-testid="view-day">Day</button>
         <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'timeline'" (click)="setView('timeline')" data-testid="view-timeline">Timeline</button>
+        <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'weekrows'" (click)="setView('weekrows')" data-testid="view-weekrows">Week rows</button>
         <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'agenda'" (click)="setView('agenda')" data-testid="view-agenda">Agenda</button>
         <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'year'" (click)="setView('year')" data-testid="view-year">Year</button>
       </div>
@@ -121,12 +122,47 @@
           [statusColors]="statusColors"
           (externalDrop)="onExternalDrop($event)"
         >
-          <!-- Rich, consumer-defined job card (charter §1): title + status badge -->
+          <!-- Rich, consumer-defined job card (charter §1): avatar + title + status badge -->
           <ng-template calEventTemplate let-job>
             <div class="job">
+              @if (assigneeInitials(job)) {
+                <span
+                  class="job__avatar"
+                  [style.background]="assigneeColor(job)"
+                  [attr.title]="assigneeName(job)"
+                  aria-hidden="true"
+                  >{{ assigneeInitials(job) }}</span
+                >
+              }
               <span class="job__title">{{ job.title }}</span>
               @if (job.status) {
                 <span class="job__badge">{{ job.status }}</span>
+              }
+            </div>
+          </ng-template>
+        </cal-timeline-view>
+      }
+      @case ('weekrows') {
+        <!-- Week-as-rows preset: timeline with one lane per weekday (public API only). -->
+        <cal-timeline-view
+          [events]="weekRowEvents()"
+          [resources]="weekdayResources"
+          [viewDate]="weekRowAnchor()"
+          [days]="1"
+          [dayStartMinutes]="480"
+          [dayEndMinutes]="1140"
+          [headerGroupings]="['hour']"
+          [hourWidth]="80"
+          [laneHeight]="40"
+          [themeMode]="mode()"
+          [accentColor]="accent()"
+          [statusColors]="statusColors"
+        >
+          <ng-template calEventTemplate let-ev>
+            <div class="job">
+              <span class="job__title">{{ ev.title }}</span>
+              @if (ev.status) {
+                <span class="job__badge">{{ ev.status }}</span>
               }
             </div>
           </ng-template>
