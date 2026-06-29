@@ -83,6 +83,7 @@
             [class]="ev.event.cssClass ?? ''"
             [style]="eventStyle(ev, column)"
             [attr.aria-label]="eventLabel(ev.event)"
+            [attr.title]="tooltip(ev.event)"
             (pointerdown)="onEventPointerDown(ev, column, 'move', $event)"
             (pointermove)="onEventPointerMove($event)"
             (pointerup)="onEventPointerUp(ev, column, $event)"

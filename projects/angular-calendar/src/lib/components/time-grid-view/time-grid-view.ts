@@ -224,6 +224,22 @@ export class CalTimeGridView<TMeta = unknown> {
     return this.a11y.eventLabel(event);
   }
 
+  /** Hover tooltip: title + localized time range (events truncate at small sizes). */
+  protected tooltip(event: CalendarEvent<TMeta>): string {
+    const title = event.title ?? '';
+    if (event.allDay === true) {
+      return `${title} · ${this.intl.allDay}`.trim();
+    }
+    const zone = this.resolvedZone();
+    const locale = this.resolvedLocale();
+    const start = this.adapter.format(this.adapter.toZoned(event.start, zone), 'h:mm a', locale);
+    if (event.end === undefined) {
+      return `${title} · ${start}`.trim();
+    }
+    const end = this.adapter.format(this.adapter.toZoned(event.end, zone), 'h:mm a', locale);
+    return `${title} · ${start}–${end}`.trim();
+  }
+
   /** Inline geometry for a timed event (time axis + cross-axis lane), status-tinted. */
   protected eventStyle(ev: PositionedEvent<TMeta>, column: TimeColumn<TMeta>): Record<string, string> {
     const key = ev.event.status !== undefined ? sanitizeStatusKey(ev.event.status) : '';
