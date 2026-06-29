@@ -31,3 +31,34 @@ export { type CalendarEvent } from './lib/core/model/calendar-event';
 export { type CalendarResource } from './lib/core/model/calendar-resource';
 export { type WorkingHours } from './lib/core/model/working-hours';
 export { type CalendarViewName, type TimeAxisOrientation } from './lib/core/model/view';
+
+// ── Headless layout primitives (pure, DOM-free) ─────────────────────────────
+export { overlaps, type Interval } from './lib/core/layout/interval';
+export { packRows, type LanePlacement, type RowPacking } from './lib/core/layout/pack-rows';
+export {
+  packColumns,
+  type ColumnPlacement,
+  type ColumnPacking,
+} from './lib/core/layout/pack-columns';
+export {
+  clampFraction,
+  offsetFraction,
+  sizeFraction,
+  valueAtFraction,
+  snapValue,
+  type ProjectionRange,
+} from './lib/core/layout/projection';
+
+// ── Configuration & providers ───────────────────────────────────────────────
+export {
+  CALENDAR_CONFIG,
+  DEFAULT_CALENDAR_CONFIG,
+  type CalendarConfig,
+} from './lib/core/config/calendar-config';
+export {
+  provideCalendar,
+  withDefaults,
+  withDateAdapter,
+  type CalendarFeature,
+  type CalendarFeatureKind,
+} from './lib/core/config/provide-calendar';

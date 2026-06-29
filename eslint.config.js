@@ -30,6 +30,13 @@ module.exports = tseslint.config(
     },
   },
   {
+    files: ['**/*.spec.ts'],
+    rules: {
+      // Tests may use non-null assertions for terse access to known-present values.
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
+  {
     files: ['**/*.html'],
     extends: [
       ...angular.configs.templateRecommended,
