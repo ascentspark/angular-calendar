@@ -92,7 +92,19 @@ labels.
 **Exit:** month-view + year-view components + e2e + axe-clean + screenshot baselines
 (light/dark/RTL); year view verified under a non-Gregorian `calendarSystem`.
 
-## Phase 3 — Week / Day time-grid (both orientations)
+## Phase 3 — Week / Day time-grid (both orientations) 🟡 IN PROGRESS
+
+**Done:** `buildTimeGridView` (day-window clipping, sweep-line side-by-side packing via
+`packColumns`, all-day band via `packRows`, multi-day spans, work-week `excludeDays`,
+now-indicator offset, hourly ticks — 116→121 tests incl. DST). `<cal-time-grid>` component
+(time gutter, day headers with today pill, all-day band, hour lines, status-coloured timed
+events with lane geometry, live now-line, slot click→`slotSelected`, `eventClicked`,
+overridable `*calEventTemplate`, theming). Demo Week + Day views — **visually verified via
+Playwright** (week light): correct time placement, status colours, all-day band, now-line,
+weekend shading. **Remaining:** thin `<cal-week-view>`/`<cal-day-view>` selector wrappers
+(currently `<cal-time-grid days=7/1>`); **horizontal orientation** CSS (vertical done; host
+class toggles, X-axis layout pending); working-hours/off-hours shading bands (model has the
+`shade` slot, builder emits `[]` for now); keyboard nav across slots; axe + screenshot gate.
 
 `<cal-week-view>` / `<cal-day-view>` with `orientation` toggle (time on X or Y), now-line,
 all-day band, working-hours shading, side-by-side lane packing, slot granularity.
