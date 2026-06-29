@@ -9,7 +9,8 @@
     "test": "ng test angular-calendar --watch=false",
     "serve:ssr:demo": "node dist/demo/server/server.mjs",
     "lint": "ng lint",
-    "format": "prettier --write \"projects/**/*.{ts,html,css,json}\""
+    "format": "prettier --write \"projects/**/*.{ts,html,css,json}\"",
+    "check:size": "node scripts/check-bundle-size.mjs"
   },
   "private": true,
   "packageManager": "npm@11.12.1",
