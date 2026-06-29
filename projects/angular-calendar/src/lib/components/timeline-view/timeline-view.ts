@@ -18,6 +18,8 @@ import type { CalendarEvent } from '../../core/model/calendar-event';
 import type { CalendarResource } from '../../core/model/calendar-resource';
 import { buildTimelineView } from '../../core/view-model/build-timeline-view';
 import type { TimeHeaderUnit, ResourceRow } from '../../core/view-model/timeline-view-model';
+import { RECURRENCE_ADAPTER } from '../../core/recurrence/recurrence-adapter';
+import { expandRecurringEvents } from '../../core/recurrence/expand-recurring-events';
 import type { PositionedEvent, ShadeBand } from '../../core/view-model/positioned-event';
 import { applyTheme } from '../../theme/apply-theme';
 import { deriveTheme, type CalThemeMode } from '../../theme/derive-theme';
@@ -48,6 +50,7 @@ export class CalTimelineView<TMeta = unknown> {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly adapter = inject(DATE_ADAPTER);
   private readonly config = inject(CALENDAR_CONFIG);
+  private readonly recurrence = inject(RECURRENCE_ADAPTER, { optional: true });
   readonly a11y = inject(CalCalendarA11y);
 
   readonly events = input.required<readonly CalendarEvent<TMeta>[]>();
@@ -103,21 +106,41 @@ export class CalTimelineView<TMeta = unknown> {
     const zone = this.resolvedZone();
     const todayValue = this.today();
     const nowValue = this.now();
-    return buildTimelineView<TMeta>(this.adapter, {
+    const args = {
       viewDate: this.adapter.toZoned(this.viewDate(), zone),
-      events: this.events(),
       resources: this.effectiveResources(),
       days: this.days(),
       dayStartMinutes: this.dayStartMinutes() ?? this.config.dayStartMinutes,
       dayEndMinutes: this.dayEndMinutes() ?? this.config.dayEndMinutes,
       headerGroupings: this.headerGroupings(),
-      orientation: 'horizontal',
+      orientation: 'horizontal' as const,
       weekStartsOn: this.weekStartsOn() ?? this.config.weekStartsOn,
       locale: this.resolvedLocale(),
       ...(nowValue !== null ? { now: this.adapter.toZoned(nowValue, zone) } : {}),
       ...(todayValue !== null ? { today: this.adapter.toZoned(todayValue, zone) } : {}),
-    });
+    };
+    const events = this.expandedEvents(zone, args);
+    return buildTimelineView<TMeta>(this.adapter, { ...args, events });
   });
+
+  /** Expand recurring events against the timeline window when an adapter is present. */
+  private expandedEvents(
+    zone: string,
+    args: Omit<Parameters<typeof buildTimelineView<TMeta>>[1], 'events'>,
+  ): readonly CalendarEvent<TMeta>[] {
+    const raw = this.events();
+    if (this.recurrence === null || !raw.some((e) => e.recurrenceRule !== undefined)) {
+      return raw;
+    }
+    const probe = buildTimelineView<TMeta>(this.adapter, { ...args, events: [] });
+    return expandRecurringEvents<TMeta>(raw, {
+      recurrence: this.recurrence,
+      dates: this.adapter,
+      windowStart: probe.period.start,
+      windowEnd: probe.period.end,
+      zone,
+    });
+  }
 
   /** Total hours along the axis (for the time-area width). */
   protected readonly totalHours = computed(() => {

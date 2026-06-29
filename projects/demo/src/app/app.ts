@@ -23,7 +23,9 @@ const z = (iso: string) => ({ epochMs: Date.parse(iso), zone: Z });
   styleUrl: './app.css',
 })
 export class App {
-  protected readonly view = signal<'month' | 'week' | 'day' | 'timeline' | 'agenda' | 'year'>('month');
+  protected readonly view = signal<'month' | 'week' | 'day' | 'timeline' | 'agenda' | 'year'>(
+    'month',
+  );
   protected readonly mode = signal<CalThemeMode>('light');
   protected readonly accent = signal('#3b82f6');
 
@@ -124,13 +126,62 @@ export class App {
   ];
 
   protected readonly jobs: CalendarEvent[] = [
-    { id: 'j1', title: 'AC install — 14 Oak St', resourceIds: ['alice'], start: z('2026-06-15T13:00:00Z'), end: z('2026-06-15T15:00:00Z'), status: 'scheduled' },
-    { id: 'j2', title: 'Inspection — 9 Pine Ave', resourceIds: ['alice'], start: z('2026-06-15T16:00:00Z'), end: z('2026-06-15T17:00:00Z'), status: 'active' },
-    { id: 'j3', title: 'Lunch', resourceIds: ['alice'], isBlock: true, start: z('2026-06-15T16:00:00Z'), end: z('2026-06-15T16:30:00Z') },
-    { id: 'j4', title: 'Boiler repair — 5 Elm', resourceIds: ['bob'], start: z('2026-06-15T14:30:00Z'), end: z('2026-06-15T16:30:00Z'), status: 'scheduled' },
-    { id: 'j5', title: 'Follow-up — 22 Birch', resourceIds: ['bob'], start: z('2026-06-15T18:00:00Z'), end: z('2026-06-15T19:00:00Z'), status: 'done' },
-    { id: 'j6', title: 'Survey — 100 Cedar', resourceIds: ['carol'], start: z('2026-06-15T15:00:00Z'), end: z('2026-06-15T17:30:00Z'), status: 'active' },
-    { id: 'j7', title: 'Cancelled — 3 Maple', resourceIds: ['carol'], start: z('2026-06-15T19:00:00Z'), end: z('2026-06-15T20:00:00Z'), status: 'cancelled' },
+    {
+      id: 'j1',
+      title: 'AC install — 14 Oak St',
+      resourceIds: ['alice'],
+      start: z('2026-06-15T13:00:00Z'),
+      end: z('2026-06-15T15:00:00Z'),
+      status: 'scheduled',
+    },
+    {
+      id: 'j2',
+      title: 'Inspection — 9 Pine Ave',
+      resourceIds: ['alice'],
+      start: z('2026-06-15T16:00:00Z'),
+      end: z('2026-06-15T17:00:00Z'),
+      status: 'active',
+    },
+    {
+      id: 'j3',
+      title: 'Lunch',
+      resourceIds: ['alice'],
+      isBlock: true,
+      start: z('2026-06-15T16:00:00Z'),
+      end: z('2026-06-15T16:30:00Z'),
+    },
+    {
+      id: 'j4',
+      title: 'Boiler repair — 5 Elm',
+      resourceIds: ['bob'],
+      start: z('2026-06-15T14:30:00Z'),
+      end: z('2026-06-15T16:30:00Z'),
+      status: 'scheduled',
+    },
+    {
+      id: 'j5',
+      title: 'Follow-up — 22 Birch',
+      resourceIds: ['bob'],
+      start: z('2026-06-15T18:00:00Z'),
+      end: z('2026-06-15T19:00:00Z'),
+      status: 'done',
+    },
+    {
+      id: 'j6',
+      title: 'Survey — 100 Cedar',
+      resourceIds: ['carol'],
+      start: z('2026-06-15T15:00:00Z'),
+      end: z('2026-06-15T17:30:00Z'),
+      status: 'active',
+    },
+    {
+      id: 'j7',
+      title: 'Cancelled — 3 Maple',
+      resourceIds: ['carol'],
+      start: z('2026-06-15T19:00:00Z'),
+      end: z('2026-06-15T20:00:00Z'),
+      status: 'cancelled',
+    },
   ];
 
   protected toggleMode(): void {
