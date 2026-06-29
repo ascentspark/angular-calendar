@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  eventsToCsv,
+  eventsToIcs,
+  eventsToExcelXml,
+  CalPrintService,
+} from '@ascentsparksoftware/angular-calendar/export';
 import {
   CalMonthView,
   CalTimeGridView,
@@ -52,6 +58,50 @@ export class App {
   protected readonly statusKeys = ['scheduled', 'active', 'done', 'cancelled'] as const;
   /** Active status filter (all on by default). */
   protected readonly activeStatuses = signal<ReadonlySet<string>>(new Set(this.statusKeys));
+
+  private readonly printer = inject(CalPrintService);
+
+  /** Trigger a browser download of a generated text blob. */
+  private download(filename: string, mime: string, contents: string): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    const blob = new Blob([contents], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  protected exportCsv(): void {
+    this.download('calendar.csv', 'text/csv;charset=utf-8', eventsToCsv(this.filteredEvents()));
+  }
+
+  protected exportIcs(): void {
+    this.download(
+      'calendar.ics',
+      'text/calendar;charset=utf-8',
+      eventsToIcs(this.filteredEvents(), { zone: Z }),
+    );
+  }
+
+  protected exportExcel(): void {
+    this.download(
+      'calendar.xls',
+      'application/vnd.ms-excel',
+      eventsToExcelXml(this.filteredEvents()),
+    );
+  }
+
+  protected printSchedule(): void {
+    this.printer.print(this.filteredEvents(), {
+      title: 'Schedule — angular-calendar',
+      timeZone: Z,
+      hour12: true,
+    });
+  }
 
   protected toggleStatus(status: string): void {
     this.activeStatuses.update((set) => {
