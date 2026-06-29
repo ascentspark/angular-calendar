@@ -25,6 +25,7 @@ import { applyTheme } from '../../theme/apply-theme';
 import { deriveTheme, type CalThemeMode } from '../../theme/derive-theme';
 import { sanitizeStatusKey } from '../../theme/tokens';
 import { CalCalendarA11y } from '../../a11y/cal-calendar-a11y';
+import { CalCalendarIntl } from '../../i18n/cal-calendar-intl';
 import { CalEventTemplate } from '../../directives/cal-event-template';
 import { CalResourceHeaderTemplate } from '../../directives/cal-resource-header-template';
 
@@ -52,6 +53,7 @@ export class CalTimelineView<TMeta = unknown> {
   private readonly config = inject(CALENDAR_CONFIG);
   private readonly recurrence = inject(RECURRENCE_ADAPTER, { optional: true });
   readonly a11y = inject(CalCalendarA11y);
+  readonly intl = inject(CalCalendarIntl);
 
   readonly events = input.required<readonly CalendarEvent<TMeta>[]>();
   readonly resources = input.required<readonly CalendarResource<TMeta>[]>();

@@ -69,7 +69,7 @@
                   [attr.aria-label]="moreLabel(day.overflowCount)"
                   (click)="onDayClick(day)"
                 >
-                  +{{ day.overflowCount }}
+                  {{ intl.moreLabel(day.overflowCount) }}
                 </button>
               }
             }

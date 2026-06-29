@@ -137,6 +137,7 @@ export {
 
 // ── Accessibility ───────────────────────────────────────────────────────────
 export { CalCalendarA11y } from './lib/a11y/cal-calendar-a11y';
+export { CalCalendarIntl } from './lib/i18n/cal-calendar-intl';
 
 // ── Template-override directives ─────────────────────────────────────────────
 export { CalEventTemplate, type CalEventContext } from './lib/directives/cal-event-template';

@@ -3,7 +3,7 @@
     <section class="cal-agenda__day" [class.cal-agenda__day--today]="day.isToday">
       <h3 class="cal-agenda__date">{{ dayHeading(day) }}</h3>
       @if (day.events.length === 0) {
-        <p class="cal-agenda__empty">No events</p>
+        <p class="cal-agenda__empty">{{ intl.noEvents }}</p>
       } @else {
         <ul class="cal-agenda__list" role="list">
           @for (event of day.events; track trackEvent($index, event)) {
