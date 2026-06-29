@@ -1,29 +1,89 @@
-<main class="page" [class.page--dark]="mode() === 'dark'">
-  <header class="page__bar">
-    <h1 class="page__title">angular-calendar</h1>
-    <div class="page__controls">
-      <div class="seg" role="group" aria-label="View">
-        <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'month'" (click)="setView('month')" data-testid="view-month">Month</button>
-        <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'week'" (click)="setView('week')" data-testid="view-week">Week</button>
-        <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'day'" (click)="setView('day')" data-testid="view-day">Day</button>
-        <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'timeline'" (click)="setView('timeline')" data-testid="view-timeline">Timeline</button>
-        <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'weekrows'" (click)="setView('weekrows')" data-testid="view-weekrows">Week rows</button>
-        <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'agenda'" (click)="setView('agenda')" data-testid="view-agenda">Agenda</button>
-        <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'year'" (click)="setView('year')" data-testid="view-year">Year</button>
+<main class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand__mark" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="17" rx="3" />
+        <line x1="3" y1="9" x2="21" y2="9" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+      </svg>
+      <div class="brand__text">
+        <h1 class="brand__name">angular&#8209;calendar</h1>
+        <p class="brand__tag">Signals-first scheduler. Theme it with two colors.</p>
       </div>
-      <button type="button" class="btn" (click)="toggleMode()" data-testid="toggle-mode">
-        {{ mode() === 'light' ? '🌙 Dark' : '☀️ Light' }}
+    </div>
+
+    <div class="theme" role="group" aria-label="Theme">
+      <div class="theme__group" role="group" aria-label="Accent color">
+        <span class="theme__label">Accent</span>
+        <div class="swatches">
+          @for (sw of accentSwatches; track sw) {
+            <button
+              type="button"
+              class="swatch"
+              [class.swatch--on]="accent() === sw"
+              [style.--sw]="sw"
+              [attr.aria-label]="'Accent ' + sw"
+              [attr.aria-pressed]="accent() === sw"
+              (click)="setAccent(sw)"
+            ></button>
+          }
+          <label class="swatch swatch--custom" [style.--sw]="accent()" title="Custom accent">
+            <input type="color" [value]="accent()" (input)="setAccent($any($event.target).value)" aria-label="Custom accent color" />
+          </label>
+        </div>
+      </div>
+
+      <div class="theme__group" role="group" aria-label="Base color">
+        <span class="theme__label">Base</span>
+        <div class="swatches">
+          @for (sw of baseSwatches; track sw) {
+            <button
+              type="button"
+              class="swatch swatch--base"
+              [class.swatch--on]="base() === sw"
+              [style.--sw]="sw"
+              [attr.aria-label]="'Base ' + sw"
+              [attr.aria-pressed]="base() === sw"
+              (click)="setBase(sw)"
+            ></button>
+          }
+          <label class="swatch swatch--custom swatch--base" [style.--sw]="base()" title="Custom base">
+            <input type="color" [value]="base()" (input)="setBase($any($event.target).value)" aria-label="Custom base color" />
+          </label>
+        </div>
+      </div>
+
+      <button type="button" class="iconbtn" (click)="toggleMode()" data-testid="toggle-mode" [attr.aria-label]="mode() === 'light' ? 'Switch to dark mode' : 'Switch to light mode'">
+        @if (mode() === 'light') {
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" /></svg>
+        } @else {
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5" /><line x1="12" y1="2" x2="12" y2="5" /><line x1="12" y1="19" x2="12" y2="22" /><line x1="2" y1="12" x2="5" y2="12" /><line x1="19" y1="12" x2="22" y2="12" /><line x1="4.5" y1="4.5" x2="6.6" y2="6.6" /><line x1="17.4" y1="17.4" x2="19.5" y2="19.5" /><line x1="4.5" y1="19.5" x2="6.6" y2="17.4" /><line x1="17.4" y1="6.6" x2="19.5" y2="4.5" /></svg>
+        }
       </button>
-      <div class="seg" role="group" aria-label="Export">
-        <button type="button" class="btn" (click)="printSchedule()" data-testid="export-print">🖨 Print</button>
-        <button type="button" class="btn" (click)="exportCsv()" data-testid="export-csv">CSV</button>
-        <button type="button" class="btn" (click)="exportExcel()" data-testid="export-excel">Excel</button>
-        <button type="button" class="btn" (click)="exportIcs()" data-testid="export-ics">ICS</button>
-      </div>
     </div>
   </header>
 
-  <div class="page__filters" role="group" aria-label="Filter by status">
+  <nav class="viewbar">
+    <div class="segment" role="group" aria-label="Calendar view">
+      <button type="button" class="segment__btn" [class.segment__btn--on]="view() === 'month'" (click)="setView('month')" data-testid="view-month">Month</button>
+      <button type="button" class="segment__btn" [class.segment__btn--on]="view() === 'week'" (click)="setView('week')" data-testid="view-week">Week</button>
+      <button type="button" class="segment__btn" [class.segment__btn--on]="view() === 'day'" (click)="setView('day')" data-testid="view-day">Day</button>
+      <button type="button" class="segment__btn" [class.segment__btn--on]="view() === 'timeline'" (click)="setView('timeline')" data-testid="view-timeline">Timeline</button>
+      <button type="button" class="segment__btn" [class.segment__btn--on]="view() === 'weekrows'" (click)="setView('weekrows')" data-testid="view-weekrows">Week&nbsp;rows</button>
+      <button type="button" class="segment__btn" [class.segment__btn--on]="view() === 'agenda'" (click)="setView('agenda')" data-testid="view-agenda">Agenda</button>
+      <button type="button" class="segment__btn" [class.segment__btn--on]="view() === 'year'" (click)="setView('year')" data-testid="view-year">Year</button>
+    </div>
+
+    <div class="exports" role="group" aria-label="Export">
+      <button type="button" class="ghostbtn" (click)="printSchedule()" data-testid="export-print">Print</button>
+      <button type="button" class="ghostbtn" (click)="exportCsv()" data-testid="export-csv">CSV</button>
+      <button type="button" class="ghostbtn" (click)="exportExcel()" data-testid="export-excel">Excel</button>
+      <button type="button" class="ghostbtn" (click)="exportIcs()" data-testid="export-ics">ICS</button>
+    </div>
+  </nav>
+
+  <div class="filters" role="group" aria-label="Filter by status">
     @for (s of statusKeys; track s) {
       <button
         type="button"
@@ -40,12 +100,12 @@
   </div>
 
   @if (compactFallback()) {
-    <p class="page__compact" data-testid="compact-banner" role="status">
-      📱 Compact screen — showing the agenda instead of the month grid.
+    <p class="banner" data-testid="compact-banner" role="status">
+      Compact screen: showing the agenda instead of the month grid.
     </p>
   }
 
-  <section class="page__demo" data-testid="calendar-demo">
+  <section class="panel" data-testid="calendar-demo">
     @switch (effectiveView()) {
       @case ('month') {
         <cal-month-view
@@ -53,6 +113,7 @@
           [viewDate]="viewDate"
           [today]="today"
           [themeMode]="mode()"
+          [baseColor]="base()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
           [maxLanes]="4"
@@ -69,6 +130,7 @@
           [dayStartMinutes]="360"
           [dayEndMinutes]="1320"
           [themeMode]="mode()"
+          [baseColor]="base()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
           (eventChanged)="onEventChanged($event)"
@@ -85,6 +147,7 @@
           [dayStartMinutes]="0"
           [dayEndMinutes]="1440"
           [themeMode]="mode()"
+          [baseColor]="base()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
           (eventChanged)="onEventChanged($event)"
@@ -93,7 +156,7 @@
       @case ('timeline') {
         @if (unscheduled().length > 0) {
           <div class="unsched" aria-label="Unassigned jobs">
-            <span class="unsched__label">Unassigned — drag onto a lane:</span>
+            <span class="unsched__label">Unassigned, drag onto a lane</span>
             @for (job of unscheduled(); track job.id) {
               <div
                 class="unsched__item"
@@ -118,6 +181,7 @@
           [headerGroupings]="['day', 'hour']"
           [hourWidth]="80"
           [themeMode]="mode()"
+          [baseColor]="base()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
           (externalDrop)="onExternalDrop($event)"
@@ -155,6 +219,7 @@
           [hourWidth]="80"
           [laneHeight]="40"
           [themeMode]="mode()"
+          [baseColor]="base()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
         >
@@ -175,6 +240,7 @@
           [today]="today"
           [days]="10"
           [themeMode]="mode()"
+          [baseColor]="base()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
         />
@@ -185,6 +251,7 @@
           [viewDate]="viewDate"
           [today]="today"
           [themeMode]="mode()"
+          [baseColor]="base()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
         />
@@ -207,16 +274,16 @@
           “{{ pending.change.event?.title }}” repeats. Apply your change to:
         </p>
         <div class="rdialog__actions">
-          <button type="button" class="btn" (click)="applyRecurringEdit('this')" data-testid="recur-this">
+          <button type="button" class="primarybtn" (click)="applyRecurringEdit('this')" data-testid="recur-this">
             This occurrence
           </button>
-          <button type="button" class="btn" (click)="applyRecurringEdit('following')" data-testid="recur-following">
+          <button type="button" class="ghostbtn" (click)="applyRecurringEdit('following')" data-testid="recur-following">
             This &amp; following
           </button>
-          <button type="button" class="btn" (click)="applyRecurringEdit('all')" data-testid="recur-all">
+          <button type="button" class="ghostbtn" (click)="applyRecurringEdit('all')" data-testid="recur-all">
             All occurrences
           </button>
-          <button type="button" class="btn btn--ghost" (click)="cancelRecurringEdit()" data-testid="recur-cancel">
+          <button type="button" class="ghostbtn ghostbtn--quiet" (click)="cancelRecurringEdit()" data-testid="recur-cancel">
             Cancel
           </button>
         </div>

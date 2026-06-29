@@ -20,8 +20,10 @@ for (const mode of MODES) {
       // Let the view settle (theme effect + view-model render).
       await page.locator('[data-testid="calendar-demo"]').waitFor();
 
+      // Scan the whole shell (top bar, theme controls, exports, filters) plus the
+      // calendar — the entire rendered surface must clear the gate.
       const results = await new AxeBuilder({ page })
-        .include('[data-testid="calendar-demo"]')
+        .include('main.app')
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
         .analyze();
 
