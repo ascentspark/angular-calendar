@@ -60,10 +60,17 @@
         [class.cal-tg__col--today]="column.isToday"
         [class.cal-tg__col--weekend]="column.isWeekend"
         [attr.aria-label]="a11y.dayLabel(column.date)"
-        (click)="onColumnClick(column, $event)"
+        (pointerdown)="onColumnPointerDown(column, $event)"
+        (pointermove)="onColumnPointerMove($event)"
+        (pointerup)="onColumnPointerUp(column, $event)"
+        (pointercancel)="onEventPointerCancel($event)"
       >
         @for (tick of vm.ticks; track tick.minutes) {
           <div class="cal-tg__line" [style.--tick-pos]="tick.offset * 100 + '%'" aria-hidden="true"></div>
+        }
+
+        @if (createGhostStyle(column); as ghost) {
+          <div class="cal-tg__create-ghost" [style]="ghost" aria-hidden="true"></div>
         }
 
         @for (ev of column.events; track trackEvent($index, ev)) {

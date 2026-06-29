@@ -40,6 +40,8 @@ interface DragGesture {
   readonly deltaMinutes: number;
   /** True once movement passed the start threshold (so a plain click still selects). */
   readonly active: boolean;
+  /** For `create`: the column (day) the new event belongs to. */
+  readonly columnEpoch?: number;
 }
 
 const DRAG_THRESHOLD_PX = 4;
@@ -348,18 +350,123 @@ export class CalTimeGridView<TMeta = unknown> {
     this.eventClicked.emit({ event });
   }
 
-  protected onColumnClick(column: TimeColumn<TMeta>, dom: MouseEvent): void {
-    // Map the click position along the time axis back to a minute, then snap.
+  /** Begin a drag-create on empty grid space (pointer-down on the column itself). */
+  protected onColumnPointerDown(column: TimeColumn<TMeta>, dom: PointerEvent): void {
+    // Ignore if the gesture started on an event/handle (those stopPropagation).
+    if (!this.editable()) {
+      return;
+    }
+    const colEl = dom.currentTarget as HTMLElement;
     const vm = this.viewModel();
     const total = vm.dayEndMinutes - vm.dayStartMinutes;
-    const rect = (dom.currentTarget as HTMLElement).getBoundingClientRect();
-    const frac =
-      vm.orientation === 'vertical'
-        ? (dom.clientY - rect.top) / Math.max(1, rect.height)
-        : (dom.clientX - rect.left) / Math.max(1, rect.width);
+    const rect = colEl.getBoundingClientRect();
+    const pxPerMinute = rect.height / Math.max(1, total);
+    const frac = (dom.clientY - rect.top) / Math.max(1, rect.height);
     const minutes = vm.dayStartMinutes + Math.max(0, Math.min(1, frac)) * total;
-    const date = this.adapter.addMinutes(column.date, Math.round(minutes));
-    this.slotSelected.emit({ date, minutes: Math.round(minutes) });
+    const anchorMs = this.adapter.addMinutes(column.date, Math.round(minutes)).epochMs;
+    if (typeof colEl.setPointerCapture === 'function') {
+      try {
+        colEl.setPointerCapture(dom.pointerId);
+      } catch {
+        // best-effort
+      }
+    }
+    this.dragState.set({
+      kind: 'create',
+      eventId: '',
+      originStartMs: anchorMs,
+      originEndMs: anchorMs,
+      pointerId: dom.pointerId,
+      startClientY: dom.clientY,
+      pxPerMinute,
+      deltaMinutes: 0,
+      active: false,
+      columnEpoch: column.date.epochMs,
+    });
+  }
+
+  protected onColumnPointerMove(dom: PointerEvent): void {
+    const drag = this.dragState();
+    if (drag === null || drag.kind !== 'create' || drag.pointerId !== dom.pointerId) {
+      return;
+    }
+    const dyPx = dom.clientY - drag.startClientY;
+    const active = drag.active || Math.abs(dyPx) > DRAG_THRESHOLD_PX;
+    this.dragState.set({ ...drag, deltaMinutes: dyPx / drag.pxPerMinute, active });
+  }
+
+  protected onColumnPointerUp(column: TimeColumn<TMeta>, dom: PointerEvent): void {
+    const drag = this.dragState();
+    if (drag === null || drag.kind !== 'create' || drag.pointerId !== dom.pointerId) {
+      return;
+    }
+    const vm = this.viewModel();
+    if (!drag.active) {
+      // No drag → a plain slot click.
+      this.dragState.set(null);
+      const minutes = this.adapter.differenceInMinutes(
+        this.adapter.toZoned(new Date(drag.originStartMs), this.resolvedZone()),
+        this.adapter.startOfDay(column.date),
+      );
+      this.slotSelected.emit({
+        date: this.adapter.toZoned(new Date(drag.originStartMs), this.resolvedZone()),
+        minutes: Math.round(minutes),
+      });
+      return;
+    }
+    const times = this.createTimes(drag);
+    const zone = this.resolvedZone();
+    const change: EventChange<TMeta> = {
+      kind: 'create',
+      event: null,
+      start: this.adapter.toZoned(new Date(times.startMs), zone),
+      end: this.adapter.toZoned(new Date(times.endMs), zone),
+    };
+    void vm;
+    this.dragState.set(null);
+    const validate = this.validateChange();
+    if (validate !== null && !validate(change)) {
+      return;
+    }
+    this.eventChanged.emit(change);
+  }
+
+  /** Preview geometry for the in-flight create ghost in a given column, or null. */
+  protected createGhostStyle(column: TimeColumn<TMeta>): Record<string, string> | null {
+    const drag = this.dragState();
+    if (
+      drag === null ||
+      drag.kind !== 'create' ||
+      !drag.active ||
+      drag.columnEpoch !== column.date.epochMs
+    ) {
+      return null;
+    }
+    const vm = this.viewModel();
+    const total = vm.dayEndMinutes - vm.dayStartMinutes;
+    const times = this.createTimes(drag);
+    const dayStart0 = this.adapter.startOfDay(column.date);
+    const zone = this.resolvedZone();
+    const sMin = this.adapter.differenceInMinutes(this.adapter.toZoned(new Date(times.startMs), zone), dayStart0);
+    const eMin = this.adapter.differenceInMinutes(this.adapter.toZoned(new Date(times.endMs), zone), dayStart0);
+    const cs = Math.max(vm.dayStartMinutes, Math.min(sMin, vm.dayEndMinutes));
+    const ce = Math.max(cs, Math.min(eMin, vm.dayEndMinutes));
+    return {
+      '--ev-start': `${((cs - vm.dayStartMinutes) / total) * 100}%`,
+      '--ev-size': `${((ce - cs) / total) * 100}%`,
+    };
+  }
+
+  private createTimes(drag: DragGesture): { startMs: number; endMs: number } {
+    return computeDragTimes({
+      kind: 'create',
+      originStartMs: drag.originStartMs,
+      originEndMs: drag.originEndMs,
+      deltaMinutes: 0,
+      pointerMs: drag.originStartMs + drag.deltaMinutes * 60_000,
+      snapMinutes: this.snapMinutes() ?? this.config.snapMinutes,
+      minDurationMinutes: Math.max(5, this.config.slotMinutes),
+    });
   }
 
   protected trackColumn(_index: number, column: TimeColumn<TMeta>): number {

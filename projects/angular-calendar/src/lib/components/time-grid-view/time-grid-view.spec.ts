@@ -127,3 +127,46 @@ function makePointer(type: string, pointerId: number, clientY: number): Event {
     return e;
   }
 }
+
+describe('CalTimeGridView — drag-create', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('emits eventChanged kind "create" after dragging empty grid space', async () => {
+    TestBed.configureTestingModule({
+      providers: [provideCalendar(withDateAdapter(provideDateFnsAdapter()))],
+    });
+    const fixture = TestBed.createComponent(CalTimeGridView);
+    fixture.componentRef.setInput('events', []);
+    fixture.componentRef.setInput('viewDate', at('2026-06-15T12:00:00Z'));
+    fixture.componentRef.setInput('days', 1);
+    fixture.componentRef.setInput('anchorToWeek', false);
+    fixture.componentRef.setInput('dayStartMinutes', 0);
+    fixture.componentRef.setInput('dayEndMinutes', 1440);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const cmp = fixture.componentInstance;
+    let change: { kind: string; start?: unknown; end?: unknown } | null = null;
+    cmp.eventChanged.subscribe((c) => (change = c));
+    const col = el.querySelector<HTMLElement>('.cal-tg__col')!;
+    col.getBoundingClientRect = () =>
+      ({ height: 1440, top: 0, left: 0, right: 100, bottom: 1440, width: 100, x: 0, y: 0, toJSON() {} }) as DOMRect;
+    col.dispatchEvent(makePointerXY('pointerdown', 1, 0, 540)); // 09:00
+    col.dispatchEvent(makePointerXY('pointermove', 1, 0, 660)); // 11:00
+    col.dispatchEvent(makePointerXY('pointerup', 1, 0, 660));
+    expect(change).not.toBeNull();
+    expect(change!.kind).toBe('create');
+    expect(change!.start).toBeDefined();
+    expect(change!.end).toBeDefined();
+  });
+});
+
+function makePointerXY(type: string, pointerId: number, clientX: number, clientY: number): Event {
+  try {
+    return new PointerEvent(type, { pointerId, clientX, clientY, bubbles: true });
+  } catch {
+    const e = new MouseEvent(type, { clientX, clientY, bubbles: true });
+    Object.defineProperty(e, 'pointerId', { value: pointerId });
+    return e;
+  }
+}
