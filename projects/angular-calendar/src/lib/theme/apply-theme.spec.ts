@@ -21,6 +21,17 @@ describe('applyTheme', () => {
     const sibling = document.createElement('div');
     expect(sibling.style.getPropertyValue('--cal-bg')).toBe('');
   });
+  it('skips undefined token values (defensive against partial maps)', () => {
+    const host = document.createElement('div');
+    const partial = {
+      '--cal-bg': '#ffffff',
+      '--cal-event-ghost': undefined,
+    } as unknown as CalThemeTokens;
+    applyTheme(host, partial);
+    expect(host.style.getPropertyValue('--cal-bg')).toBe('#ffffff');
+    expect(host.style.getPropertyValue('--cal-event-ghost')).toBe('');
+  });
+
   it('re-applying overwrites prior values (idempotent for same tokens)', () => {
     const host = document.createElement('div');
     const a = deriveTheme('#ffffff', '#3b82f6', 'light');

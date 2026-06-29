@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import type { ZonedDateTime } from '@ascentsparksoftware/angular-calendar';
-import { DateFnsDateAdapter } from '@ascentsparksoftware/angular-calendar/date-fns';
+import { TestBed } from '@angular/core/testing';
+import { DATE_ADAPTER, type ZonedDateTime } from '@ascentsparksoftware/angular-calendar';
+import {
+  DateFnsDateAdapter,
+  provideDateFnsAdapter,
+} from '@ascentsparksoftware/angular-calendar/date-fns';
 
 const a = new DateFnsDateAdapter();
 const NY = 'America/New_York';
@@ -147,5 +151,12 @@ describe('DateFnsDateAdapter — format', () => {
   });
   it('throws on an unsupported pattern', () => {
     expect(() => a.format(d, 'nonsense', 'en-US')).toThrowError(/Unsupported format pattern/);
+  });
+});
+
+describe('provideDateFnsAdapter', () => {
+  it('binds DATE_ADAPTER to a DateFnsDateAdapter instance', () => {
+    TestBed.configureTestingModule({ providers: [provideDateFnsAdapter()] });
+    expect(TestBed.inject(DATE_ADAPTER)).toBeInstanceOf(DateFnsDateAdapter);
   });
 });
