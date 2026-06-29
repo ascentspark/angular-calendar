@@ -81,6 +81,12 @@ export class CalTimelineView<TMeta = unknown> {
   readonly eventClicked = output<{ event: CalendarEvent<TMeta> }>();
   readonly slotSelected = output<{ date: ZonedDateTime; resourceId: string }>();
   readonly resourceToggled = output<{ resource: CalendarResource<TMeta>; expanded: boolean }>();
+  /**
+   * Fired when an external item (e.g. an unassigned job from a side list) is
+   * dropped onto a resource lane. Carries the drop time, target resource, and the
+   * dropped `text/plain` payload so the host can create/assign the event.
+   */
+  readonly externalDrop = output<{ date: ZonedDateTime; resourceId: string; data: string }>();
 
   readonly eventTemplate = contentChild(CalEventTemplate);
   readonly resourceHeaderTemplate = contentChild(CalResourceHeaderTemplate);
@@ -231,6 +237,34 @@ export class CalTimelineView<TMeta = unknown> {
     const frac = Math.max(0, Math.min(1, x / Math.max(1, rect.width)));
     const date = this.adapter.addMinutes(vm.period.start, Math.round(frac * total));
     this.slotSelected.emit({ date, resourceId: row.resource.id });
+  }
+
+  /** Map a clientX on a lane back to a drop time (RTL-aware). */
+  private dropTime(row: ResourceRow<TMeta>, target: HTMLElement, clientX: number): ZonedDateTime {
+    const vm = this.viewModel();
+    const total = this.adapter.differenceInMinutes(vm.period.end, vm.period.start);
+    const rect = target.getBoundingClientRect();
+    const rtl = getComputedStyleSafe(target) === 'rtl';
+    const x = rtl ? rect.right - clientX : clientX - rect.left;
+    const frac = Math.max(0, Math.min(1, x / Math.max(1, rect.width)));
+    return this.adapter.addMinutes(vm.period.start, Math.round(frac * total));
+  }
+
+  /** Allow a native drag to drop on a lane. */
+  protected onLaneDragOver(dom: DragEvent): void {
+    dom.preventDefault();
+    if (dom.dataTransfer) {
+      dom.dataTransfer.dropEffect = 'copy';
+    }
+  }
+
+  /** Handle an external item dropped onto a lane → resolve (time, resource, payload). */
+  protected onExternalDrop(row: ResourceRow<TMeta>, dom: DragEvent): void {
+    dom.preventDefault();
+    const target = dom.currentTarget as HTMLElement;
+    const date = this.dropTime(row, target, dom.clientX);
+    const data = dom.dataTransfer?.getData('text/plain') ?? '';
+    this.externalDrop.emit({ date, resourceId: row.resource.id, data });
   }
 
   protected trackRow(_index: number, row: ResourceRow<TMeta>): string {

@@ -63,6 +63,8 @@
         [style.block-size.px]="rowHeightPx(row)"
         [attr.aria-label]="row.resource.name"
         (click)="onRowClick(row, $event)"
+        (dragover)="onLaneDragOver($event)"
+        (drop)="onExternalDrop(row, $event)"
       >
         @for (band of row.shade; track $index) {
           <div
