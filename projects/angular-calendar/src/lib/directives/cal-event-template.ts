@@ -2,10 +2,14 @@ import { Directive, inject, TemplateRef } from '@angular/core';
 import type { CalendarEvent } from '../core/model/calendar-event';
 import type { PositionedChip } from '../core/view-model/positioned-chip';
 
-/** Context passed to a consumer's `*calEventTemplate`. */
+/**
+ * Context passed to a consumer's `*calEventTemplate`. `$implicit` is always the
+ * event; `chip` is provided in month / all-day contexts (where the event renders
+ * as a positioned chip) and omitted in time-grid contexts.
+ */
 export interface CalEventContext<TMeta = unknown> {
   readonly $implicit: CalendarEvent<TMeta>;
-  readonly chip: PositionedChip<TMeta>;
+  readonly chip?: PositionedChip<TMeta>;
 }
 
 /**
