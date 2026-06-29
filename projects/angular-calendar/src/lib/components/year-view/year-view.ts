@@ -123,6 +123,21 @@ export class CalYearView<TMeta = unknown> {
     return this.adapter.format(day.date, 'd', this.resolvedLocale(), this.resolvedSystem());
   }
 
+  /** Chunk a mini-month's flat day list into calendar weeks (rows of 7) so each
+   *  week can be a proper ARIA `row` of day gridcells. */
+  protected weeksOf(days: readonly YearDay[]): readonly (readonly YearDay[])[] {
+    const weeks: YearDay[][] = [];
+    for (let i = 0; i < days.length; i += 7) {
+      const week = days.slice(i, i + 7);
+      // Skip a trailing week that lies entirely outside the month — an all-blank
+      // ARIA row would have no perceivable cell children.
+      if (week.some((d) => d.inMonth)) {
+        weeks.push(week);
+      }
+    }
+    return weeks;
+  }
+
   protected dayLabel(day: YearDay): string {
     const base = this.a11y.dayLabel(day.date);
     if (day.eventCount === 0) {

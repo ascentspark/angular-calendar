@@ -94,7 +94,9 @@
 }
 
 .cal-day--out .cal-day__num {
-  color: var(--cal-ink-faint);
+  /* ink-700, not faint/muted: the date is real info and must clear AA contrast
+     against the sunk out-of-month surface, while staying visually de-emphasised. */
+  color: var(--cal-ink-700);
 }
 
 .cal-chip {
