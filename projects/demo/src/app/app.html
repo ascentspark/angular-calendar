@@ -20,7 +20,7 @@
     @switch (view()) {
       @case ('month') {
         <cal-month-view
-          [events]="events"
+          [events]="events()"
           [viewDate]="viewDate"
           [today]="today"
           [themeMode]="mode()"
@@ -31,7 +31,7 @@
       }
       @case ('week') {
         <cal-time-grid
-          [events]="events"
+          [events]="events()"
           [viewDate]="viewDate"
           [today]="today"
           [now]="now"
@@ -42,11 +42,12 @@
           [themeMode]="mode()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
+          (eventChanged)="onEventChanged($event)"
         />
       }
       @case ('day') {
         <cal-time-grid
-          [events]="events"
+          [events]="events()"
           [viewDate]="viewDate"
           [today]="today"
           [now]="now"
@@ -57,6 +58,7 @@
           [themeMode]="mode()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
+          (eventChanged)="onEventChanged($event)"
         />
       }
       @case ('timeline') {
@@ -78,7 +80,7 @@
       }
       @case ('agenda') {
         <cal-agenda-view
-          [events]="events"
+          [events]="events()"
           [viewDate]="viewDate"
           [today]="today"
           [days]="10"
@@ -89,7 +91,7 @@
       }
       @case ('year') {
         <cal-year-view
-          [events]="events"
+          [events]="events()"
           [viewDate]="viewDate"
           [today]="today"
           [themeMode]="mode()"
