@@ -173,3 +173,41 @@
   font-weight: 700;
   color: #fff;
 }
+
+.rdialog__scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.rdialog {
+  background: var(--cal-surface, #fff);
+  color: var(--cal-ink, #18181b);
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  max-width: 420px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+.page--dark .rdialog {
+  background: #27272a;
+  color: #fafafa;
+}
+.rdialog__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+.rdialog__body {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+}
+.rdialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.btn--ghost {
+  opacity: 0.7;
+}

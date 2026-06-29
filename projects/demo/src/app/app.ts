@@ -24,10 +24,14 @@ import {
   CalEventTemplate,
   filterByStatus,
   DATE_ADAPTER,
+  RECURRENCE_ADAPTER,
+  addRecurrenceException,
+  splitSeriesAt,
   type CalThemeMode,
   type CalendarEvent,
   type CalendarResource,
   type EventChange,
+  type ZonedDateTime,
 } from '@ascentsparksoftware/angular-calendar';
 
 const Z = 'America/New_York';
@@ -449,7 +453,26 @@ export class App {
   private createSeq = 0;
 
   /** Apply a move/resize/create/inline-edit from the grid to the demo's event store. */
+  private readonly recurrence = inject(RECURRENCE_ADAPTER);
+
+  /** A pending edit to a recurring occurrence, awaiting a scope choice. */
+  protected readonly pendingRecurringEdit = signal<{
+    change: EventChange;
+    seriesId: string;
+    occStart: ZonedDateTime;
+  } | null>(null);
+
   protected onEventChanged(change: EventChange): void {
+    // Editing a recurring occurrence: ask which occurrences the change applies to
+    // before mutating anything (this / this-and-following / all).
+    if (change.event?.recurrenceId !== undefined) {
+      this.pendingRecurringEdit.set({
+        change,
+        seriesId: change.event.recurrenceId,
+        occStart: this.adapter.toZoned(change.event.start, Z),
+      });
+      return;
+    }
     // Inline edit only carries a title (no start/end).
     if (change.kind === 'inline-edit' && change.event !== null) {
       const id = change.event.id;
@@ -475,5 +498,69 @@ export class App {
     }
     const id = change.event.id;
     this.events.update((list) => list.map((e) => (e.id === id ? { ...e, start, end } : e)));
+  }
+
+  protected cancelRecurringEdit(): void {
+    this.pendingRecurringEdit.set(null);
+  }
+
+  /** Apply the pending recurring edit at the chosen scope using the core helpers. */
+  protected applyRecurringEdit(scope: 'this' | 'following' | 'all'): void {
+    const pending = this.pendingRecurringEdit();
+    if (pending === null) {
+      return;
+    }
+    const { change, seriesId, occStart } = pending;
+    const series = this.events().find((e) => e.id === seriesId);
+    if (series === undefined) {
+      this.pendingRecurringEdit.set(null);
+      return;
+    }
+
+    // Project this edit's delta onto a target event (title for inline-edit,
+    // times for a move/resize).
+    const applyDelta = <T extends CalendarEvent>(ev: T): T => {
+      if (change.kind === 'inline-edit') {
+        return { ...ev, title: change.title ?? ev.title };
+      }
+      if (change.start !== undefined && change.end !== undefined) {
+        return { ...ev, start: change.start, end: change.end };
+      }
+      return ev;
+    };
+
+    if (scope === 'all') {
+      // Mutate the series itself → every occurrence reflects the change.
+      this.events.update((list) => list.map((e) => (e.id === seriesId ? applyDelta(e) : e)));
+    } else if (scope === 'this') {
+      // Add an exception to the series and drop a detached concrete event.
+      const withException = addRecurrenceException(series, occStart);
+      const detached = applyDelta<CalendarEvent>({
+        ...(change.event as CalendarEvent),
+        id: `${seriesId}-this-${occStart.epochMs}`,
+      });
+      delete (detached as { recurrenceId?: unknown }).recurrenceId;
+      delete (detached as { recurrenceRule?: unknown }).recurrenceRule;
+      this.events.update((list) =>
+        list.map((e) => (e.id === seriesId ? withException : e)).concat(detached),
+      );
+    } else {
+      // This-and-following: terminate the series before this occurrence and start
+      // a new series here with the change applied.
+      const split = splitSeriesAt(series, occStart, {
+        recurrence: this.recurrence,
+        dates: this.adapter,
+      });
+      const tail = applyDelta<CalendarEvent>({
+        ...series,
+        id: `${seriesId}-tail-${occStart.epochMs}`,
+        recurrenceRule: split.tailRule,
+        start: split.tailStart,
+      });
+      this.events.update((list) =>
+        list.map((e) => (e.id === seriesId ? split.head : e)).concat(tail),
+      );
+    }
+    this.pendingRecurringEdit.set(null);
   }
 }
