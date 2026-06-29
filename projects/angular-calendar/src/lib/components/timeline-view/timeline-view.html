@@ -4,14 +4,14 @@
   [style.--cal-tl-time-width.px]="totalHours() * hourWidth()"
   [style.--cal-tl-hour-w.px]="hourWidth()"
 >
-  <div class="cal-tl__grid">
-    <!-- Corner (frozen top-left) -->
-    <div class="cal-tl__corner">
+  <div class="cal-tl__grid" role="grid" aria-label="Resource timeline">
+    <!-- Corner (frozen top-left). Decorative: resource lanes are self-labelled. -->
+    <div class="cal-tl__corner" aria-hidden="true">
       <span class="cal-tl__corner-label">{{ intl.resourcesHeader }}</span>
     </div>
 
     <!-- Sticky multi-level time headers -->
-    <div class="cal-tl__timehead">
+    <div class="cal-tl__timehead" role="rowgroup">
       @for (hrow of vm.headerRows; track $index) {
         <div class="cal-tl__hrow" role="row">
           @for (cell of hrow.cells; track trackCell($index)) {
@@ -29,10 +29,13 @@
       }
     </div>
 
-    <!-- Resource rows: frozen header + lane body -->
+    <!-- Resource rows: frozen header + lane body. The display:contents wrapper is
+         the ARIA row (rowheader + gridcell) without disturbing the CSS grid. -->
     @for (row of vm.resourceRows; track trackRow($index, row)) {
+      <div class="cal-tl__resrow" role="row">
       <div
         class="cal-tl__rhead"
+        role="rowheader"
         [style.block-size.px]="rowHeightPx(row)"
         [style.--cal-tl-depth]="row.depth"
       >
@@ -59,7 +62,7 @@
 
       <div
         class="cal-tl__row"
-        role="row"
+        role="gridcell"
         [style.block-size.px]="rowHeightPx(row)"
         [attr.aria-label]="row.resource.name"
         (click)="onRowClick(row, $event)"
@@ -102,6 +105,7 @@
         @if (vm.nowOffset !== null) {
           <div class="cal-tl__now" [style]="nowStyle()" aria-hidden="true"></div>
         }
+      </div>
       </div>
     }
   </div>

@@ -19,13 +19,16 @@
 }
 
 .cal-agenda__day--today .cal-agenda__date {
-  color: var(--cal-accent);
+  /* Mark today with an accent rule, not accent-coloured text (raw accent can't
+     guarantee AA contrast against the surface). */
+  border-inline-start: 3px solid var(--cal-accent);
+  padding-inline-start: 0.4rem;
 }
 
 .cal-agenda__empty {
   margin: 0;
   font-size: 0.78rem;
-  color: var(--cal-ink-faint);
+  color: var(--cal-ink-700);
 }
 
 .cal-agenda__list {

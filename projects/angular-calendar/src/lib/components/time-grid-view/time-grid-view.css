@@ -47,6 +47,12 @@
   background: var(--cal-surface-sunk);
 }
 
+/* Weekend headers sit on the sunk surface; bump the weekday abbreviation to
+   ink-700 so it clears AA contrast there (muted is only AA against `surface`). */
+.cal-tg__colhead--weekend .cal-tg__colhead-wd {
+  color: var(--cal-ink-700);
+}
+
 .cal-tg__colhead-wd {
   display: block;
   font-size: 0.66rem;
@@ -74,7 +80,7 @@
 .cal-tg__allday-gutter {
   grid-area: allday-gutter;
   font-size: 0.6rem;
-  color: var(--cal-ink-faint);
+  color: var(--cal-ink-700);
   text-align: end;
   padding: 0.2rem 0.4rem;
   border-inline-end: 1px solid var(--cal-grid-line);
@@ -84,13 +90,19 @@
 
 .cal-tg__allday {
   grid-area: allday;
+  min-block-size: calc(var(--cal-tg-allday-lanes, 0) * (var(--cal-tg-allday-row) + 2px) + 2px);
+  border-block-end: 1px solid var(--cal-grid-line);
+  background: var(--cal-allday-bg);
+}
+
+/* Inner gridcell wrapper: holds the all-day chips in their column grid while the
+   parent .cal-tg__allday carries the ARIA `row` role. */
+.cal-tg__allday-cells {
   display: grid;
   grid-auto-rows: var(--cal-tg-allday-row);
   gap: 2px;
   padding: 2px;
-  min-block-size: calc(var(--cal-tg-allday-lanes, 0) * (var(--cal-tg-allday-row) + 2px) + 2px);
-  border-block-end: 1px solid var(--cal-grid-line);
-  background: var(--cal-allday-bg);
+  block-size: 100%;
 }
 
 .cal-tg__chip {
@@ -131,7 +143,7 @@
 
 .cal-tg__tick-label {
   font-size: 0.62rem;
-  color: var(--cal-ink-muted);
+  color: var(--cal-ink-700);
   font-variant-numeric: tabular-nums;
 }
 

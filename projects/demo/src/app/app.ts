@@ -343,7 +343,8 @@ export class App {
     for (let i = 0; i < id.length; i++) {
       hash = (hash * 31 + id.charCodeAt(i)) % 360;
     }
-    return `hsl(${hash} 55% 45%)`;
+    // Lightness 32% keeps white initials at ≥4.5:1 contrast for every hue.
+    return `hsl(${hash} 55% 32%)`;
   }
 
   // ── Week-as-rows preset (charter §1 "Lust for Dust" signature layout) ───────

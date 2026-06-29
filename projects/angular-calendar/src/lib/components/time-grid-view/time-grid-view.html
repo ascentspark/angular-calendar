@@ -1,6 +1,10 @@
 @let vm = viewModel();
 <div
   class="cal-tg"
+  role="grid"
+  aria-label="Time grid"
+  [attr.aria-colcount]="vm.columns.length"
+  [attr.aria-rowcount]="3"
   [style.--cal-tg-cols]="vm.columns.length"
   [style.--cal-tg-hours]="(vm.dayEndMinutes - vm.dayStartMinutes) / 60"
   [style.--cal-tg-allday-lanes]="allDayLanes()"
@@ -23,27 +27,28 @@
 
   <!-- All-day band -->
   <div class="cal-tg__allday-gutter" aria-hidden="true">{{ intl.allDay }}</div>
-  <div
-    class="cal-tg__allday"
-    role="row"
-    aria-label="All-day events"
-    [style.grid-template-columns]="'repeat(' + vm.columns.length + ', 1fr)'"
-  >
-    @for (chip of vm.allDay; track trackChip($index, chip)) {
-      <button
-        type="button"
-        class="cal-tg__chip"
-        [style]="chipStyle(chip)"
-        [attr.aria-label]="eventLabel(chip.event)"
-        (click)="onEventClick(chip.event, $event)"
-      >
-        <span class="cal-tg__chip-title">{{ chip.event.title }}</span>
-      </button>
-    }
+  <div class="cal-tg__allday" role="row" aria-label="All-day events">
+    <div
+      class="cal-tg__allday-cells"
+      role="gridcell"
+      [style.grid-template-columns]="'repeat(' + vm.columns.length + ', 1fr)'"
+    >
+      @for (chip of vm.allDay; track trackChip($index, chip)) {
+        <button
+          type="button"
+          class="cal-tg__chip"
+          [style]="chipStyle(chip)"
+          [attr.aria-label]="eventLabel(chip.event)"
+          (click)="onEventClick(chip.event, $event)"
+        >
+          <span class="cal-tg__chip-title">{{ chip.event.title }}</span>
+        </button>
+      }
+    </div>
   </div>
 
   <!-- Time gutter -->
-  <div class="cal-tg__gutter">
+  <div class="cal-tg__gutter" aria-hidden="true">
     @for (tick of vm.ticks; track tick.minutes) {
       <div class="cal-tg__tick" [style.--tick-pos]="tick.offset * 100 + '%'">
         <span class="cal-tg__tick-label">{{ tick.label }}</span>
@@ -52,7 +57,7 @@
   </div>
 
   <!-- Day columns -->
-  <div class="cal-tg__cols" role="grid" aria-label="Time grid">
+  <div class="cal-tg__cols" role="row">
     @for (column of vm.columns; track trackColumn($index, column)) {
       <div
         class="cal-tg__col"

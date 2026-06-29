@@ -206,6 +206,19 @@ the Phase-1 adapter primitives; **responsive/adaptive layout** (container-query 
 mobile drawer, single-resource collapse, swipe nav, month→agenda fallback); virtualization
 extended to vertical views; perf budgets encoded as CI assertions.
 
+**Axe-zero achieved (real-browser sweep):** ran axe-core 4.10 against the live rendered demo
+(not jsdom) across **every view — month, week, day, timeline, agenda, year, week-rows — in both
+light and dark**, iterating to **zero WCAG 2.0/2.1 A & AA violations**. Real bugs fixed, not
+suppressed: the time-grid and timeline had **malformed grid ARIA** (gridcells without `row`
+parents, rows without a grid container) — restructured to valid `grid → row → gridcell/columnheader`
+(the time-grid all-day band gained a `gridcell` wrapper; the timeline groups each resource
+header+lane into one `row` via a `display:contents` wrapper; the year mini-months wrap each week in a
+`display:contents` `row` and drop all-blank trailing weeks). **Contrast** fixes that hold for *any*
+theme: out-of-month / weekend / gutter / tick text moved off the decorative `--cal-ink-faint` onto
+AA-guaranteed `--cal-ink-700`; the timeline "now" header-cell and agenda "today" heading no longer
+use **raw `--cal-accent` as text** (which can't guarantee AA for an arbitrary accent) — they keep ink
+text and mark state with an accent underline / rule instead.
+
 **Adaptive done:** every view host is `container-type: inline-size`; agenda + year carry
 `@container` breakpoints, and **month + time-grid now tighten at ≤640/≤420px** (smaller day
 numbers, denser chips, condensed weekday rail) so they stay tappable on a phone without

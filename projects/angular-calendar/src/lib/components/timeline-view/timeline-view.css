@@ -73,8 +73,11 @@
 }
 
 .cal-tl__hcell--now {
-  color: var(--cal-accent);
+  /* Ink text (always AA) + an accent underline marks "now" — using raw accent as
+     the text colour can't guarantee contrast for an arbitrary accent value. */
+  color: var(--cal-ink);
   font-weight: 700;
+  box-shadow: inset 0 -2px 0 var(--cal-accent);
 }
 
 /* Resource header column: frozen left */
@@ -115,6 +118,12 @@
 }
 
 /* Lane body */
+/* display:contents wrapper: groups each resource's header + lane into one ARIA
+   row without introducing a box that would disturb the CSS grid. */
+.cal-tl__resrow {
+  display: contents;
+}
+
 .cal-tl__row {
   position: relative;
   border-block-end: 1px solid var(--cal-grid-line);
