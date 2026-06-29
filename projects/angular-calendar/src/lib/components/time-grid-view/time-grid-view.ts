@@ -49,6 +49,8 @@ interface DragGesture {
 }
 
 const DRAG_THRESHOLD_PX = 4;
+/** Sentinel pointerId marking a keyboard-driven grab (vs a real pointer). */
+const KEYBOARD_POINTER = -1;
 
 const FALLBACK_BASE = '#ffffff';
 const FALLBACK_ACCENT = '#3b82f6';
@@ -340,6 +342,11 @@ export class CalTimeGridView<TMeta = unknown> {
       this.eventClicked.emit({ event: ev.event });
       return;
     }
+    this.commitGesture(ev, drag);
+  }
+
+  /** Build, validate, and emit the change for a finished move/resize gesture. */
+  private commitGesture(ev: PositionedEvent<TMeta>, drag: DragGesture): void {
     const times = computeDragTimes({
       kind: drag.kind,
       originStartMs: drag.originStartMs,
@@ -367,6 +374,71 @@ export class CalTimeGridView<TMeta = unknown> {
     const drag = this.dragState();
     if (drag !== null && drag.pointerId === dom.pointerId) {
       this.dragState.set(null);
+    }
+  }
+
+  /**
+   * Keyboard move/resize on a focused event (a11y). Enter/Space grabs; Arrow
+   * Up/Down move by one snap step (Shift = resize the end); Enter drops, Escape
+   * cancels. Uses the same `dragState` preview + commit path as pointer drag.
+   */
+  protected onEventKeydown(ev: PositionedEvent<TMeta>, dom: KeyboardEvent): void {
+    const drag = this.dragState();
+    const grabbing = drag !== null && drag.pointerId === KEYBOARD_POINTER && drag.eventId === ev.event.id;
+    const snap = this.snapMinutes() ?? this.config.snapMinutes;
+
+    if (!grabbing) {
+      if (dom.key === 'Enter' || dom.key === ' ') {
+        if (!this.editable() || ev.event.isReadonly === true || ev.event.editable === false) {
+          return;
+        }
+        dom.preventDefault();
+        const zone = this.resolvedZone();
+        const start = this.adapter.toZoned(ev.event.start, zone);
+        const end = ev.event.end === undefined ? start : this.adapter.toZoned(ev.event.end, zone);
+        this.dragState.set({
+          kind: 'move',
+          eventId: ev.event.id,
+          originStartMs: start.epochMs,
+          originEndMs: end.epochMs,
+          pointerId: KEYBOARD_POINTER,
+          startClientY: 0,
+          pxPerMinute: 1,
+          deltaMinutes: 0,
+          active: true,
+        });
+      }
+      return;
+    }
+
+    switch (dom.key) {
+      case 'ArrowUp':
+        dom.preventDefault();
+        this.dragState.set({
+          ...drag,
+          kind: dom.shiftKey ? 'resize-end' : 'move',
+          deltaMinutes: drag.deltaMinutes - snap,
+        });
+        break;
+      case 'ArrowDown':
+        dom.preventDefault();
+        this.dragState.set({
+          ...drag,
+          kind: dom.shiftKey ? 'resize-end' : 'move',
+          deltaMinutes: drag.deltaMinutes + snap,
+        });
+        break;
+      case 'Enter':
+      case ' ':
+        dom.preventDefault();
+        this.commitGesture(ev, drag);
+        break;
+      case 'Escape':
+        dom.preventDefault();
+        this.dragState.set(null);
+        break;
+      default:
+        break;
     }
   }
 

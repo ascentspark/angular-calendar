@@ -299,3 +299,43 @@ async function renderWithFixture(inputs: Record<string, unknown>) {
   fixture.detectChanges();
   return { el: fixture.nativeElement as HTMLElement, cmp: fixture.componentInstance, fixture };
 }
+
+describe('CalTimeGridView — keyboard move', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('Enter grabs, ArrowDown moves, Enter commits a move', async () => {
+    const ev: CalendarEvent = { id: 'a', title: 'X', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T14:00:00Z') };
+    const { el, cmp } = await renderWithFixture({
+      events: [ev],
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      anchorToWeek: false,
+      snapMinutes: 30,
+    });
+    let change: { kind: string } | null = null;
+    cmp.eventChanged.subscribe((c) => (change = c));
+    const eventEl = el.querySelector<HTMLButtonElement>('.cal-tg__event')!;
+    eventEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    eventEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    eventEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(change).not.toBeNull();
+    expect(change!.kind).toBe('move');
+  });
+
+  it('Escape cancels a keyboard grab without emitting', async () => {
+    const ev: CalendarEvent = { id: 'a', title: 'X', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T14:00:00Z') };
+    const { el, cmp } = await renderWithFixture({
+      events: [ev],
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      anchorToWeek: false,
+    });
+    let emitted = false;
+    cmp.eventChanged.subscribe(() => (emitted = true));
+    const eventEl = el.querySelector<HTMLButtonElement>('.cal-tg__event')!;
+    eventEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    eventEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    eventEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(emitted).toBe(false);
+  });
+});
