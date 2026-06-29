@@ -3,6 +3,7 @@ import {
   CalMonthView,
   CalTimeGridView,
   CalTimelineView,
+  CalAgendaView,
   CalYearView,
   type CalThemeMode,
   type CalendarEvent,
@@ -16,12 +17,12 @@ const z = (iso: string) => ({ epochMs: Date.parse(iso), zone: Z });
   selector: 'cal-root',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CalMonthView, CalTimeGridView, CalTimelineView, CalYearView],
+  imports: [CalMonthView, CalTimeGridView, CalTimelineView, CalAgendaView, CalYearView],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
 export class App {
-  protected readonly view = signal<'month' | 'week' | 'day' | 'timeline' | 'year'>('month');
+  protected readonly view = signal<'month' | 'week' | 'day' | 'timeline' | 'agenda' | 'year'>('month');
   protected readonly mode = signal<CalThemeMode>('light');
   protected readonly accent = signal('#3b82f6');
 
@@ -127,7 +128,7 @@ export class App {
     this.mode.update((m) => (m === 'light' ? 'dark' : 'light'));
   }
 
-  protected setView(view: 'month' | 'week' | 'day' | 'timeline' | 'year'): void {
+  protected setView(view: 'month' | 'week' | 'day' | 'timeline' | 'agenda' | 'year'): void {
     this.view.set(view);
   }
 }

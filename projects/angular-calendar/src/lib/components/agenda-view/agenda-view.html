@@ -1,0 +1,28 @@
+<div class="cal-agenda">
+  @for (day of viewModel().days; track trackDay($index, day)) {
+    <section class="cal-agenda__day" [class.cal-agenda__day--today]="day.isToday">
+      <h3 class="cal-agenda__date">{{ dayHeading(day) }}</h3>
+      @if (day.events.length === 0) {
+        <p class="cal-agenda__empty">No events</p>
+      } @else {
+        <ul class="cal-agenda__list" role="list">
+          @for (event of day.events; track trackEvent($index, event)) {
+            <li class="cal-agenda__item" role="listitem">
+              <button
+                type="button"
+                class="cal-agenda__row"
+                [class]="event.cssClass ?? ''"
+                [attr.aria-label]="eventLabel(event)"
+                (click)="onEventClick(event)"
+              >
+                <span class="cal-agenda__dot" [style]="dotStyle(event)" aria-hidden="true"></span>
+                <span class="cal-agenda__time">{{ timeLabel(event) }}</span>
+                <span class="cal-agenda__title">{{ event.title }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</div>
