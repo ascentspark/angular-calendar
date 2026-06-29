@@ -21,6 +21,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx ng build angular-calendar
+      - run: node scripts/check-bundle-size.mjs
       - run: TZ=UTC npx ng test angular-calendar --watch=false
       - run: TZ=America/New_York npx ng test angular-calendar --watch=false
       - run: npx ng lint
+      - run: npx ng build demo
