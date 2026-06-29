@@ -8,6 +8,7 @@ import {
   type CalThemeMode,
   type CalendarEvent,
   type CalendarResource,
+  type EventChange,
 } from '@ascentsparksoftware/angular-calendar';
 
 const Z = 'America/New_York';
@@ -37,7 +38,7 @@ export class App {
     cancelled: '#dc2626',
   };
 
-  protected readonly events: CalendarEvent[] = [
+  protected readonly events = signal<CalendarEvent[]>([
     {
       id: '1',
       title: 'Morning standup',
@@ -88,7 +89,7 @@ export class App {
       end: z('2026-06-20T04:00:00Z'),
       status: 'done',
     },
-  ];
+  ]);
 
   // ── Resource timeline (dispatch board) sample data ──────────────────────
   protected readonly resources: CalendarResource[] = [
@@ -130,5 +131,18 @@ export class App {
 
   protected setView(view: 'month' | 'week' | 'day' | 'timeline' | 'agenda' | 'year'): void {
     this.view.set(view);
+  }
+
+  /** Apply a move/resize from the time-grid to the demo's event store. */
+  protected onEventChanged(change: EventChange): void {
+    if (change.event === null || change.start === undefined || change.end === undefined) {
+      return;
+    }
+    const id = change.event.id;
+    const start = change.start;
+    const end = change.end;
+    this.events.update((list) =>
+      list.map((e) => (e.id === id ? { ...e, start, end } : e)),
+    );
   }
 }
