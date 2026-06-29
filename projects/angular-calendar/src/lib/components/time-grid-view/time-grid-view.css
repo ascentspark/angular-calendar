@@ -177,7 +177,8 @@
   font-size: 0.7rem;
   line-height: 1.15;
   text-align: start;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
   overflow: hidden;
   box-shadow: 0 0 0 1px var(--cal-bg);
 }
@@ -195,6 +196,29 @@
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+}
+
+.cal-tg__event--dragging {
+  z-index: 5;
+  opacity: 0.9;
+  cursor: grabbing;
+  box-shadow: 0 2px 8px var(--cal-scrim);
+}
+
+.cal-tg__resize {
+  position: absolute;
+  inset-inline: 0;
+  block-size: 7px;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.cal-tg__resize--start {
+  inset-block-start: -1px;
+}
+
+.cal-tg__resize--end {
+  inset-block-end: -1px;
 }
 
 .cal-tg__now {

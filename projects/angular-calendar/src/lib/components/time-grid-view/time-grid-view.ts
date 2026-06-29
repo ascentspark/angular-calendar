@@ -25,6 +25,24 @@ import { deriveTheme, type CalThemeMode } from '../../theme/derive-theme';
 import { sanitizeStatusKey } from '../../theme/tokens';
 import { CalCalendarA11y } from '../../a11y/cal-calendar-a11y';
 import { CalEventTemplate } from '../../directives/cal-event-template';
+import type { EventChange } from '../../interactions/event-change';
+import { computeDragTimes, type DragKind } from '../../interactions/drag-preview';
+
+/** Internal record of an in-flight pointer gesture on the time grid. */
+interface DragGesture {
+  readonly kind: DragKind;
+  readonly eventId: string;
+  readonly originStartMs: number;
+  readonly originEndMs: number;
+  readonly pointerId: number;
+  readonly startClientY: number;
+  readonly pxPerMinute: number;
+  readonly deltaMinutes: number;
+  /** True once movement passed the start threshold (so a plain click still selects). */
+  readonly active: boolean;
+}
+
+const DRAG_THRESHOLD_PX = 4;
 
 const FALLBACK_BASE = '#ffffff';
 const FALLBACK_ACCENT = '#3b82f6';
@@ -76,10 +94,21 @@ export class CalTimeGridView<TMeta = unknown> {
   readonly themeMode = input<CalThemeMode>('light');
   readonly statusColors = input<Record<string, string>>({});
 
+  /** Whether events can be dragged / resized. */
+  readonly editable = input<boolean>(true);
+  /** Drag/resize quantisation in minutes; defaults to the config snap. */
+  readonly snapMinutes = input<number | null>(null);
+  /** Live veto: return false to reject an in-flight change (preview snaps back). */
+  readonly validateChange = input<((change: EventChange<TMeta>) => boolean) | null>(null);
+
   readonly eventClicked = output<{ event: CalendarEvent<TMeta> }>();
   readonly slotSelected = output<{ date: ZonedDateTime; minutes: number }>();
+  readonly eventChanged = output<EventChange<TMeta>>();
 
   readonly eventTemplate = contentChild(CalEventTemplate);
+
+  /** In-flight drag/resize gesture, or null. Drives the live preview. */
+  protected readonly dragState = signal<DragGesture | null>(null);
 
   private readonly resolvedLocale = computed(() => this.locale() ?? this.config.locale);
   private readonly resolvedZone = computed(
@@ -151,20 +180,151 @@ export class CalTimeGridView<TMeta = unknown> {
   }
 
   /** Inline geometry for a timed event (time axis + cross-axis lane), status-tinted. */
-  protected eventStyle(ev: PositionedEvent<TMeta>): Record<string, string> {
+  protected eventStyle(ev: PositionedEvent<TMeta>, column: TimeColumn<TMeta>): Record<string, string> {
     const key = ev.event.status !== undefined ? sanitizeStatusKey(ev.event.status) : '';
     const bg = key !== '' ? `var(--cal-event-${key}, var(--cal-accent))` : 'var(--cal-accent)';
     const fg = key !== '' ? `var(--cal-event-${key}-ink, var(--cal-accent-ink))` : 'var(--cal-accent-ink)';
+    const geo = this.previewGeometry(ev, column);
     const widthPct = (ev.columnSpan / ev.laneCount) * 100;
     const leftPct = (ev.lane / ev.laneCount) * 100;
     return {
-      '--ev-start': `${ev.startOffset * 100}%`,
-      '--ev-size': `${ev.span * 100}%`,
+      '--ev-start': `${geo.startOffset * 100}%`,
+      '--ev-size': `${geo.span * 100}%`,
       '--ev-cross-start': `${leftPct}%`,
       '--ev-cross-size': `${widthPct}%`,
       background: bg,
       color: fg,
     };
+  }
+
+  /** Whether this event is the one currently being dragged/resized. */
+  protected isDragging(ev: PositionedEvent<TMeta>): boolean {
+    const drag = this.dragState();
+    return drag !== null && drag.active && drag.eventId === ev.event.id;
+  }
+
+  /** Time-axis geometry, replaced by the live preview while this event is dragged. */
+  private previewGeometry(
+    ev: PositionedEvent<TMeta>,
+    column: TimeColumn<TMeta>,
+  ): { startOffset: number; span: number } {
+    const drag = this.dragState();
+    if (drag === null || !drag.active || drag.eventId !== ev.event.id) {
+      return { startOffset: ev.startOffset, span: ev.span };
+    }
+    const vm = this.viewModel();
+    const total = vm.dayEndMinutes - vm.dayStartMinutes;
+    const times = computeDragTimes({
+      kind: drag.kind,
+      originStartMs: drag.originStartMs,
+      originEndMs: drag.originEndMs,
+      deltaMinutes: drag.deltaMinutes,
+      snapMinutes: this.snapMinutes() ?? this.config.snapMinutes,
+      minDurationMinutes: Math.max(5, this.config.slotMinutes),
+    });
+    const dayStart0 = this.adapter.startOfDay(column.date);
+    const zone = this.resolvedZone();
+    const sMin = this.adapter.differenceInMinutes(this.adapter.toZoned(new Date(times.startMs), zone), dayStart0);
+    const eMin = this.adapter.differenceInMinutes(this.adapter.toZoned(new Date(times.endMs), zone), dayStart0);
+    const cs = Math.max(vm.dayStartMinutes, Math.min(sMin, vm.dayEndMinutes));
+    const ce = Math.max(cs, Math.min(eMin, vm.dayEndMinutes));
+    return { startOffset: (cs - vm.dayStartMinutes) / total, span: (ce - cs) / total };
+  }
+
+  /** Begin a move/resize gesture on pointer-down over an event (or its handle). */
+  protected onEventPointerDown(
+    ev: PositionedEvent<TMeta>,
+    column: TimeColumn<TMeta>,
+    kind: DragKind,
+    dom: PointerEvent,
+  ): void {
+    if (!this.editable() || ev.event.isReadonly === true || ev.event.editable === false) {
+      return;
+    }
+    if (kind === 'move' && ev.event.draggable === false) {
+      return;
+    }
+    const colEl = (dom.currentTarget as HTMLElement).closest<HTMLElement>('.cal-tg__col');
+    if (colEl === null) {
+      return;
+    }
+    const vm = this.viewModel();
+    const total = vm.dayEndMinutes - vm.dayStartMinutes;
+    const pxPerMinute = colEl.getBoundingClientRect().height / Math.max(1, total);
+    const zone = this.resolvedZone();
+    const start = this.adapter.toZoned(ev.event.start, zone);
+    const end = ev.event.end === undefined ? start : this.adapter.toZoned(ev.event.end, zone);
+    const target = dom.currentTarget as HTMLElement;
+    if (typeof target.setPointerCapture === 'function') {
+      try {
+        target.setPointerCapture(dom.pointerId);
+      } catch {
+        // setPointerCapture is best-effort (not critical to the gesture).
+      }
+    }
+    dom.stopPropagation();
+    this.dragState.set({
+      kind,
+      eventId: ev.event.id,
+      originStartMs: start.epochMs,
+      originEndMs: end.epochMs,
+      pointerId: dom.pointerId,
+      startClientY: dom.clientY,
+      pxPerMinute,
+      deltaMinutes: 0,
+      active: false,
+    });
+  }
+
+  protected onEventPointerMove(dom: PointerEvent): void {
+    const drag = this.dragState();
+    if (drag === null || drag.pointerId !== dom.pointerId) {
+      return;
+    }
+    const dyPx = dom.clientY - drag.startClientY;
+    const active = drag.active || Math.abs(dyPx) > DRAG_THRESHOLD_PX;
+    this.dragState.set({ ...drag, deltaMinutes: dyPx / drag.pxPerMinute, active });
+  }
+
+  protected onEventPointerUp(ev: PositionedEvent<TMeta>, column: TimeColumn<TMeta>, dom: PointerEvent): void {
+    const drag = this.dragState();
+    if (drag === null || drag.pointerId !== dom.pointerId) {
+      return;
+    }
+    if (!drag.active) {
+      // No real movement → treat as a click/select.
+      this.dragState.set(null);
+      this.eventClicked.emit({ event: ev.event });
+      return;
+    }
+    const times = computeDragTimes({
+      kind: drag.kind,
+      originStartMs: drag.originStartMs,
+      originEndMs: drag.originEndMs,
+      deltaMinutes: drag.deltaMinutes,
+      snapMinutes: this.snapMinutes() ?? this.config.snapMinutes,
+      minDurationMinutes: Math.max(5, this.config.slotMinutes),
+    });
+    const zone = this.resolvedZone();
+    const change: EventChange<TMeta> = {
+      kind: drag.kind === 'move' ? 'move' : 'resize',
+      event: ev.event,
+      start: this.adapter.toZoned(new Date(times.startMs), zone),
+      end: this.adapter.toZoned(new Date(times.endMs), zone),
+    };
+    this.dragState.set(null);
+    const validate = this.validateChange();
+    if (validate !== null && !validate(change)) {
+      return; // vetoed → preview already cleared (snaps back)
+    }
+    this.eventChanged.emit(change);
+  }
+
+  protected onEventPointerCancel(dom: PointerEvent): void {
+    const drag = this.dragState();
+    if (drag !== null && drag.pointerId === dom.pointerId) {
+      this.dragState.set(null);
+    }
   }
 
   protected chipStyle(chip: PositionedChip<TMeta>): Record<string, string> {

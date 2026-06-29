@@ -77,7 +77,7 @@ describe('CalTimeGridView', () => {
     expect(el.querySelector('.cal-tg__now')).toBeTruthy();
   });
 
-  it('emits eventClicked when a timed event is clicked', async () => {
+  it('emits eventClicked on a tap (pointer down+up with no movement)', async () => {
     const ev: CalendarEvent = { id: 'a', title: 'X', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T14:00:00Z') };
     const { el, cmp } = await render({
       events: [ev],
@@ -87,7 +87,43 @@ describe('CalTimeGridView', () => {
     });
     let clicked: string | null = null;
     cmp.eventClicked.subscribe((e) => (clicked = e.event.id));
-    el.querySelector<HTMLButtonElement>('.cal-tg__event')?.click();
+    const eventEl = el.querySelector<HTMLButtonElement>('.cal-tg__event')!;
+    eventEl.dispatchEvent(makePointer('pointerdown', 1, 100));
+    eventEl.dispatchEvent(makePointer('pointerup', 1, 100));
     expect(clicked).toBe('a');
   });
+
+  it('emits eventChanged with kind "move" when an event is dragged', async () => {
+    const ev: CalendarEvent = { id: 'a', title: 'X', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T14:00:00Z') };
+    const { el, cmp } = await render({
+      events: [ev],
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      anchorToWeek: false,
+      dayStartMinutes: 0,
+      dayEndMinutes: 1440,
+    });
+    let change: { kind: string } | null = null;
+    cmp.eventChanged.subscribe((c) => (change = c));
+    const eventEl = el.querySelector<HTMLButtonElement>('.cal-tg__event')!;
+    // jsdom reports a 0px column height → guard against that for the math
+    eventEl.closest<HTMLElement>('.cal-tg__col')!.getBoundingClientRect = () =>
+      ({ height: 1440, top: 0, left: 0, right: 0, bottom: 1440, width: 100, x: 0, y: 0, toJSON() {} }) as DOMRect;
+    eventEl.dispatchEvent(makePointer('pointerdown', 1, 100));
+    eventEl.dispatchEvent(makePointer('pointermove', 1, 160)); // +60px → +60min at 1px/min
+    eventEl.dispatchEvent(makePointer('pointerup', 1, 160));
+    expect(change).not.toBeNull();
+    expect(change!.kind).toBe('move');
+  });
 });
+
+/** Construct a PointerEvent (jsdom-safe), falling back to a MouseEvent with a pointerId. */
+function makePointer(type: string, pointerId: number, clientY: number): Event {
+  try {
+    return new PointerEvent(type, { pointerId, clientY, bubbles: true });
+  } catch {
+    const e = new MouseEvent(type, { clientY, bubbles: true });
+    Object.defineProperty(e, 'pointerId', { value: pointerId });
+    return e;
+  }
+}
