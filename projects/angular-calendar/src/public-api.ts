@@ -26,6 +26,16 @@ export {
 } from './lib/core/date-adapter/zoned-date-time';
 export { type DateAdapter, DATE_ADAPTER } from './lib/core/date-adapter/date-adapter';
 
+// ── Recurrence contract ─────────────────────────────────────────────────────
+export {
+  type RecurrenceAdapter,
+  type RecurrenceParts,
+  type RecurrenceFreq,
+  type RecurrenceEnd,
+  type RecurrenceEditScope,
+  RECURRENCE_ADAPTER,
+} from './lib/core/recurrence/recurrence-adapter';
+
 // ── Core data model ─────────────────────────────────────────────────────────
 export { type CalendarEvent } from './lib/core/model/calendar-event';
 export { type CalendarResource } from './lib/core/model/calendar-resource';
