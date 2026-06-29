@@ -85,6 +85,7 @@
             [class]="ev.event.cssClass ?? ''"
             [style]="eventStyle(ev)"
             [attr.aria-label]="eventLabel(ev.event)"
+            [attr.title]="tooltip(ev.event)"
             (click)="onEventClick(ev.event, $event)"
           >
             @if (eventTemplate(); as tpl) {

@@ -172,6 +172,19 @@ export class CalTimelineView<TMeta = unknown> {
     return this.a11y.eventLabel(event);
   }
 
+  /** Hover tooltip: title + localized time range. */
+  protected tooltip(event: CalendarEvent<TMeta>): string {
+    const title = event.title ?? '';
+    const zone = this.resolvedZone();
+    const locale = this.resolvedLocale();
+    const start = this.adapter.format(this.adapter.toZoned(event.start, zone), 'h:mm a', locale);
+    if (event.end === undefined) {
+      return `${title} · ${start}`.trim();
+    }
+    const end = this.adapter.format(this.adapter.toZoned(event.end, zone), 'h:mm a', locale);
+    return `${title} · ${start}–${end}`.trim();
+  }
+
   protected rowHeightPx(row: ResourceRow<TMeta>): number {
     return row.laneCount * this.laneHeight();
   }
