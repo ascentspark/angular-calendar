@@ -18,6 +18,7 @@ import { applyTheme } from '../../theme/apply-theme';
 import { deriveTheme, type CalThemeMode } from '../../theme/derive-theme';
 import { sanitizeStatusKey } from '../../theme/tokens';
 import { CalCalendarA11y } from '../../a11y/cal-calendar-a11y';
+import { CalCalendarIntl } from '../../i18n/cal-calendar-intl';
 
 const FALLBACK_BASE = '#ffffff';
 const FALLBACK_ACCENT = '#3b82f6';
@@ -39,6 +40,7 @@ export class CalAgendaView<TMeta = unknown> {
   private readonly adapter = inject(DATE_ADAPTER);
   private readonly config = inject(CALENDAR_CONFIG);
   readonly a11y = inject(CalCalendarA11y);
+  readonly intl = inject(CalCalendarIntl);
 
   readonly events = input.required<readonly CalendarEvent<TMeta>[]>();
   readonly viewDate = input.required<Date | ZonedDateTime>();
@@ -94,7 +96,7 @@ export class CalAgendaView<TMeta = unknown> {
 
   protected timeLabel(event: CalendarEvent<TMeta>): string {
     if (event.allDay === true) {
-      return 'All day';
+      return this.intl.allDay;
     }
     const zone = this.resolvedZone();
     const start = this.adapter.toZoned(event.start, zone);
