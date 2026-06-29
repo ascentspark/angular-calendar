@@ -35,3 +35,32 @@
   max-width: 1000px;
   margin: 0 auto;
 }
+
+.page__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.seg {
+  display: inline-flex;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.seg__btn {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font: inherit;
+}
+.seg__btn--on {
+  background: currentColor;
+}
+.seg__btn--on {
+  color: var(--seg-on-text, #fff);
+}
+.page:not(.page--dark) .seg__btn--on {
+  --seg-on-text: #fff;
+}

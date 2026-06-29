@@ -1,0 +1,42 @@
+<div class="cal-year" (keydown)="onGridKeydown($event)">
+  <div class="cal-year__grid">
+    @for (month of viewModel().months; track trackMonth($index); let mi = $index) {
+      <section class="cal-mini" role="grid" [attr.aria-label]="month.label">
+        <header class="cal-mini__head">
+          <button type="button" class="cal-mini__title" (click)="onMonthClick(mi)">
+            {{ month.label }}
+          </button>
+        </header>
+        <div class="cal-mini__weekdays" role="row">
+          @for (wd of weekdayInitials(); track $index) {
+            <div class="cal-mini__wd" role="columnheader"><span aria-hidden="true">{{ wd }}</span></div>
+          }
+        </div>
+        <div class="cal-mini__days">
+          @for (day of month.days; track trackDay($index, day)) {
+            @if (day.inMonth) {
+              <button
+                type="button"
+                class="cal-mini__day"
+                [class.cal-mini__day--today]="day.isToday"
+                [attr.data-density]="density(day)"
+                [attr.data-epoch]="day.date.epochMs"
+                [attr.tabindex]="isFocusTarget(day) ? 0 : -1"
+                [attr.aria-label]="dayLabel(day)"
+                role="gridcell"
+                (click)="onDayClick(day)"
+              >
+                <span class="cal-mini__num" aria-hidden="true">{{ dayNumber(day) }}</span>
+                @if (day.eventCount > 0) {
+                  <span class="cal-mini__dot" aria-hidden="true"></span>
+                }
+              </button>
+            } @else {
+              <span class="cal-mini__day cal-mini__day--blank" role="gridcell" aria-hidden="true"></span>
+            }
+          }
+        </div>
+      </section>
+    }
+  </div>
+</div>

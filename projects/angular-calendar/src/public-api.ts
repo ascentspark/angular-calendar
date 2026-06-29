@@ -73,6 +73,13 @@ export {
   type MonthViewArgs,
 } from './lib/core/view-model/month-view-model';
 export { buildMonthView } from './lib/core/view-model/build-month-view';
+export {
+  type YearDay,
+  type YearMonth,
+  type YearViewModel,
+  type YearViewArgs,
+} from './lib/core/view-model/year-view-model';
+export { buildYearView } from './lib/core/view-model/build-year-view';
 
 // ── Accessibility ───────────────────────────────────────────────────────────
 export { CalCalendarA11y } from './lib/a11y/cal-calendar-a11y';
@@ -87,3 +94,4 @@ export {
 
 // ── Components ───────────────────────────────────────────────────────────────
 export { CalMonthView } from './lib/components/month-view/month-view';
+export { CalYearView } from './lib/components/year-view/year-view';
