@@ -16,11 +16,27 @@
     </div>
   </header>
 
+  <div class="page__filters" role="group" aria-label="Filter by status">
+    @for (s of statusKeys; track s) {
+      <button
+        type="button"
+        class="chip"
+        [class.chip--off]="!isStatusOn(s)"
+        [style.--chip]="statusColors[s]"
+        [attr.aria-pressed]="isStatusOn(s)"
+        (click)="toggleStatus(s)"
+        [attr.data-testid]="'filter-' + s"
+      >
+        <span class="chip__dot"></span>{{ s }}
+      </button>
+    }
+  </div>
+
   <section class="page__demo" data-testid="calendar-demo">
     @switch (view()) {
       @case ('month') {
         <cal-month-view
-          [events]="events()"
+          [events]="filteredEvents()"
           [viewDate]="viewDate"
           [today]="today"
           [themeMode]="mode()"
@@ -31,7 +47,7 @@
       }
       @case ('week') {
         <cal-time-grid
-          [events]="events()"
+          [events]="filteredEvents()"
           [viewDate]="viewDate"
           [today]="today"
           [now]="now"
@@ -47,7 +63,7 @@
       }
       @case ('day') {
         <cal-time-grid
-          [events]="events()"
+          [events]="filteredEvents()"
           [viewDate]="viewDate"
           [today]="today"
           [now]="now"
@@ -63,7 +79,7 @@
       }
       @case ('timeline') {
         <cal-timeline-view
-          [events]="jobs"
+          [events]="filteredJobs()"
           [resources]="resources"
           [viewDate]="viewDate"
           [today]="today"
@@ -76,11 +92,21 @@
           [themeMode]="mode()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
-        />
+        >
+          <!-- Rich, consumer-defined job card (charter §1): title + status badge -->
+          <ng-template calEventTemplate let-job>
+            <div class="job">
+              <span class="job__title">{{ job.title }}</span>
+              @if (job.status) {
+                <span class="job__badge">{{ job.status }}</span>
+              }
+            </div>
+          </ng-template>
+        </cal-timeline-view>
       }
       @case ('agenda') {
         <cal-agenda-view
-          [events]="events()"
+          [events]="filteredEvents()"
           [viewDate]="viewDate"
           [today]="today"
           [days]="10"
@@ -91,7 +117,7 @@
       }
       @case ('year') {
         <cal-year-view
-          [events]="events()"
+          [events]="filteredEvents()"
           [viewDate]="viewDate"
           [today]="today"
           [themeMode]="mode()"

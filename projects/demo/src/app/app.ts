@@ -1,10 +1,12 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import {
   CalMonthView,
   CalTimeGridView,
   CalTimelineView,
   CalAgendaView,
   CalYearView,
+  CalEventTemplate,
+  filterByStatus,
   type CalThemeMode,
   type CalendarEvent,
   type CalendarResource,
@@ -18,7 +20,14 @@ const z = (iso: string) => ({ epochMs: Date.parse(iso), zone: Z });
   selector: 'cal-root',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CalMonthView, CalTimeGridView, CalTimelineView, CalAgendaView, CalYearView],
+  imports: [
+    CalMonthView,
+    CalTimeGridView,
+    CalTimelineView,
+    CalAgendaView,
+    CalYearView,
+    CalEventTemplate,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -39,6 +48,34 @@ export class App {
     done: '#7c3aed',
     cancelled: '#dc2626',
   };
+
+  protected readonly statusKeys = ['scheduled', 'active', 'done', 'cancelled'] as const;
+  /** Active status filter (all on by default). */
+  protected readonly activeStatuses = signal<ReadonlySet<string>>(new Set(this.statusKeys));
+
+  protected toggleStatus(status: string): void {
+    this.activeStatuses.update((set) => {
+      const next = new Set(set);
+      if (next.has(status)) {
+        next.delete(status);
+      } else {
+        next.add(status);
+      }
+      return next;
+    });
+  }
+
+  protected isStatusOn(status: string): boolean {
+    return this.activeStatuses().has(status);
+  }
+
+  /** Events/jobs passed through the status filter (untagged kept). */
+  protected readonly filteredEvents = computed(() =>
+    filterByStatus(this.events(), this.activeStatuses()),
+  );
+  protected readonly filteredJobs = computed(() =>
+    filterByStatus(this.jobs, this.activeStatuses()),
+  );
 
   protected readonly events = signal<CalendarEvent[]>([
     {
