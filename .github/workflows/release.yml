@@ -1,0 +1,51 @@
+name: Release
+
+# CI-only publish. Tag a release (`vMAJOR.MINOR.PATCH`) and this workflow builds,
+# tests, and publishes to npm with provenance. No manual `npm publish` ever.
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing vMAJOR.MINOR.PATCH tag to (re)publish'
+        required: true
+
+permissions:
+  contents: read
+  id-token: write # npm provenance
+
+jobs:
+  publish:
+    name: build, test & publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npx ng build angular-calendar
+      - run: TZ=UTC npx ng test angular-calendar --watch=false
+      - run: TZ=America/New_York npx ng test angular-calendar --watch=false
+      - run: npx ng lint
+      - name: Derive npm dist-tag from the version major
+        id: tag
+        run: |
+          VERSION="$(node -p "require('./dist/angular-calendar/package.json').version")"
+          MAJOR="${VERSION%%.*}"
+          case "$MAJOR" in
+            22) DIST=latest ;;
+            *)  DIST="ng${MAJOR}" ;;
+          esac
+          echo "dist=$DIST" >> "$GITHUB_OUTPUT"
+          echo "Publishing $VERSION with dist-tag $DIST"
+      - name: Publish
+        working-directory: dist/angular-calendar
+        run: npm publish --provenance --access public --tag "${{ steps.tag.outputs.dist }}"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
