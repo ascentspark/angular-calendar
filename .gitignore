@@ -84,3 +84,5 @@ pnpm-debug.log*
 # Local visual-check scratch (not part of the repo)
 scratchpad-shots/
 .playwright-mcp/
+/month-*.png
+/page-*.png
