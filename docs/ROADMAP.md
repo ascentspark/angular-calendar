@@ -158,11 +158,21 @@ text-only, commit via `eventChanged` `kind:'inline-edit'`).
 **Exit:** Playwright e2e incl. touch emulation for move/create/resize **and inline-edit**
 across all views; keyboard-only operability verified; axe-clean.
 
-## Phase 6 — Recurrence + advanced
+## Phase 6 — Recurrence + advanced 🟡 IN PROGRESS
 
-RRULE adapter + windowed expansion + exceptions; `<cal-recurrence-editor>` standalone
-control; three-way edit semantics + exception bookkeeping helpers; conflict/overlap
-detection; status filtering; tooltips/popovers; density modes.
+**Done:** `RecurrenceAdapter` contract + `RECURRENCE_ADAPTER` token (core, pure) and the
+default RFC 5545 `rrule` engine in the tree-shakable `/recurrence` entry — **windowed,
+DST-stable** expansion (naive-wall-clock space; a 09:00 weekly meeting stays 09:00 across DST),
+exceptions, `parse`/`serialize` round-trip (Sun=0 ↔ rrule Mon=0 weekday mapping). Pure
+`expandRecurringEvents` pre-pass (concrete occurrences, preserved duration, `recurrenceId`).
+Three-way edit helpers: `addRecurrenceException` (this/delete) and `splitSeriesAt` (this-and-
+following, with a real `UNTIL`-naive-space bug fixed via cynical testing). `detectConflicts`
+(resource-aware sweep) + `filterByStatus`. **Recurrence wired into month + week + day views**
+(probe-window + expand) — **verified via UI**: a `FREQ=WEEKLY;BYDAY=WE` event renders on every
+Wednesday (Jun 17, 24, Jul 1). **186 unit tests** (TZ=UTC + DST). **Remaining:**
+`<cal-recurrence-editor>` standalone control (signal `model()` on the RRULE string); timeline
+recurrence wiring; tooltips/popovers (CDK overlay); density modes; "edit which occurrences?"
+prompt flow + `recurrenceEdit` output.
 
 **Exit:** recurrence expansion property-tested (DST-correct); editor e2e; 3-way edit flows;
 overlap detection asserted.
