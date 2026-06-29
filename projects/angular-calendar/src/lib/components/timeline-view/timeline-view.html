@@ -1,0 +1,105 @@
+@let vm = viewModel();
+<div
+  class="cal-tl"
+  [style.--cal-tl-time-width.px]="totalHours() * hourWidth()"
+  [style.--cal-tl-hour-w.px]="hourWidth()"
+>
+  <div class="cal-tl__grid">
+    <!-- Corner (frozen top-left) -->
+    <div class="cal-tl__corner">
+      <span class="cal-tl__corner-label">Resources</span>
+    </div>
+
+    <!-- Sticky multi-level time headers -->
+    <div class="cal-tl__timehead">
+      @for (hrow of vm.headerRows; track $index) {
+        <div class="cal-tl__hrow" role="row">
+          @for (cell of hrow.cells; track trackCell($index)) {
+            <div
+              class="cal-tl__hcell"
+              role="columnheader"
+              [class.cal-tl__hcell--now]="cell.isNow"
+              [style.inset-inline-start.%]="cell.offset * 100"
+              [style.inline-size.%]="cell.span * 100"
+            >
+              <span class="cal-tl__hcell-label">{{ cell.label }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Resource rows: frozen header + lane body -->
+    @for (row of vm.resourceRows; track trackRow($index, row)) {
+      <div
+        class="cal-tl__rhead"
+        [style.block-size.px]="rowHeightPx(row)"
+        [style.--cal-tl-depth]="row.depth"
+      >
+        @if (resourceHeaderTemplate(); as tpl) {
+          <ng-container
+            [ngTemplateOutlet]="tpl.template"
+            [ngTemplateOutletContext]="{ $implicit: row.resource, depth: row.depth, hasChildren: row.hasChildren, collapsed: isCollapsed(row) }"
+          />
+        } @else {
+          @if (row.hasChildren) {
+            <button
+              type="button"
+              class="cal-tl__twisty"
+              [attr.aria-expanded]="!isCollapsed(row)"
+              [attr.aria-label]="(isCollapsed(row) ? 'Expand ' : 'Collapse ') + row.resource.name"
+              (click)="toggle(row)"
+            >
+              {{ isCollapsed(row) ? '▸' : '▾' }}
+            </button>
+          }
+          <span class="cal-tl__rname">{{ row.resource.name }}</span>
+        }
+      </div>
+
+      <div
+        class="cal-tl__row"
+        role="row"
+        [style.block-size.px]="rowHeightPx(row)"
+        [attr.aria-label]="row.resource.name"
+        (click)="onRowClick(row, $event)"
+      >
+        @for (band of row.shade; track $index) {
+          <div
+            class="cal-tl__shade"
+            [class.cal-tl__shade--block]="band.kind === 'block'"
+            [class.cal-tl__shade--off]="band.kind === 'off'"
+            [style]="shadeStyle(band)"
+            aria-hidden="true"
+          ></div>
+        }
+
+        @for (ev of row.events; track trackEvent($index, ev)) {
+          <button
+            type="button"
+            class="cal-tl__event"
+            [class.cal-tl__event--continues-before]="ev.continuesBefore"
+            [class.cal-tl__event--continues-after]="ev.continuesAfter"
+            [class]="ev.event.cssClass ?? ''"
+            [style]="eventStyle(ev)"
+            [attr.aria-label]="eventLabel(ev.event)"
+            (click)="onEventClick(ev.event, $event)"
+          >
+            @if (eventTemplate(); as tpl) {
+              <ng-container
+                [ngTemplateOutlet]="tpl.template"
+                [ngTemplateOutletContext]="{ $implicit: ev.event }"
+              />
+            } @else {
+              <span class="cal-tl__event-title">{{ ev.event.title }}</span>
+            }
+          </button>
+        }
+
+        @if (vm.nowOffset !== null) {
+          <div class="cal-tl__now" [style]="nowStyle()" aria-hidden="true"></div>
+        }
+      </div>
+    }
+  </div>
+</div>

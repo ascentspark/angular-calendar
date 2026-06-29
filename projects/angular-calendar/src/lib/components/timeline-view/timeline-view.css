@@ -1,0 +1,204 @@
+:host {
+  display: block;
+  background: var(--cal-bg);
+  color: var(--cal-ink);
+  font-family: inherit;
+
+  --cal-tl-res-w: 12rem;
+  --cal-tl-header-h: 2rem;
+}
+
+.cal-tl {
+  overflow: auto;
+  max-block-size: 70vh;
+  border: 1px solid var(--cal-grid-line);
+}
+
+.cal-tl__grid {
+  display: grid;
+  grid-template-columns: var(--cal-tl-res-w) var(--cal-tl-time-width, 100%);
+  inline-size: max-content;
+}
+
+/* Corner: frozen both axes */
+.cal-tl__corner {
+  position: sticky;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 5;
+  background: var(--cal-surface-2);
+  border-inline-end: 1px solid var(--cal-line-strong);
+  border-block-end: 1px solid var(--cal-line-strong);
+  display: flex;
+  align-items: center;
+  padding-inline: 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--cal-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Time headers: sticky top */
+.cal-tl__timehead {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 4;
+  background: var(--cal-surface-2);
+  border-block-end: 1px solid var(--cal-line-strong);
+}
+
+.cal-tl__hrow {
+  position: relative;
+  block-size: var(--cal-tl-header-h);
+  border-block-end: 1px solid var(--cal-grid-line);
+}
+
+.cal-tl__hrow:last-child {
+  border-block-end: 0;
+}
+
+.cal-tl__hcell {
+  position: absolute;
+  inset-block: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-inline-start: 1px solid var(--cal-grid-line);
+  font-size: 0.68rem;
+  color: var(--cal-ink-700);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.cal-tl__hcell--now {
+  color: var(--cal-accent);
+  font-weight: 700;
+}
+
+/* Resource header column: frozen left */
+.cal-tl__rhead {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 3;
+  background: var(--cal-surface);
+  border-inline-end: 1px solid var(--cal-line-strong);
+  border-block-end: 1px solid var(--cal-grid-line);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding-inline: calc(0.5rem + var(--cal-tl-depth, 0) * 1rem) 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 550;
+}
+
+.cal-tl__twisty {
+  border: 0;
+  background: transparent;
+  color: var(--cal-ink-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+  padding: 0 0.15rem;
+  line-height: 1;
+}
+
+.cal-tl__twisty:focus-visible {
+  outline: 2px solid var(--cal-ring);
+}
+
+.cal-tl__rname {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Lane body */
+.cal-tl__row {
+  position: relative;
+  border-block-end: 1px solid var(--cal-grid-line);
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent calc(var(--cal-tl-hour-w, 60px) - 1px),
+      var(--cal-grid-line) calc(var(--cal-tl-hour-w, 60px) - 1px),
+      var(--cal-grid-line) var(--cal-tl-hour-w, 60px)
+    );
+  cursor: pointer;
+}
+
+.cal-tl__shade {
+  position: absolute;
+  inset-block: 0;
+  pointer-events: none;
+}
+
+.cal-tl__shade--off {
+  background: var(--cal-surface-sunk);
+  opacity: 0.55;
+}
+
+.cal-tl__shade--block {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--cal-line-strong) 0,
+    var(--cal-line-strong) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+  opacity: 0.5;
+}
+
+.cal-tl__event {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  padding-inline: 0.4rem;
+  border: 0;
+  border-radius: var(--cal-radius-sm);
+  font: inherit;
+  font-size: 0.72rem;
+  line-height: 1;
+  text-align: start;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px var(--cal-bg);
+  z-index: 1;
+}
+
+.cal-tl__event:focus-visible {
+  outline: 2px solid var(--cal-ring);
+  outline-offset: 1px;
+  z-index: 2;
+}
+
+.cal-tl__event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-tl__event--continues-before {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+.cal-tl__event--continues-after {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.cal-tl__now {
+  position: absolute;
+  inset-block: 0;
+  border-inline-start: 2px solid var(--cal-now-line);
+  z-index: 3;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

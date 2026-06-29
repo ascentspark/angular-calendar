@@ -115,8 +115,13 @@ export {
   CalOverflowTemplate,
   type CalOverflowContext,
 } from './lib/directives/cal-overflow-template';
+export {
+  CalResourceHeaderTemplate,
+  type CalResourceHeaderContext,
+} from './lib/directives/cal-resource-header-template';
 
 // ── Components ───────────────────────────────────────────────────────────────
 export { CalMonthView } from './lib/components/month-view/month-view';
 export { CalYearView } from './lib/components/year-view/year-view';
 export { CalTimeGridView } from './lib/components/time-grid-view/time-grid-view';
+export { CalTimelineView } from './lib/components/timeline-view/timeline-view';
