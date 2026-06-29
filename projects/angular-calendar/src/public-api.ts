@@ -35,6 +35,15 @@ export {
   type RecurrenceEditScope,
   RECURRENCE_ADAPTER,
 } from './lib/core/recurrence/recurrence-adapter';
+export {
+  expandRecurringEvents,
+  type ExpandContext,
+} from './lib/core/recurrence/expand-recurring-events';
+export {
+  addRecurrenceException,
+  splitSeriesAt,
+  type SeriesSplit,
+} from './lib/core/recurrence/recurrence-edit';
 
 // ── Core data model ─────────────────────────────────────────────────────────
 export { type CalendarEvent } from './lib/core/model/calendar-event';
@@ -120,6 +129,11 @@ export {
   type AgendaViewArgs,
 } from './lib/core/view-model/agenda-view-model';
 export { buildAgendaView } from './lib/core/view-model/build-agenda-view';
+export {
+  detectConflicts,
+  filterByStatus,
+  type EventConflict,
+} from './lib/core/view-model/event-queries';
 
 // ── Accessibility ───────────────────────────────────────────────────────────
 export { CalCalendarA11y } from './lib/a11y/cal-calendar-a11y';
