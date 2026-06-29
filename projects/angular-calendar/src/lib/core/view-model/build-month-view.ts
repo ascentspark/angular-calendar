@@ -10,6 +10,11 @@ import type { ViewPeriod } from './view-period';
 const DAYS_PER_WEEK = 7;
 const DEFAULT_WEEKEND: readonly number[] = [0, 6];
 
+/** Absolute epoch ms of a `Date | ZonedDateTime` (for stable start-sorting). */
+function epochOf(value: Date | ZonedDateTime): number {
+  return value instanceof Date ? value.getTime() : value.epochMs;
+}
+
 /** Resolve an event endpoint to a `ZonedDateTime` in the display zone. */
 function resolve(
   adapter: DateAdapter,
@@ -131,6 +136,11 @@ export function buildMonthView<TMeta = unknown>(
       const overflowCount = chips.filter(
         (c) => c.startColumn <= column && column < c.startColumn + c.span && c.lane >= maxLanes,
       ).length;
+      const dayEpoch = dayEpochs[column] ?? date.epochMs;
+      const dayEvents = ranges
+        .filter((r) => r.startDayEpoch <= dayEpoch && dayEpoch <= r.lastDayEpoch)
+        .map((r) => r.event)
+        .sort((a, b) => epochOf(a.start) - epochOf(b.start));
       return {
         date,
         inMonth: adapter.startOfMonth(date).epochMs === monthStart.epochMs,
@@ -138,6 +148,7 @@ export function buildMonthView<TMeta = unknown>(
         isWeekend: weekendDays.includes(adapter.getDayOfWeek(date)),
         events: anchored,
         overflowCount,
+        dayEvents,
       };
     });
 

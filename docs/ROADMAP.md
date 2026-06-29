@@ -79,7 +79,13 @@ event-density heat + dots, today, drill-down day/month, non-Gregorian labels, ro
 keyboard). `CalCalendarA11y` DI provider. **106 unit tests** (TZ=UTC + DST). Demo app with a
 Month/Year toggle + light/dark theme switch — **visually verified via Playwright** (month
 light+dark, year light): spanning, status colours, today pill, density all correct.
-**Remaining:** richer "+N more" CDK-overlay popover (currently the control selects the day);
+**"+N more" overflow popover** done — clicking the indicator opens an accessible `role="dialog"`
+popover listing **every** event covering that day (start-sorted, status-dot + localized time + title),
+sourced from a new pure `MonthDay.dayEvents` builder field so hidden events stay reachable; focus
+moves into the popover on open and returns to the trigger on Escape/close; backdrop + outside-click
+dismiss; **verified via UI** (June 15 "+1 more" → all four events listed) and **axe-zero with the
+popover open** (added to the e2e gate). Dependency-free (matches the codebase's native-DnD choice).
+**Remaining:** none for the overflow popover;
 formal Playwright e2e + axe-zero gate + committed screenshot baselines (light/dark/RTL); RTL
 visual pass (CSS already uses logical properties). These land with the shared e2e/axe harness.
 

@@ -212,3 +212,101 @@
     page-break-inside: avoid;
   }
 }
+
+/* ── "+N more" overflow popover ──────────────────────────────────────────── */
+.cal-more__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+}
+.cal-more {
+  position: absolute;
+  inset-block-start: 0.2rem;
+  inset-inline-start: 0.2rem;
+  inline-size: max(calc(100% - 0.4rem), 13rem);
+  max-block-size: 16rem;
+  overflow-y: auto;
+  z-index: 10;
+  background: var(--cal-surface);
+  color: var(--cal-ink);
+  border: 1px solid var(--cal-line-strong);
+  border-radius: var(--cal-radius-md);
+  box-shadow: 0 12px 32px -10px var(--cal-scrim);
+  padding: 0.4rem;
+}
+.cal-more:focus-visible {
+  outline: 2px solid var(--cal-ring);
+  outline-offset: -1px;
+}
+.cal-more__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.15rem 0.25rem 0.35rem;
+  border-block-end: 1px solid var(--cal-line);
+  margin-block-end: 0.25rem;
+}
+.cal-more__date {
+  font-size: 0.74rem;
+  font-weight: 650;
+}
+.cal-more__close {
+  border: 0;
+  background: transparent;
+  color: var(--cal-ink-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.1rem 0.3rem;
+  border-radius: var(--cal-radius-sm);
+}
+.cal-more__close:hover {
+  background: var(--cal-surface-sunk);
+  color: var(--cal-ink);
+}
+.cal-more__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.cal-more__item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  inline-size: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.72rem;
+  text-align: start;
+  padding: 0.28rem 0.35rem;
+  border-radius: var(--cal-radius-sm);
+  cursor: pointer;
+}
+.cal-more__item:hover {
+  background: var(--cal-surface-sunk);
+}
+.cal-more__item:focus-visible {
+  outline: 2px solid var(--cal-ring);
+  outline-offset: -1px;
+}
+.cal-more__dot {
+  inline-size: 0.55rem;
+  block-size: 0.55rem;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+.cal-more__time {
+  color: var(--cal-ink-700);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cal-more__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

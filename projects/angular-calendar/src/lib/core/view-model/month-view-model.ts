@@ -15,6 +15,11 @@ export interface MonthDay<TMeta = unknown> {
   readonly events: readonly PositionedChip<TMeta>[];
   /** Hidden events covering this day → drives the "+N more" indicator. */
   readonly overflowCount: number;
+  /**
+   * Every event covering this day (visible and overflowed), start-sorted. Powers
+   * the "+N more" popover so hidden events stay reachable.
+   */
+  readonly dayEvents: readonly CalendarEvent<TMeta>[];
 }
 
 /** One week row. */
