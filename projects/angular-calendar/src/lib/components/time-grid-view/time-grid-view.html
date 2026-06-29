@@ -72,10 +72,14 @@
             class="cal-tg__event"
             [class.cal-tg__event--continues-before]="ev.continuesBefore"
             [class.cal-tg__event--continues-after]="ev.continuesAfter"
+            [class.cal-tg__event--dragging]="isDragging(ev)"
             [class]="ev.event.cssClass ?? ''"
-            [style]="eventStyle(ev)"
+            [style]="eventStyle(ev, column)"
             [attr.aria-label]="eventLabel(ev.event)"
-            (click)="onEventClick(ev.event, $event)"
+            (pointerdown)="onEventPointerDown(ev, column, 'move', $event)"
+            (pointermove)="onEventPointerMove($event)"
+            (pointerup)="onEventPointerUp(ev, column, $event)"
+            (pointercancel)="onEventPointerCancel($event)"
           >
             @if (eventTemplate(); as tpl) {
               <ng-container
@@ -84,6 +88,25 @@
               />
             } @else {
               <span class="cal-tg__event-title">{{ ev.event.title }}</span>
+            }
+
+            @if (editable() && ev.event.isReadonly !== true) {
+              <span
+                class="cal-tg__resize cal-tg__resize--start"
+                aria-hidden="true"
+                (pointerdown)="onEventPointerDown(ev, column, 'resize-start', $event)"
+                (pointermove)="onEventPointerMove($event)"
+                (pointerup)="onEventPointerUp(ev, column, $event)"
+                (pointercancel)="onEventPointerCancel($event)"
+              ></span>
+              <span
+                class="cal-tg__resize cal-tg__resize--end"
+                aria-hidden="true"
+                (pointerdown)="onEventPointerDown(ev, column, 'resize-end', $event)"
+                (pointermove)="onEventPointerMove($event)"
+                (pointerup)="onEventPointerUp(ev, column, $event)"
+                (pointercancel)="onEventPointerCancel($event)"
+              ></span>
             }
           </button>
         }
