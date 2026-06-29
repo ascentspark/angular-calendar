@@ -1,0 +1,82 @@
+# ============================================================================
+# SECRETS & INTERNAL BUILDER DOCS — never commit (contains PATs / npm tokens)
+# ============================================================================
+internal_docs/
+**/github.md
+**/npm.md
+*.pem
+*.key
+*.p12
+.env
+.env.*
+!.env.example
+secrets/
+**/*secret*
+**/*token*
+
+# ============================================================================
+# AI / agent session files — must never ship (repo reads as human-authored)
+# ============================================================================
+CLAUDE.md
+GEMINI.md
+AGENTS.md
+.claude/
+.cursor/
+.aider*
+.codeium/
+memory/
+scratchpad/
+
+# Granular builder task plans are process notes, not public docs (github_standard).
+# Public design docs (SPEC.md, ROADMAP.md, calendar-competitive-analysis.md) DO ship.
+docs/build-plans/
+
+# ============================================================================
+# Node / Angular
+# ============================================================================
+node_modules/
+dist/
+tmp/
+out-tsc/
+bazel-out/
+.angular/
+.nx/cache/
+.nx/workspace-data/
+
+# ============================================================================
+# Build / coverage / test artifacts
+# ============================================================================
+coverage/
+*.lcov
+.nyc_output/
+playwright-report/
+test-results/
+/e2e/screenshots/
+*.tsbuildinfo
+storybook-static/
+chromatic-build/
+
+# ============================================================================
+# IDE / editor / OS
+# ============================================================================
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ============================================================================
+# Logs & misc
+# ============================================================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npmrc
+.yarn/
+.pnp.*
