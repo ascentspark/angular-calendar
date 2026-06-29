@@ -1,0 +1,150 @@
+# `@ascentsparksoftware/angular-calendar` — Roadmap
+
+Phased, gated delivery. **No phase begins until the prior phase's exit criteria are met and
+verified with real command output.** Each phase has its own atomic task plan in
+`docs/build-plans/phase-NN-*.md`. TDD throughout: test first, frequent commits, review gate
+at each phase boundary.
+
+---
+
+## Decision log (locked)
+
+| Topic | Decision | Rationale |
+|---|---|---|
+| Package | Single `@ascentsparksoftware/angular-calendar`, tree-shakable views + secondary entries (`/date-fns`, `/recurrence-editor`, `/export`, `/testing`) | Mirror image-editor single-package model; pay-for-what-you-import |
+| Versioning | Package major == Angular major; **three supported lines 20.x.x / 21.x.x / 22.x.x** | Match in-house libs; version tracks the Angular it targets |
+| Angular support | **20, 21, 22** — `main`=22.x + `21.x`/`20.x` maintenance branches; each line's peerDeps pin its major; per-line lockfiles | Broad adoption across current Angular majors |
+| Publishing | **CI-only** via a GitHub Actions release workflow on `v*.*.*` tags (build→test→`npm publish --provenance`, dist-tag from major); **no manual publish/copying**; npm token only as `NPM_TOKEN` Actions secret | Reproducible, auditable, no local credentials |
+| Timezone | Correct from day one; `ZonedDateTime` model; default `date-fns` + `date-fns-tz` | Multi-site field service; biggest gap in references |
+| Recurrence | In v1; RFC 5545 via `rrule` behind our adapter; standalone editor; 3-way edit | Availability/recurring jobs needed early |
+| Drag engine | Custom Pointer-Events layer (precision/touch) + CDK drag-drop for external drag-in | Mobile-precise is a hard requirement |
+| Scope | General-purpose v1; field-service look = demos/presets on top, not core | Reusable beyond one org |
+| Reactivity | Signals-first, standalone, zoneless, OnPush, SSR-safe | Modern Angular 22; differentiator |
+| Theming | `--cal-*` CSS custom properties via OKLCH `deriveTheme`/`applyTheme` | Theme-agnostic; no Sass build |
+| Layout | Pure, DOM-free builders; interval-tree / sweep-line packing; fraction geometry | Testable, fast, no thrash |
+| Feature scope | **Full Syncfusion parity in v1** — Year & Timeline-Year views, inline editing, print/print-to-PDF, non-Gregorian calendar systems, configurable timezone-picker, responsive adaptive (mobile drawer) layout are all v1, not deferred | Match/beat the mature commercial bar from the first release |
+
+---
+
+## Phase 0 — Discovery & analysis ✅ DONE
+
+Cloned and dissected the three references; produced `docs/calendar-competitive-analysis.md`
+(rubric tables + does-well / does-poorly / worth-borrowing per library + synthesis). This
+spec and roadmap are the synthesized output.
+
+**Exit (met):** competitive-analysis doc committed; SPEC + ROADMAP approved.
+
+---
+
+## Phase 1 — Scaffold + theming engine + headless core foundations
+
+Repo, Angular-22 CLI workspace (lib `angular-calendar` + demo), ng-packagr, lint/format/
+test (Vitest) wiring, CI + community files (single-branch variant of `github_standard.md`).
+Theming engine (`oklch`/`color`/`tokens`/`derive-theme`/`apply-theme`, `--cal-*`). Date
+adapter interface + `ZonedDateTime` + default `date-fns(+tz)` adapter, including the
+**calendar-system primitives** (`getEra`/calendar-aware `format` via `Intl`, `CalendarSystem`
+type) that the non-Gregorian display builds on. `provideCalendar()`. Pure view-model +
+lane-packing + projection primitives (no DOM), fully unit-tested.
+
+**Exit:** `ng build angular-calendar` + `ng test` green; theming + adapter (incl.
+calendar-system) + packing have ≥95% coverage incl. DST cases; CI green on all three Angular
+lines (distinct check names); published-package manifest shape correct (peerDeps pin the
+line's major); `npm pack` dry-run clean. **Gate review.**
+
+## Phase 2 — Month view + Year view
+
+`<cal-month-view>` (chips, "+N more" overflow popover, multi-day spans, today, selection),
+default templates + override directives, a11y grid semantics, theming applied. Plus
+`<cal-year-view>` (12-month overview, per-day event-density dots, click a day to drill into
+month/day) built on the same pure builders and honouring `calendarSystem` for month/year
+labels.
+
+**Exit:** month-view + year-view components + e2e + axe-clean + screenshot baselines
+(light/dark/RTL); year view verified under a non-Gregorian `calendarSystem`.
+
+## Phase 3 — Week / Day time-grid (both orientations)
+
+`<cal-week-view>` / `<cal-day-view>` with `orientation` toggle (time on X or Y), now-line,
+all-day band, working-hours shading, side-by-side lane packing, slot granularity.
+
+**Exit:** both orientations render correctly; now-indicator ticks; axe-clean; screenshots.
+
+## Phase 4 — Resource / timeline view
+
+`<cal-timeline-view>`: resources × time, declarative multi-level time headers, resource
+tree (group/expand), per-resource work hours / block-out shading, pixel↔time projection,
+CDK virtual scroll for many rows/events. The field-service dispatch-board core. Includes the
+**Timeline-Year** range mode (resources × a full-year axis with year/month/week header rows)
+and `<cal-agenda-view>`.
+
+**Exit:** 100 resources × 2,000 events virtualized at ≥55 fps (bench); Timeline-Year renders
+a full year virtualized; axe-clean; screenshots.
+
+## Phase 5 — Interactions
+
+Custom Pointer-Events engine: drag-move, drag-create, edge resize, snap, touch long-press,
+`dragState` signal + `computed` preview, `validateChange` veto, cancellable async commit
+outputs, CDK external drag-in, full keyboard drag/resize + roving-tabindex. Plus
+**single-click inline editing** of an event title (F2/Enter to edit, Escape to cancel,
+text-only, commit via `eventChanged` `kind:'inline-edit'`).
+
+**Exit:** Playwright e2e incl. touch emulation for move/create/resize **and inline-edit**
+across all views; keyboard-only operability verified; axe-clean.
+
+## Phase 6 — Recurrence + advanced
+
+RRULE adapter + windowed expansion + exceptions; `<cal-recurrence-editor>` standalone
+control; three-way edit semantics + exception bookkeeping helpers; conflict/overlap
+detection; status filtering; tooltips/popovers; density modes.
+
+**Exit:** recurrence expansion property-tested (DST-correct); editor e2e; 3-way edit flows;
+overlap detection asserted.
+
+## Phase 7 — A11y + i18n + RTL + timezone + calendar systems + adaptive + perf hardening
+
+Full keyboard map, `CalCalendarA11y` strings, reduced-motion; `CalCalendarIntl`, locale,
+12/24h, **RTL in every view incl. timeline**; per-event timezone surfacing + a
+**configurable timezone-picker collection** (`timezonePickerZones`); **non-Gregorian
+calendar systems** (Islamic/Hijri, Buddhist, Japanese, Persian) wired through every view via
+the Phase-1 adapter primitives; **responsive/adaptive layout** (container-query driven
+mobile drawer, single-resource collapse, swipe nav, month→agenda fallback); virtualization
+extended to vertical views; perf budgets encoded as CI assertions.
+
+**Exit:** axe zero-violations gate across all views/modes/orientations/RTL **and calendar
+systems and adaptive (mobile) layout**; timezone picker honours the restricted subset; all
+perf budgets pass in CI; bundle-size budget passes.
+
+## Phase 8 — Docs, Storybook, demo, optional token bridge, publish
+
+Public docs (`README`, `ARCHITECTURE.md`, `THEMING.md`, `MIGRATION.md`, `SECURITY.md`),
+Storybook (per-state, a11y addon, visual-regression), demo app (SSR-safe), optional
+`provideCalendar(withTokenBridge())` adapter for design-token systems. **Print / print-to-PDF**
+(`/export` entry, `withPrint`, `print()` API, print stylesheet) and ICS/Excel/CSV export.
+Repo hardening (multi-line Dependabot, per-branch CI with distinct check names, CodeQL,
+ruleset). **CI-only release:** a GitHub Actions `release.yml` on `v*.*.*` tags builds, tests,
+and `npm publish --provenance` with the dist-tag derived from the tag's major (`latest` for
+22, `ng21`/`ng20` for maintenance). No manual publish; `NPM_TOKEN` is the only credential and
+lives solely as an Actions secret. `RELEASING.md` runbook documents tag→Actions→verify.
+
+**Exit:** GitHub Community Standards green; CI/CodeQL clean on all three lines; the release
+workflow performs a successful tagged publish (verified on npm) with **no manual step**;
+print/print-to-PDF produces correct paginated output (e2e); docs site builds;
+`git grep -i 'claude\|anthropic'` returns nothing shipped.
+
+## Phase 9 — Field-service proof surface (consumer demo)
+
+A demo/preset proving the API against the "Lust for Dust" requirements: resource schedule,
+week-as-rows, 7-status theming, rich event cards, unscheduled strip, status filters,
+external drag-in — built **on top of** the published library, not in core.
+
+**Exit:** the field-service wireframe requirements (charter §1) reproduced using only the
+public API + a thin preset; documented as the reference adoption pattern.
+
+---
+
+## Per-phase ritual (every phase)
+
+1. Read the phase plan in `docs/build-plans/`. 2. Create a todo per task. 3. TDD each task
+(test → fail → implement → pass → commit). 4. Run the full verification suite. 5. Update
+`CHANGELOG.md`. 6. Phase gate review (real command output, screenshots, axe + bench
+results) before advancing. Never claim done without verification evidence.
