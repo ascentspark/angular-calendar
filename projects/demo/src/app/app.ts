@@ -75,6 +75,12 @@ export class App {
     this.base.set(hex);
   }
 
+  /** Vertical density for the week/day time-grid. */
+  protected readonly density = signal<'comfortable' | 'compact'>('comfortable');
+  protected toggleDensity(): void {
+    this.density.update((d) => (d === 'compact' ? 'comfortable' : 'compact'));
+  }
+
   /** True when the demo viewport is phone-narrow (drives month→agenda fallback). */
   protected readonly narrow = signal(false);
 

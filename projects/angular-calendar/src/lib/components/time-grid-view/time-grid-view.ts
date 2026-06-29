@@ -73,6 +73,7 @@ const FALLBACK_ACCENT = '#3b82f6';
   host: {
     '[class.cal-tg--horizontal]': "orientation() === 'horizontal'",
     '[class.cal-tg--vertical]': "orientation() === 'vertical'",
+    '[class.cal-tg--compact]': "density() === 'compact'",
   },
 })
 export class CalTimeGridView<TMeta = unknown> {
@@ -89,6 +90,8 @@ export class CalTimeGridView<TMeta = unknown> {
   readonly days = input<number>(7);
   readonly anchorToWeek = input<boolean>(true);
   readonly orientation = input<TimeAxisOrientation>('vertical');
+  /** Vertical density: `'compact'` shrinks hour rows and type for dense schedules. */
+  readonly density = input<'comfortable' | 'compact'>('comfortable');
   readonly today = input<Date | ZonedDateTime | null>(null);
   readonly now = input<Date | ZonedDateTime | null>(null);
   readonly weekStartsOn = input<number | null>(null);

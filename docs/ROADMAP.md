@@ -191,8 +191,12 @@ raises a This / This-and-following / All prompt; the demo applies it through the
 (`addRecurrenceException` for *this* → series exception + detached concrete event; `splitSeriesAt`
 for *following* → `UNTIL`-terminated head + new tail series; series mutation for *all*) —
 **verified via UI** (renamed one Wednesday: *All* relabelled every Wednesday; *This* relabelled
-only that date and left the rest). **201 unit tests** (TZ=UTC + DST). **Remaining:** density
-modes; richer CDK-overlay popovers (native `title` tooltips ship now).
+only that date and left the rest). **Density modes** — a `density` input (`'comfortable' |
+'compact'`) on the time-grid: compact shrinks the hour-row height (3rem→2rem), all-day rows, and
+type via `:host(.cal-tg--compact)` token overrides, so a dense day/week fits more on screen —
+**verified via UI** (demo "Compact" toggle: the full 06:00–22:00 range fits where 06:00–19:00 did).
+**201 unit tests** (TZ=UTC + DST). **Remaining:** none for density/tooltips (native `title` tooltips
++ the month overflow popover ship now).
 
 **Exit:** recurrence expansion property-tested (DST-correct); editor e2e; 3-way edit flows;
 overlap detection asserted.
