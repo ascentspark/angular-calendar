@@ -87,8 +87,20 @@
             (pointermove)="onEventPointerMove($event)"
             (pointerup)="onEventPointerUp(ev, column, $event)"
             (pointercancel)="onEventPointerCancel($event)"
+            (dblclick)="startInlineEdit(ev, $event)"
           >
-            @if (eventTemplate(); as tpl) {
+            @if (isEditing(ev)) {
+              <input
+                #inlineInput
+                type="text"
+                class="cal-tg__inline"
+                [value]="ev.event.title ?? ''"
+                [attr.aria-label]="'Edit title'"
+                (pointerdown)="$event.stopPropagation()"
+                (keydown)="onInlineKeydown(ev, $event)"
+                (blur)="commitInlineEdit(ev, $any($event.target).value)"
+              />
+            } @else if (eventTemplate(); as tpl) {
               <ng-container
                 [ngTemplateOutlet]="tpl.template"
                 [ngTemplateOutletContext]="{ $implicit: ev.event }"

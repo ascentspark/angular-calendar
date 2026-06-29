@@ -143,8 +143,15 @@ export class App {
 
   private createSeq = 0;
 
-  /** Apply a move/resize/create from the grid to the demo's event store. */
+  /** Apply a move/resize/create/inline-edit from the grid to the demo's event store. */
   protected onEventChanged(change: EventChange): void {
+    // Inline edit only carries a title (no start/end).
+    if (change.kind === 'inline-edit' && change.event !== null) {
+      const id = change.event.id;
+      const title = change.title ?? '';
+      this.events.update((list) => list.map((e) => (e.id === id ? { ...e, title } : e)));
+      return;
+    }
     if (change.start === undefined || change.end === undefined) {
       return;
     }

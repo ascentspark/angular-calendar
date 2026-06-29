@@ -9,6 +9,7 @@ import {
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
@@ -110,10 +111,16 @@ export class CalTimeGridView<TMeta = unknown> {
   readonly slotSelected = output<{ date: ZonedDateTime; minutes: number }>();
   readonly eventChanged = output<EventChange<TMeta>>();
 
+  /** Enable single-/double-click inline editing of an event's title. */
+  readonly inlineEdit = input<boolean>(true);
+
   readonly eventTemplate = contentChild(CalEventTemplate);
 
   /** In-flight drag/resize gesture, or null. Drives the live preview. */
   protected readonly dragState = signal<DragGesture | null>(null);
+  /** Id of the event whose title is being inline-edited, or null. */
+  protected readonly editingId = signal<string | null>(null);
+  private readonly inlineInput = viewChild<ElementRef<HTMLInputElement>>('inlineInput');
 
   private readonly resolvedLocale = computed(() => this.locale() ?? this.config.locale);
   private readonly resolvedZone = computed(
@@ -198,6 +205,15 @@ export class CalTimeGridView<TMeta = unknown> {
 
   constructor() {
     effect(() => applyTheme(this.host.nativeElement, this.theme()));
+    effect(() => {
+      if (this.editingId() !== null) {
+        const el = this.inlineInput()?.nativeElement;
+        if (el) {
+          el.focus();
+          el.select();
+        }
+      }
+    });
   }
 
   protected eventLabel(event: CalendarEvent<TMeta>): string {
@@ -349,6 +365,45 @@ export class CalTimeGridView<TMeta = unknown> {
     const drag = this.dragState();
     if (drag !== null && drag.pointerId === dom.pointerId) {
       this.dragState.set(null);
+    }
+  }
+
+  // ── inline title editing ──────────────────────────────────────────────────
+  protected isEditing(ev: PositionedEvent<TMeta>): boolean {
+    return this.editingId() === ev.event.id;
+  }
+
+  protected startInlineEdit(ev: PositionedEvent<TMeta>, dom: Event): void {
+    if (!this.inlineEdit() || ev.event.isReadonly === true) {
+      return;
+    }
+    dom.stopPropagation();
+    this.dragState.set(null);
+    this.editingId.set(ev.event.id);
+  }
+
+  protected commitInlineEdit(ev: PositionedEvent<TMeta>, value: string): void {
+    if (this.editingId() !== ev.event.id) {
+      return;
+    }
+    this.editingId.set(null);
+    const title = value.trim();
+    if (title !== (ev.event.title ?? '')) {
+      this.eventChanged.emit({ kind: 'inline-edit', event: ev.event, title });
+    }
+  }
+
+  protected cancelInlineEdit(): void {
+    this.editingId.set(null);
+  }
+
+  protected onInlineKeydown(ev: PositionedEvent<TMeta>, dom: KeyboardEvent): void {
+    if (dom.key === 'Enter') {
+      dom.preventDefault();
+      this.commitInlineEdit(ev, (dom.target as HTMLInputElement).value);
+    } else if (dom.key === 'Escape') {
+      dom.preventDefault();
+      this.cancelInlineEdit();
     }
   }
 
