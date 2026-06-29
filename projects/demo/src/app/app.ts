@@ -23,6 +23,7 @@ import {
   CalYearView,
   CalEventTemplate,
   filterByStatus,
+  DATE_ADAPTER,
   type CalThemeMode,
   type CalendarEvent,
   type CalendarResource,
@@ -48,7 +49,7 @@ const z = (iso: string) => ({ epochMs: Date.parse(iso), zone: Z });
   styleUrl: './app.css',
 })
 export class App {
-  protected readonly view = signal<'month' | 'week' | 'day' | 'timeline' | 'agenda' | 'year'>(
+  protected readonly view = signal<'month' | 'week' | 'day' | 'timeline' | 'weekrows' | 'agenda' | 'year'>(
     'month',
   );
   protected readonly mode = signal<CalThemeMode>('light');
@@ -310,6 +311,100 @@ export class App {
     },
   ]);
 
+  /** Resolve a job's primary assignee (its first resource) for the avatar card. */
+  private assignee(job: CalendarEvent): CalendarResource | undefined {
+    const id = job.resourceIds?.[0];
+    return id === undefined ? undefined : this.resources.find((r) => r.id === id);
+  }
+
+  protected assigneeName(job: CalendarEvent): string {
+    return this.assignee(job)?.name ?? '';
+  }
+
+  /** Initials (max 2) for the avatar bubble, e.g. "Alice Ng" → "AN". */
+  protected assigneeInitials(job: CalendarEvent): string {
+    const name = this.assigneeName(job);
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('');
+  }
+
+  /** Stable avatar background per assignee id (deterministic hue, no deps). */
+  protected assigneeColor(job: CalendarEvent): string {
+    const id = this.assignee(job)?.id ?? '';
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = (hash * 31 + id.charCodeAt(i)) % 360;
+    }
+    return `hsl(${hash} 55% 45%)`;
+  }
+
+  // ── Week-as-rows preset (charter §1 "Lust for Dust" signature layout) ───────
+  // Built entirely on the public API: the resource timeline with one row per
+  // weekday and events projected onto a shared single-day hour axis. A pure
+  // consumer-side transform — nothing app-specific lives in the library core.
+  private readonly adapter = inject(DATE_ADAPTER);
+
+  protected readonly weekdayResources: CalendarResource[] = [
+    { id: 'wd-0', name: 'Sunday' },
+    { id: 'wd-1', name: 'Monday' },
+    { id: 'wd-2', name: 'Tuesday' },
+    { id: 'wd-3', name: 'Wednesday' },
+    { id: 'wd-4', name: 'Thursday' },
+    { id: 'wd-5', name: 'Friday' },
+    { id: 'wd-6', name: 'Saturday' },
+  ];
+
+  /** Sunday 00:00 (in zone Z) of the viewed week — the shared canonical day. */
+  protected readonly weekRowAnchor = computed(() =>
+    this.adapter.startOfWeek(this.adapter.toZoned(this.viewDate, Z), 0),
+  );
+
+  /**
+   * The week's timed events remapped so each lands in its weekday row at the
+   * same wall-clock time on the canonical anchor day. Timezone-correct via the
+   * date adapter (no hand-rolled offset math); all-day spans are omitted to keep
+   * the hour axis clean.
+   */
+  protected readonly weekRowEvents = computed<CalendarEvent[]>(() => {
+    const adapter = this.adapter;
+    const anchor = this.weekRowAnchor();
+    const weekEnd = adapter.addDays(anchor, 7);
+    const out: CalendarEvent[] = [];
+    for (const ev of this.filteredEvents()) {
+      if (ev.allDay === true) {
+        continue;
+      }
+      const start = adapter.toZoned(ev.start, Z);
+      if (start.epochMs < anchor.epochMs || start.epochMs >= weekEnd.epochMs) {
+        continue;
+      }
+      const dow = adapter.getDayOfWeek(start);
+      const minutesIn = adapter.getMinutesIntoDay(start);
+      const duration =
+        ev.end === undefined
+          ? 60
+          : Math.max(15, adapter.differenceInMinutes(adapter.toZoned(ev.end, Z), start));
+      const newStart = adapter.addMinutes(anchor, minutesIn);
+      const newEnd = adapter.addMinutes(newStart, duration);
+      const remapped: CalendarEvent = {
+        ...ev,
+        resourceIds: [`wd-${dow}`],
+        start: newStart,
+        end: newEnd,
+      };
+      // Drop recurrence metadata: this is already a concrete in-week occurrence,
+      // and a weekly rule would otherwise re-expand against the canonical day.
+      delete (remapped as { recurrenceRule?: unknown }).recurrenceRule;
+      delete (remapped as { recurrenceExceptions?: unknown }).recurrenceExceptions;
+      out.push(remapped);
+    }
+    return out;
+  });
+
   /** Unassigned jobs the dispatcher can drag onto a tech's lane. */
   protected readonly unscheduled = signal<{ id: string; title: string }[]>([
     { id: 'u1', title: 'Emergency leak — 7 Birch' },
@@ -347,7 +442,7 @@ export class App {
     this.mode.update((m) => (m === 'light' ? 'dark' : 'light'));
   }
 
-  protected setView(view: 'month' | 'week' | 'day' | 'timeline' | 'agenda' | 'year'): void {
+  protected setView(view: 'month' | 'week' | 'day' | 'timeline' | 'weekrows' | 'agenda' | 'year'): void {
     this.view.set(view);
   }
 

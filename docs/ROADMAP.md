@@ -244,7 +244,7 @@ workflow performs a successful tagged publish (verified on npm) with **no manual
 print/print-to-PDF produces correct paginated output (e2e); docs site builds; the shipped
 tree contains no build-tool or assistant fingerprints.
 
-## Phase 9 — Field-service proof surface (consumer demo) 🟡 IN PROGRESS
+## Phase 9 — Field-service proof surface (consumer demo) ✅ COMPLETE
 
 **Done:** the demo app proves the API against the charter §1 requirements using only the public
 surface — resource dispatch board (`<cal-timeline-view>`), 7-status theming via `statusColors`,
@@ -254,7 +254,14 @@ collapse — **all verified via UI** (rich cards render; toggling a status hides
 `docs/ADOPTION.md` documents the reference adoption pattern (preset lives in the consumer, not
 core). **Unscheduled-jobs strip + external drag-in** wired in the demo — **verified via UI** (drag
 an unassigned job onto a tech's lane → it schedules at the drop time and leaves the strip).
-**Remaining:** an explicit week-as-rows preset; assignee-avatar card example.
+**Assignee-avatar card** — the dispatch-board job template now renders a coloured initials bubble
+(deterministic per-tech hue) beside the title/status badge — **verified via UI** (AN/BR/CD avatars).
+**Week-as-rows preset** — a "Week rows" demo view built purely on the public timeline API: one lane
+per weekday with the week's timed events projected onto a shared single-day hour axis via a
+**timezone-correct adapter remap** (`startOfWeek`/`getDayOfWeek`/`getMinutesIntoDay`/`addMinutes`),
+recurrence materialised to concrete occurrences — **verified via UI** (Mon's four events + Wed's 1:1
+land in the right lanes at the right hours). Also fixed the demo's invisible active-segment label
+(`background: currentColor` resolved to the white text). **Remaining:** none — Phase 9 complete.
 
 A demo/preset proving the API against the "Lust for Dust" requirements: resource schedule,
 week-as-rows, 7-status theming, rich event cards, unscheduled strip, status filters,
