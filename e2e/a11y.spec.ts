@@ -17,8 +17,20 @@ for (const mode of MODES) {
         await page.locator('[data-testid="toggle-mode"]').click();
       }
       await page.locator(`[data-testid="view-${view}"]`).click();
-      // Let the view settle (theme effect + view-model render).
+      // Let the view settle: the calendar present, the active tab styled by the
+      // applied accent token, and a frame for the theme effect to flush.
       await page.locator('[data-testid="calendar-demo"]').waitFor();
+      await page
+        .locator(`[data-testid="view-${view}"].segment__btn--on`)
+        .waitFor();
+      await page.waitForFunction(() => {
+        const root = document.querySelector('cal-root');
+        return (
+          root !== null &&
+          getComputedStyle(root).getPropertyValue('--cal-accent').trim() !== ''
+        );
+      });
+      await page.waitForTimeout(120);
 
       // Scan the whole shell (top bar, theme controls, exports, filters) plus the
       // calendar — the entire rendered surface must clear the gate.

@@ -10,8 +10,9 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
+import type { EventChange } from '../../interactions/event-change';
 import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
 import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zoned-date-time';
 import type { CalendarEvent } from '../../core/model/calendar-event';
@@ -32,6 +33,25 @@ import { CalResourceHeaderTemplate } from '../../directives/cal-resource-header-
 
 const FALLBACK_BASE = '#ffffff';
 const FALLBACK_ACCENT = '#3b82f6';
+/** Movement past this many px before a press is treated as a drag (not a click). */
+const DRAG_THRESHOLD_PX = 4;
+
+/** In-flight pointer gesture moving a timeline block along time / across lanes. */
+interface TimelineDrag {
+  readonly eventId: string;
+  readonly originStartMs: number;
+  readonly originEndMs: number;
+  readonly originResourceId: string;
+  readonly pointerId: number;
+  readonly startClientX: number;
+  readonly deltaMinutes: number;
+  readonly active: boolean;
+}
+
+/** Absolute epoch ms of a `Date | ZonedDateTime`. */
+function epochOf(value: Date | ZonedDateTime): number {
+  return value instanceof Date ? value.getTime() : value.epochMs;
+}
 
 /**
  * Resource × time dispatch board. Renders the pure {@link buildTimelineView}
@@ -50,6 +70,7 @@ const FALLBACK_ACCENT = '#3b82f6';
 })
 export class CalTimelineView<TMeta = unknown> {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly doc = inject(DOCUMENT);
   private readonly adapter = inject(DATE_ADAPTER);
   private readonly config = inject(CALENDAR_CONFIG);
   private readonly tokenBridge = inject(CAL_TOKEN_BRIDGE, { optional: true });
@@ -80,7 +101,14 @@ export class CalTimelineView<TMeta = unknown> {
   readonly themeMode = input<CalThemeMode>('light');
   readonly statusColors = input<Record<string, string>>({});
 
+  /** Whether blocks can be dragged to reschedule / reassign. */
+  readonly editable = input<boolean>(true);
+  /** Drag quantisation in minutes; defaults to the config snap. */
+  readonly snapMinutes = input<number | null>(null);
+
   readonly eventClicked = output<{ event: CalendarEvent<TMeta> }>();
+  /** Fired when a block is dragged to a new time and/or resource lane. */
+  readonly eventChanged = output<EventChange<TMeta>>();
   readonly slotSelected = output<{ date: ZonedDateTime; resourceId: string }>();
   readonly resourceToggled = output<{ resource: CalendarResource<TMeta>; expanded: boolean }>();
   /**
@@ -237,9 +265,129 @@ export class CalTimelineView<TMeta = unknown> {
     return this.collapsed().has(row.resource.id);
   }
 
+  /** In-flight block drag, or null. Drives the live horizontal preview. */
+  protected readonly drag = signal<TimelineDrag | null>(null);
+  /** Set briefly after an active drag so the trailing click doesn't also fire. */
+  private suppressClick = false;
+
   protected onEventClick(event: CalendarEvent<TMeta>, dom: Event): void {
     dom.stopPropagation();
+    if (this.suppressClick) {
+      this.suppressClick = false;
+      return;
+    }
     this.eventClicked.emit({ event });
+  }
+
+  protected onEventPointerDown(
+    ev: PositionedEvent<TMeta>,
+    row: ResourceRow<TMeta>,
+    dom: PointerEvent,
+  ): void {
+    if (!this.editable() || ev.event.isReadonly === true || dom.button !== 0) {
+      return;
+    }
+    const startMs = epochOf(ev.event.start);
+    const endMs = ev.event.end !== undefined ? epochOf(ev.event.end) : startMs + 3_600_000;
+    this.drag.set({
+      eventId: ev.event.id,
+      originStartMs: startMs,
+      originEndMs: endMs,
+      originResourceId: row.resource.id,
+      pointerId: dom.pointerId,
+      startClientX: dom.clientX,
+      deltaMinutes: 0,
+      active: false,
+    });
+    const target = dom.currentTarget as HTMLElement;
+    if (typeof target.setPointerCapture === 'function') {
+      try {
+        target.setPointerCapture(dom.pointerId);
+      } catch {
+        /* best-effort: not critical to the gesture */
+      }
+    }
+  }
+
+  protected onEventPointerMove(dom: PointerEvent): void {
+    const d = this.drag();
+    if (d === null || d.pointerId !== dom.pointerId) {
+      return;
+    }
+    const dx = dom.clientX - d.startClientX;
+    const eff = this.isRtl() ? -dx : dx;
+    const pxPerMinute = this.hourWidth() / 60;
+    const snap = this.snapMinutes() ?? this.config.snapMinutes;
+    const minutes = Math.round(eff / pxPerMinute / snap) * snap;
+    const active = d.active || Math.abs(dx) > DRAG_THRESHOLD_PX;
+    this.drag.set({ ...d, deltaMinutes: minutes, active });
+  }
+
+  protected onEventPointerUp(ev: PositionedEvent<TMeta>, dom: PointerEvent): void {
+    const d = this.drag();
+    if (d === null || d.pointerId !== dom.pointerId) {
+      return;
+    }
+    this.drag.set(null);
+    if (!d.active) {
+      return; // a plain click; let (click) handle selection
+    }
+    this.suppressClick = true;
+    const zone = this.resolvedZone();
+    const deltaMs = d.deltaMinutes * 60_000;
+    const targetResource = this.resourceAtPoint(dom.clientX, dom.clientY) ?? d.originResourceId;
+    if (deltaMs === 0 && targetResource === d.originResourceId) {
+      return; // no net change
+    }
+    const change: EventChange<TMeta> = {
+      kind: 'move',
+      event: ev.event,
+      start: this.adapter.toZoned(new Date(d.originStartMs + deltaMs), zone),
+      end: this.adapter.toZoned(new Date(d.originEndMs + deltaMs), zone),
+      resourceId: targetResource,
+    };
+    this.eventChanged.emit(change);
+  }
+
+  protected onEventPointerCancel(dom: PointerEvent): void {
+    const d = this.drag();
+    if (d !== null && d.pointerId === dom.pointerId) {
+      this.drag.set(null);
+    }
+  }
+
+  protected isDragging(ev: PositionedEvent<TMeta>): boolean {
+    const d = this.drag();
+    return d !== null && d.active && d.eventId === ev.event.id;
+  }
+
+  /** Live horizontal offset (px) for the block being dragged, else null. */
+  protected dragTransform(ev: PositionedEvent<TMeta>): string | null {
+    const d = this.drag();
+    if (d === null || !d.active || d.eventId !== ev.event.id) {
+      return null;
+    }
+    const px = d.deltaMinutes * (this.hourWidth() / 60);
+    return `translateX(${this.isRtl() ? -px : px}px)`;
+  }
+
+  /** Resolve the resource lane under a viewport point (for cross-lane reassignment). */
+  private resourceAtPoint(x: number, y: number): string | null {
+    if (typeof this.doc.elementFromPoint !== 'function') {
+      return null;
+    }
+    let el: Element | null;
+    try {
+      el = this.doc.elementFromPoint(x, y);
+    } catch {
+      return null;
+    }
+    const lane = el === null ? null : el.closest('.cal-tl__row');
+    return lane?.getAttribute('data-resource-id') ?? null;
+  }
+
+  private isRtl(): boolean {
+    return getComputedStyleSafe(this.host.nativeElement) === 'rtl';
   }
 
   protected onRowClick(row: ResourceRow<TMeta>, dom: MouseEvent): void {

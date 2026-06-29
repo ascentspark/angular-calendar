@@ -147,9 +147,15 @@ click → `slotSelected`). **Inline title edit** (double-click → field, Enter 
 **Keyboard grab-and-move/resize** (Enter grab, arrows move, Shift resize, Esc cancel — a11y).
 **External drag-in** on the timeline (`externalDrop` output resolves time + resource + payload;
 dep-free native DnD) — **verified via UI**: an unassigned job dragged onto a tech's lane became a
-scheduled job at the drop time and left the strip. All pointer flows **verified via real mouse drag**.
-**210 unit tests.** **Remaining:** in-grid move/resize on the timeline blocks themselves; touch
-long-press tuning.
+scheduled job at the drop time and left the strip. **In-grid block drag on the timeline** (Pointer
+Events): drag a dispatch block to **reschedule along the time axis and reassign across resource
+lanes** in one gesture — `drag` signal + live `translateX` preview, snap to `snapMinutes`,
+tap-vs-drag threshold, `setPointerCapture` (guarded), `touch-action:none`, duration preserved, drop
+resolves the target lane via `elementFromPoint` (SSR/jsdom-guarded) and emits `eventChanged`
+`kind:'move'` with `{start,end,resourceId}`. **Verified via real mouse drag**: "AC install" dragged
+from Alice 09:00 to Bob's lane at 14:30 reassigned + rescheduled (avatar followed). All pointer
+flows verified via real mouse drag. **228 unit tests.** **Remaining:** touch long-press tuning;
+edge-resize on timeline blocks (move shipped).
 
 Custom Pointer-Events engine: drag-move, drag-create, edge resize, snap, touch long-press,
 `dragState` signal + `computed` preview, `validateChange` veto, cancellable async commit

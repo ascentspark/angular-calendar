@@ -185,6 +185,7 @@
           [accentColor]="accent()"
           [statusColors]="statusColors"
           (externalDrop)="onExternalDrop($event)"
+          (eventChanged)="onJobChanged($event)"
         >
           <!-- Rich, consumer-defined job card (charter §1): avatar + title + status badge -->
           <ng-template calEventTemplate let-job>

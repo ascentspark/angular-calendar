@@ -63,6 +63,7 @@
       <div
         class="cal-tl__row"
         role="gridcell"
+        [attr.data-resource-id]="row.resource.id"
         [style.block-size.px]="rowHeightPx(row)"
         [attr.aria-label]="row.resource.name"
         (click)="onRowClick(row, $event)"
@@ -85,10 +86,16 @@
             class="cal-tl__event"
             [class.cal-tl__event--continues-before]="ev.continuesBefore"
             [class.cal-tl__event--continues-after]="ev.continuesAfter"
+            [class.cal-tl__event--dragging]="isDragging(ev)"
             [class]="ev.event.cssClass ?? ''"
             [style]="eventStyle(ev)"
+            [style.transform]="dragTransform(ev)"
             [attr.aria-label]="eventLabel(ev.event)"
             [attr.title]="tooltip(ev.event)"
+            (pointerdown)="onEventPointerDown(ev, row, $event)"
+            (pointermove)="onEventPointerMove($event)"
+            (pointerup)="onEventPointerUp(ev, $event)"
+            (pointercancel)="onEventPointerCancel($event)"
             (click)="onEventClick(ev.event, $event)"
           >
             @if (eventTemplate(); as tpl) {

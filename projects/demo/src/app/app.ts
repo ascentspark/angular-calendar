@@ -55,9 +55,9 @@ const z = (iso: string) => ({ epochMs: Date.parse(iso), zone: Z });
   styleUrl: './app.css',
 })
 export class App {
-  protected readonly view = signal<'month' | 'week' | 'day' | 'timeline' | 'weekrows' | 'agenda' | 'year'>(
-    'month',
-  );
+  protected readonly view = signal<
+    'month' | 'week' | 'day' | 'timeline' | 'weekrows' | 'agenda' | 'year'
+  >('month');
   protected readonly mode = signal<CalThemeMode>('light');
   /** Neutral anchor — tints every surface/ink. The whole UI derives from this. */
   protected readonly base = signal('#ffffff');
@@ -87,9 +87,7 @@ export class App {
   );
 
   /** Shown when the month view has been auto-swapped for the compact agenda. */
-  protected readonly compactFallback = computed(
-    () => this.narrow() && this.view() === 'month',
-  );
+  protected readonly compactFallback = computed(() => this.narrow() && this.view() === 'month');
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly platformId = inject(PLATFORM_ID);
@@ -449,7 +447,11 @@ export class App {
   }
 
   /** Assign a dropped unassigned job to the target lane at the drop time. */
-  protected onExternalDrop(e: { date: { epochMs: number; zone: string }; resourceId: string; data: string }): void {
+  protected onExternalDrop(e: {
+    date: { epochMs: number; zone: string };
+    resourceId: string;
+    data: string;
+  }): void {
     const job = this.unscheduled().find((u) => u.id === e.data);
     if (job === undefined) {
       return;
@@ -472,7 +474,9 @@ export class App {
     this.mode.update((m) => (m === 'light' ? 'dark' : 'light'));
   }
 
-  protected setView(view: 'month' | 'week' | 'day' | 'timeline' | 'weekrows' | 'agenda' | 'year'): void {
+  protected setView(
+    view: 'month' | 'week' | 'day' | 'timeline' | 'weekrows' | 'agenda' | 'year',
+  ): void {
     this.view.set(view);
   }
 
@@ -524,6 +528,22 @@ export class App {
     }
     const id = change.event.id;
     this.events.update((list) => list.map((e) => (e.id === id ? { ...e, start, end } : e)));
+  }
+
+  /** A timeline block was dragged: reschedule (and possibly reassign) the job. */
+  protected onJobChanged(change: EventChange): void {
+    if (change.event === null || change.start === undefined || change.end === undefined) {
+      return;
+    }
+    const id = change.event.id;
+    const start = change.start;
+    const end = change.end;
+    const resourceIds = change.resourceId !== undefined ? [change.resourceId] : undefined;
+    this.jobs.update((list) =>
+      list.map((j) =>
+        j.id === id ? { ...j, start, end, ...(resourceIds ? { resourceIds } : {}) } : j,
+      ),
+    );
   }
 
   protected cancelRecurringEdit(): void {

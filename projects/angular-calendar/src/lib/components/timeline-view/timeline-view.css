@@ -171,11 +171,18 @@
   font-size: 0.72rem;
   line-height: 1;
   text-align: start;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
   overflow: hidden;
   white-space: nowrap;
   box-shadow: 0 0 0 1px var(--cal-bg);
   z-index: 1;
+}
+.cal-tl__event--dragging {
+  cursor: grabbing;
+  z-index: 6;
+  opacity: 0.92;
+  box-shadow: 0 4px 14px var(--cal-scrim);
 }
 
 .cal-tl__event:focus-visible {

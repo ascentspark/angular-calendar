@@ -173,4 +173,89 @@ describe('CalTimelineView — external drop', () => {
     expect(drop!.resourceId).toBe('t1');
     expect(drop!.data).toBe('job-42');
   });
+
+  it('drags a block along the time axis and emits a move (duration preserved)', async () => {
+    const events: CalendarEvent[] = [
+      {
+        id: 'job1',
+        resourceIds: ['t1'],
+        title: 'Install',
+        start: at('2026-06-15T13:00:00Z'),
+        end: at('2026-06-15T14:00:00Z'),
+        status: 'scheduled',
+      },
+    ];
+    const { el, cmp } = await render({
+      events,
+      resources,
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      dayStartMinutes: 480,
+      dayEndMinutes: 1080,
+      headerGroupings: ['hour'],
+      hourWidth: 60, // 1px == 1 minute
+    });
+    let change: {
+      kind: string;
+      resourceId?: string;
+      start?: ZonedDateTime;
+      end?: ZonedDateTime;
+    } | null = null;
+    cmp.eventChanged.subscribe((c) => (change = c));
+
+    const block = el.querySelector<HTMLElement>('.cal-tl__event')!;
+    const fire = (type: string, clientX: number): void => {
+      const e = new Event(type, { bubbles: true });
+      Object.defineProperty(e, 'button', { value: 0 });
+      Object.defineProperty(e, 'pointerId', { value: 1 });
+      Object.defineProperty(e, 'clientX', { value: clientX });
+      Object.defineProperty(e, 'clientY', { value: 0 });
+      block.dispatchEvent(e);
+    };
+    fire('pointerdown', 100);
+    fire('pointermove', 160); // +60px → +60 min (snapped to 15)
+    fire('pointerup', 160);
+
+    expect(change).not.toBeNull();
+    expect(change!.kind).toBe('move');
+    expect(change!.resourceId).toBe('t1'); // jsdom elementFromPoint → keeps origin lane
+    expect(change!.start!.epochMs).toBe(Date.parse('2026-06-15T14:00:00Z'));
+    expect(change!.end!.epochMs).toBe(Date.parse('2026-06-15T15:00:00Z'));
+  });
+
+  it('does not emit a move for a click below the drag threshold', async () => {
+    const events: CalendarEvent[] = [
+      {
+        id: 'job1',
+        resourceIds: ['t1'],
+        title: 'Install',
+        start: at('2026-06-15T13:00:00Z'),
+        end: at('2026-06-15T14:00:00Z'),
+      },
+    ];
+    const { el, cmp } = await render({
+      events,
+      resources,
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      dayStartMinutes: 480,
+      dayEndMinutes: 1080,
+      headerGroupings: ['hour'],
+    });
+    let moved = false;
+    cmp.eventChanged.subscribe(() => (moved = true));
+    const block = el.querySelector<HTMLElement>('.cal-tl__event')!;
+    const fire = (type: string, clientX: number): void => {
+      const e = new Event(type, { bubbles: true });
+      Object.defineProperty(e, 'button', { value: 0 });
+      Object.defineProperty(e, 'pointerId', { value: 1 });
+      Object.defineProperty(e, 'clientX', { value: clientX });
+      Object.defineProperty(e, 'clientY', { value: 0 });
+      block.dispatchEvent(e);
+    };
+    fire('pointerdown', 100);
+    fire('pointermove', 102); // 2px < threshold
+    fire('pointerup', 102);
+    expect(moved).toBe(false);
+  });
 });
