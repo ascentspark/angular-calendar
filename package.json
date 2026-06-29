@@ -10,7 +10,8 @@
     "serve:ssr:demo": "node dist/demo/server/server.mjs",
     "lint": "ng lint",
     "format": "prettier --write \"projects/**/*.{ts,html,css,json}\"",
-    "check:size": "node scripts/check-bundle-size.mjs"
+    "check:size": "node scripts/check-bundle-size.mjs",
+    "e2e": "playwright test"
   },
   "private": true,
   "packageManager": "npm@11.12.1",
@@ -34,7 +35,9 @@
     "@angular/build": "^22.0.4",
     "@angular/cli": "^22.0.4",
     "@angular/compiler-cli": "^22.0.0",
+    "@axe-core/playwright": "^4.12.1",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",
     "@vitest/coverage-v8": "4.1.9",

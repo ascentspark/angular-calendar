@@ -97,21 +97,27 @@
   cursor: default;
 }
 
+/* Event-density heatmap. Each level pairs a background with the ink token proven
+   AA against THAT background (soft↔soft-ink, accent↔accent-ink) — mixing toward
+   the surface produced bgs that neither ink could be guaranteed against (it broke
+   in dark mode). Levels stay distinguishable via inset accent rings. */
 .cal-mini__day[data-density='1'] {
   background: var(--cal-accent-soft);
   color: var(--cal-accent-soft-ink);
 }
 .cal-mini__day[data-density='2'] {
-  background: color-mix(in oklab, var(--cal-accent) 35%, var(--cal-surface));
+  background: var(--cal-accent-soft);
   color: var(--cal-accent-soft-ink);
+  box-shadow: inset 0 0 0 1.5px var(--cal-accent);
 }
 .cal-mini__day[data-density='3'] {
-  background: color-mix(in oklab, var(--cal-accent) 60%, var(--cal-surface));
+  background: var(--cal-accent);
   color: var(--cal-accent-ink);
 }
 .cal-mini__day[data-density='4'] {
   background: var(--cal-accent);
   color: var(--cal-accent-ink);
+  box-shadow: inset 0 0 0 2px var(--cal-accent-ink);
 }
 
 .cal-mini__day--today {
