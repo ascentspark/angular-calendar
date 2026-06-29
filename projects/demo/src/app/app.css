@@ -64,3 +64,57 @@
 .page:not(.page--dark) .seg__btn--on {
   --seg-on-text: #fff;
 }
+
+.page__filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  max-width: 1000px;
+  margin: 0 auto 0.75rem;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+.chip__dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: var(--chip, #888);
+}
+.chip--off {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+.job {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  overflow: hidden;
+}
+.job__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.job__badge {
+  margin-inline-start: auto;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  padding: 0 0.3rem;
+  flex: 0 0 auto;
+}
