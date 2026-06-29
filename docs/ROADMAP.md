@@ -143,11 +143,13 @@ direction-agnostic create; property-tested) + `EventChange`/`EventChangeRequest`
 **Drag-move + edge-resize on the time-grid** via Pointer Events: `dragState` signal, live `computed`
 preview (no event mutation), snap to `snapMinutes`, `validateChange` veto, tap-vs-drag threshold,
 `setPointerCapture` (guarded), `touch-action:none` for touch. **Drag-create** on the time-grid (empty-grid drag → new event with dashed ghost preview, snap, slot
-click → `slotSelected`). Demo wired so week/day drag-move/resize/create update the store — **all three
-verified via real mouse drag in Playwright** (move 09:00→12:00 snapped; create produced a "New event"
-block; existing events intact). **160 unit tests.** **Remaining:** CDK external drag-in (unassigned
-list → lane), inline title edit (F2/Enter), full keyboard drag/resize, touch long-press tuning, and
-extending move/resize/create to the timeline view.
+click → `slotSelected`). **Inline title edit** (double-click → field, Enter commits, Escape cancels).
+**Keyboard grab-and-move/resize** (Enter grab, arrows move, Shift resize, Esc cancel — a11y).
+**External drag-in** on the timeline (`externalDrop` output resolves time + resource + payload;
+dep-free native DnD) — **verified via UI**: an unassigned job dragged onto a tech's lane became a
+scheduled job at the drop time and left the strip. All pointer flows **verified via real mouse drag**.
+**210 unit tests.** **Remaining:** in-grid move/resize on the timeline blocks themselves; touch
+long-press tuning.
 
 Custom Pointer-Events engine: drag-move, drag-create, edge resize, snap, touch long-press,
 `dragState` signal + `computed` preview, `validateChange` veto, cancellable async commit
@@ -236,8 +238,9 @@ surface — resource dispatch board (`<cal-timeline-view>`), 7-status theming vi
 filters** via `filterByStatus`, now-indicator, off-hours/block-out shading, resource-tree
 collapse — **all verified via UI** (rich cards render; toggling a status hides those jobs).
 `docs/ADOPTION.md` documents the reference adoption pattern (preset lives in the consumer, not
-core). **Remaining:** unscheduled-jobs strip + external CDK drag-in; an explicit week-as-rows
-preset; assignee-avatar card example.
+core). **Unscheduled-jobs strip + external drag-in** wired in the demo — **verified via UI** (drag
+an unassigned job onto a tech's lane → it schedules at the drop time and leaves the strip).
+**Remaining:** an explicit week-as-rows preset; assignee-avatar card example.
 
 A demo/preset proving the API against the "Lust for Dust" requirements: resource schedule,
 week-as-rows, 7-status theming, rich event cards, unscheduled strip, status filters,
