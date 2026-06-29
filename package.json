@@ -1,5 +1,5 @@
 {
-  "name": "angular-calendar",
+  "name": "angular-calendar-workspace",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -20,7 +20,10 @@
     "@angular/platform-server": "22.0.4",
     "@angular/router": "^22.0.0",
     "@angular/ssr": "22.0.4",
+    "date-fns": "4.4.0",
+    "date-fns-tz": "3.2.0",
     "express": "^5.1.0",
+    "rrule": "2.8.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -30,6 +33,7 @@
     "@angular/compiler-cli": "^22.0.0",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",
+    "fast-check": "3.23.2",
     "jsdom": "^28.0.0",
     "ng-packagr": "^22.0.0",
     "prettier": "^3.8.1",

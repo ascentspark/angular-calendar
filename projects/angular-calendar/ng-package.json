@@ -3,5 +3,6 @@
   "dest": "../../dist/angular-calendar",
   "lib": {
     "entryFile": "src/public-api.ts"
-  }
+  },
+  "allowedNonPeerDependencies": ["date-fns", "date-fns-tz", "rrule"]
 }
