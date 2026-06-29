@@ -167,17 +167,28 @@ exceptions, `parse`/`serialize` round-trip (Sun=0 ↔ rrule Mon=0 weekday mappin
 `expandRecurringEvents` pre-pass (concrete occurrences, preserved duration, `recurrenceId`).
 Three-way edit helpers: `addRecurrenceException` (this/delete) and `splitSeriesAt` (this-and-
 following, with a real `UNTIL`-naive-space bug fixed via cynical testing). `detectConflicts`
-(resource-aware sweep) + `filterByStatus`. **Recurrence wired into month + week + day views**
-(probe-window + expand) — **verified via UI**: a `FREQ=WEEKLY;BYDAY=WE` event renders on every
-Wednesday (Jun 17, 24, Jul 1). **186 unit tests** (TZ=UTC + DST). **Remaining:**
-`<cal-recurrence-editor>` standalone control (signal `model()` on the RRULE string); timeline
-recurrence wiring; tooltips/popovers (CDK overlay); density modes; "edit which occurrences?"
-prompt flow + `recurrenceEdit` output.
+(resource-aware sweep) + `filterByStatus`. **Recurrence wired into month + week + day + timeline
+views** (probe-window + expand) — **verified via UI** (a `FREQ=WEEKLY;BYDAY=WE` event renders on
+every Wednesday). **`<cal-recurrence-editor>`** standalone control done (signal `model()` on the
+RRULE string; frequency/interval/weekday/end; live preview; parse/serialize). **201 unit tests**
+(TZ=UTC + DST). **Remaining:** tooltips/popovers (CDK overlay); density modes; "edit which
+occurrences?" prompt flow + `recurrenceEdit` output.
 
 **Exit:** recurrence expansion property-tested (DST-correct); editor e2e; 3-way edit flows;
 overlap detection asserted.
 
-## Phase 7 — A11y + i18n + RTL + timezone + calendar systems + adaptive + perf hardening
+## Phase 7 — A11y + i18n + RTL + timezone + calendar systems + adaptive + perf hardening 🟡 IN PROGRESS
+
+**Done:** `CalCalendarA11y` (SR strings) from Phase 2; `CalCalendarIntl` provider for
+DI-overridable visible labels (all-day / no-events / resources-header / "+N"), wired across all
+views; roving-tabindex keyboard nav in month + year; reduced-motion in every component;
+calendar systems supported by the adapter (`getEra`/`format`) and used by month/year/timeline
+labels. **RTL verified via UI** — month mirrors correctly (weekday order, alignment, multi-day
+spans, recurring events) thanks to logical CSS properties throughout. **Remaining:** full
+documented keyboard map across time-grid/timeline; keyboard drag/resize; configurable
+timezone-picker; non-Gregorian wired through *every* view's day grid; responsive/adaptive
+(mobile drawer, swipe, month→agenda fallback); vertical-view virtualization; perf + bundle
+budgets as CI assertions; axe-zero gate across the full matrix.
 
 Full keyboard map, `CalCalendarA11y` strings, reduced-motion; `CalCalendarIntl`, locale,
 12/24h, **RTL in every view incl. timeline**; per-event timezone surfacing + a
@@ -191,7 +202,16 @@ extended to vertical views; perf budgets encoded as CI assertions.
 systems and adaptive (mobile) layout**; timezone picker honours the restricted subset; all
 perf budgets pass in CI; bundle-size budget passes.
 
-## Phase 8 — Docs, Storybook, demo, optional token bridge, publish
+## Phase 8 — Docs, Storybook, demo, optional token bridge, publish 🟡 IN PROGRESS
+
+**Done:** `/export` secondary entry with **RFC 5545 ICS** (UTC/all-day/RRULE, escaping,
+line-folding) and **RFC 4180 CSV** serialisation, both pure + unit-tested. Public
+`docs/ARCHITECTURE.md` + `docs/THEMING.md` (plus existing README/SECURITY/CONTRIBUTING/
+CODE_OF_CONDUCT/CHANGELOG from Phase 1). SSR-safe demo app exercising all six views + theme
+toggle. **Remaining:** Storybook (per-state, a11y addon, visual regression), print / print-to-PDF
+(`withPrint`/`print()` + print stylesheet), Excel export, `MIGRATION.md`, optional
+`withTokenBridge()`, multi-line repo hardening (Dependabot/CI/CodeQL/ruleset), and the CI-only
+`release.yml` tagged-publish workflow + `RELEASING.md`.
 
 Public docs (`README`, `ARCHITECTURE.md`, `THEMING.md`, `MIGRATION.md`, `SECURITY.md`),
 Storybook (per-state, a11y addon, visual-regression), demo app (SSR-safe), optional
