@@ -80,3 +80,7 @@ pnpm-debug.log*
 .npmrc
 .yarn/
 .pnp.*
+
+# Local visual-check scratch (not part of the repo)
+scratchpad-shots/
+.playwright-mcp/

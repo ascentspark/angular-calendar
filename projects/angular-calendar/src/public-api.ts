@@ -62,3 +62,28 @@ export {
   type CalendarFeature,
   type CalendarFeatureKind,
 } from './lib/core/config/provide-calendar';
+
+// ── View-models (month) ─────────────────────────────────────────────────────
+export { type ViewPeriod } from './lib/core/view-model/view-period';
+export { type PositionedChip } from './lib/core/view-model/positioned-chip';
+export {
+  type MonthDay,
+  type MonthWeek,
+  type MonthViewModel,
+  type MonthViewArgs,
+} from './lib/core/view-model/month-view-model';
+export { buildMonthView } from './lib/core/view-model/build-month-view';
+
+// ── Accessibility ───────────────────────────────────────────────────────────
+export { CalCalendarA11y } from './lib/a11y/cal-calendar-a11y';
+
+// ── Template-override directives ─────────────────────────────────────────────
+export { CalEventTemplate, type CalEventContext } from './lib/directives/cal-event-template';
+export { CalCellTemplate, type CalCellContext } from './lib/directives/cal-cell-template';
+export {
+  CalOverflowTemplate,
+  type CalOverflowContext,
+} from './lib/directives/cal-overflow-template';
+
+// ── Components ───────────────────────────────────────────────────────────────
+export { CalMonthView } from './lib/components/month-view/month-view';
