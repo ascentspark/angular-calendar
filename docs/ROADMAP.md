@@ -224,10 +224,18 @@ page-break-friendly). **Excel export** — dependency-free SpreadsheetML 2003 (`
 typed `DateTime` cells, XML-escaped) that Excel/Sheets/LibreOffice open natively. **All export paths
 verified through the demo UI** (Print → paginated agenda screenshot; CSV/Excel/ICS → real downloads
 inspected: valid SpreadsheetML, RFC 4180, VCALENDAR). Public `docs/ARCHITECTURE.md` + `docs/THEMING.md`
-(plus existing README/SECURITY/CONTRIBUTING/CODE_OF_CONDUCT/CHANGELOG from Phase 1). SSR-safe demo app
-exercising all six views + theme toggle + export toolbar. **Remaining:** Storybook (per-state, a11y
-addon, visual regression), `MIGRATION.md`, optional `withTokenBridge()`, multi-line repo hardening
-(Dependabot/CI/CodeQL/ruleset), and the CI-only `release.yml` tagged-publish workflow + `RELEASING.md`.
+(plus existing README/SECURITY/CONTRIBUTING/CODE_OF_CONDUCT/CHANGELOG from Phase 1) and
+`docs/MIGRATION.md`. SSR-safe demo app exercising all seven views + theme toggle + export toolbar.
+**`withTokenBridge()`** — the optional design-token adapter: `applyTheme` takes an optional
+`CalTokenBridge` overlay (re-applied after the derived theme so bridged `--cal-*` always win),
+`CAL_TOKEN_BRIDGE` is injected by every view, and `withTokenBridge({ '--cal-accent': '--brand' })`
+maps calendar tokens to a host's own design-system variables — **verified through the demo UI** (the
+host `--brand` token recolours the calendar accent — today pill — to pink while status colours and
+unbridged tokens keep their derived values). **CI-only release:** `release.yml` (tag-triggered
+build→test→`npm publish --provenance`) + `RELEASING.md` runbook + `ci.yml`/`codeql.yml` present.
+**Remaining:** Storybook (per-state, a11y addon, visual regression) and the multi-line
+(20.x/21.x) repo hardening (per-branch CI check names, multi-target Dependabot, branch ruleset) —
+both deferred until the maintenance branches are cut and the API stabilises.
 
 Public docs (`README`, `ARCHITECTURE.md`, `THEMING.md`, `MIGRATION.md`, `SECURITY.md`),
 Storybook (per-state, a11y addon, visual-regression), demo app (SSR-safe), optional

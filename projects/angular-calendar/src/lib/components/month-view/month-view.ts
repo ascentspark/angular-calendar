@@ -21,6 +21,7 @@ import { expandRecurringEvents } from '../../core/recurrence/expand-recurring-ev
 import type { MonthDay } from '../../core/view-model/month-view-model';
 import type { PositionedChip } from '../../core/view-model/positioned-chip';
 import { applyTheme } from '../../theme/apply-theme';
+import { CAL_TOKEN_BRIDGE } from '../../core/config/provide-calendar';
 import { deriveTheme, type CalThemeMode } from '../../theme/derive-theme';
 import { sanitizeStatusKey } from '../../theme/tokens';
 import { CalCalendarA11y } from '../../a11y/cal-calendar-a11y';
@@ -50,6 +51,7 @@ export class CalMonthView<TMeta = unknown> {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly adapter = inject(DATE_ADAPTER);
   private readonly config = inject(CALENDAR_CONFIG);
+  private readonly tokenBridge = inject(CAL_TOKEN_BRIDGE, { optional: true });
   private readonly recurrence = inject(RECURRENCE_ADAPTER, { optional: true });
   readonly a11y = inject(CalCalendarA11y);
   readonly intl = inject(CalCalendarIntl);
@@ -174,7 +176,7 @@ export class CalMonthView<TMeta = unknown> {
   });
 
   constructor() {
-    effect(() => applyTheme(this.host.nativeElement, this.theme()));
+    effect(() => applyTheme(this.host.nativeElement, this.theme(), this.tokenBridge));
     effect(() => {
       const period = this.viewModel().period;
       this.viewPeriodChanged.emit(period);

@@ -5,7 +5,7 @@
 
 // ── Theming engine ──────────────────────────────────────────────────────────
 export { deriveTheme, type CalThemeMode } from './lib/theme/derive-theme';
-export { applyTheme } from './lib/theme/apply-theme';
+export { applyTheme, type CalTokenBridge } from './lib/theme/apply-theme';
 export {
   COLOR_TOKEN_NAMES,
   STATIC_TOKEN_NAMES,
@@ -78,6 +78,8 @@ export {
   provideCalendar,
   withDefaults,
   withDateAdapter,
+  withTokenBridge,
+  CAL_TOKEN_BRIDGE,
   type CalendarFeature,
   type CalendarFeatureKind,
 } from './lib/core/config/provide-calendar';

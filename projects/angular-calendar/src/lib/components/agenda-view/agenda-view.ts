@@ -15,6 +15,7 @@ import type { CalendarEvent } from '../../core/model/calendar-event';
 import { buildAgendaView } from '../../core/view-model/build-agenda-view';
 import type { AgendaDay } from '../../core/view-model/agenda-view-model';
 import { applyTheme } from '../../theme/apply-theme';
+import { CAL_TOKEN_BRIDGE } from '../../core/config/provide-calendar';
 import { deriveTheme, type CalThemeMode } from '../../theme/derive-theme';
 import { sanitizeStatusKey } from '../../theme/tokens';
 import { CalCalendarA11y } from '../../a11y/cal-calendar-a11y';
@@ -39,6 +40,7 @@ export class CalAgendaView<TMeta = unknown> {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly adapter = inject(DATE_ADAPTER);
   private readonly config = inject(CALENDAR_CONFIG);
+  private readonly tokenBridge = inject(CAL_TOKEN_BRIDGE, { optional: true });
   readonly a11y = inject(CalCalendarA11y);
   readonly intl = inject(CalCalendarIntl);
 
@@ -87,7 +89,7 @@ export class CalAgendaView<TMeta = unknown> {
   });
 
   constructor() {
-    effect(() => applyTheme(this.host.nativeElement, this.theme()));
+    effect(() => applyTheme(this.host.nativeElement, this.theme(), this.tokenBridge));
   }
 
   protected dayHeading(day: AgendaDay<TMeta>): string {
