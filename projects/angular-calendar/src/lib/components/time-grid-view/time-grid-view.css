@@ -258,3 +258,15 @@
     transition: none !important;
   }
 }
+
+.cal-tg__inline {
+  inline-size: 100%;
+  font: inherit;
+  font-size: 0.7rem;
+  border: 0;
+  border-radius: var(--cal-radius-sm);
+  padding: 0.1rem 0.25rem;
+  background: var(--cal-bg);
+  color: var(--cal-ink);
+  outline: 2px solid var(--cal-ring);
+}

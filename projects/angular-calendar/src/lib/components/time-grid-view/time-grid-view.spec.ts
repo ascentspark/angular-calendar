@@ -237,3 +237,65 @@ describe('CalTimeGridView — resize & veto', () => {
     expect(slot).toBe(1);
   });
 });
+
+describe('CalTimeGridView — inline edit', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('double-click reveals an input that commits a new title via eventChanged', async () => {
+    const ev: CalendarEvent = { id: 'a', title: 'Old', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T14:00:00Z') };
+    const { el, cmp, fixture } = await renderWithFixture({
+      events: [ev],
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      anchorToWeek: false,
+    });
+    let change: { kind: string; title?: string } | null = null;
+    cmp.eventChanged.subscribe((c) => (change = c));
+    const eventEl = el.querySelector<HTMLButtonElement>('.cal-tg__event')!;
+    eventEl.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const input = el.querySelector<HTMLInputElement>('.cal-tg__inline');
+    expect(input).toBeTruthy();
+    input!.value = 'New title';
+    input!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(change).not.toBeNull();
+    expect(change!.kind).toBe('inline-edit');
+    expect(change!.title).toBe('New title');
+  });
+
+  it('Escape cancels the inline edit without emitting', async () => {
+    const ev: CalendarEvent = { id: 'a', title: 'Old', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T14:00:00Z') };
+    const { el, cmp, fixture } = await renderWithFixture({
+      events: [ev],
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      anchorToWeek: false,
+    });
+    let emitted = false;
+    cmp.eventChanged.subscribe(() => (emitted = true));
+    el.querySelector<HTMLButtonElement>('.cal-tg__event')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const input = el.querySelector<HTMLInputElement>('.cal-tg__inline')!;
+    input.value = 'changed';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(emitted).toBe(false);
+    expect(el.querySelector('.cal-tg__inline')).toBeNull();
+  });
+});
+
+async function renderWithFixture(inputs: Record<string, unknown>) {
+  TestBed.configureTestingModule({
+    providers: [provideCalendar(withDateAdapter(provideDateFnsAdapter()))],
+  });
+  const fixture = TestBed.createComponent(CalTimeGridView);
+  for (const [k, v] of Object.entries(inputs)) {
+    fixture.componentRef.setInput(k, v);
+  }
+  await fixture.whenStable();
+  fixture.detectChanges();
+  return { el: fixture.nativeElement as HTMLElement, cmp: fixture.componentInstance, fixture };
+}
