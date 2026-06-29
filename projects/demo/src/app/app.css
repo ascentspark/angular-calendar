@@ -118,3 +118,31 @@
   padding: 0 0.3rem;
   flex: 0 0 auto;
 }
+
+.unsched {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  max-width: 1000px;
+  margin: 0 auto 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px dashed currentColor;
+  border-radius: 8px;
+}
+.unsched__label {
+  font-size: 0.78rem;
+  opacity: 0.7;
+}
+.unsched__item {
+  font-size: 0.78rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  background: #3b82f6;
+  color: #fff;
+  cursor: grab;
+  user-select: none;
+}
+.unsched__item:active {
+  cursor: grabbing;
+}
