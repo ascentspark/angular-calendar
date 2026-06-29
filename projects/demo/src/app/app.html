@@ -80,6 +80,7 @@
       <button type="button" class="ghostbtn" (click)="exportCsv()" data-testid="export-csv">CSV</button>
       <button type="button" class="ghostbtn" (click)="exportExcel()" data-testid="export-excel">Excel</button>
       <button type="button" class="ghostbtn" (click)="exportIcs()" data-testid="export-ics">ICS</button>
+      <button type="button" class="ghostbtn" (click)="toggleDensity()" data-testid="toggle-density" [attr.aria-pressed]="density() === 'compact'">{{ density() === 'compact' ? 'Cozy' : 'Compact' }}</button>
     </div>
   </nav>
 
@@ -129,6 +130,7 @@
           [anchorToWeek]="true"
           [dayStartMinutes]="360"
           [dayEndMinutes]="1320"
+          [density]="density()"
           [themeMode]="mode()"
           [baseColor]="base()"
           [accentColor]="accent()"
@@ -146,6 +148,7 @@
           [anchorToWeek]="false"
           [dayStartMinutes]="0"
           [dayEndMinutes]="1440"
+          [density]="density()"
           [themeMode]="mode()"
           [baseColor]="base()"
           [accentColor]="accent()"

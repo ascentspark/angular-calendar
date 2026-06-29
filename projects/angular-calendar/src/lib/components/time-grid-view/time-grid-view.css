@@ -295,3 +295,22 @@
     print-color-adjust: exact;
   }
 }
+
+/* Compact density: tighter hour rows + type for dense day/week schedules. */
+:host(.cal-tg--compact) {
+  --cal-tg-hour: 2rem;
+  --cal-tg-allday-row: 1.15rem;
+}
+:host(.cal-tg--compact) .cal-tg__event {
+  font-size: 0.65rem;
+  padding: 0.08rem 0.3rem;
+}
+:host(.cal-tg--compact) .cal-tg__tick-label,
+:host(.cal-tg--compact) .cal-tg__colhead-wd {
+  font-size: 0.6rem;
+}
+:host(.cal-tg--compact) .cal-tg__colhead-day {
+  min-inline-size: 1.4em;
+  block-size: 1.4em;
+  font-size: 0.72rem;
+}
