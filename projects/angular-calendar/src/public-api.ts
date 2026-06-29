@@ -104,6 +104,12 @@ export {
   type TimelineViewArgs,
 } from './lib/core/view-model/timeline-view-model';
 export { buildTimelineView } from './lib/core/view-model/build-timeline-view';
+export {
+  type AgendaDay,
+  type AgendaViewModel,
+  type AgendaViewArgs,
+} from './lib/core/view-model/agenda-view-model';
+export { buildAgendaView } from './lib/core/view-model/build-agenda-view';
 
 // ── Accessibility ───────────────────────────────────────────────────────────
 export { CalCalendarA11y } from './lib/a11y/cal-calendar-a11y';
@@ -125,3 +131,4 @@ export { CalMonthView } from './lib/components/month-view/month-view';
 export { CalYearView } from './lib/components/year-view/year-view';
 export { CalTimeGridView } from './lib/components/time-grid-view/time-grid-view';
 export { CalTimelineView } from './lib/components/timeline-view/timeline-view';
+export { CalAgendaView } from './lib/components/agenda-view/agenda-view';

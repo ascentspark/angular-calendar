@@ -7,6 +7,7 @@
         <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'week'" (click)="setView('week')" data-testid="view-week">Week</button>
         <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'day'" (click)="setView('day')" data-testid="view-day">Day</button>
         <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'timeline'" (click)="setView('timeline')" data-testid="view-timeline">Timeline</button>
+        <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'agenda'" (click)="setView('agenda')" data-testid="view-agenda">Agenda</button>
         <button type="button" class="seg__btn" [class.seg__btn--on]="view() === 'year'" (click)="setView('year')" data-testid="view-year">Year</button>
       </div>
       <button type="button" class="btn" (click)="toggleMode()" data-testid="toggle-mode">
@@ -70,6 +71,17 @@
           [dayEndMinutes]="1260"
           [headerGroupings]="['day', 'hour']"
           [hourWidth]="80"
+          [themeMode]="mode()"
+          [accentColor]="accent()"
+          [statusColors]="statusColors"
+        />
+      }
+      @case ('agenda') {
+        <cal-agenda-view
+          [events]="events"
+          [viewDate]="viewDate"
+          [today]="today"
+          [days]="10"
           [themeMode]="mode()"
           [accentColor]="accent()"
           [statusColors]="statusColors"

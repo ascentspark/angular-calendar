@@ -1,0 +1,92 @@
+:host {
+  display: block;
+  container-type: inline-size;
+  background: var(--cal-bg);
+  color: var(--cal-ink);
+  font-family: inherit;
+}
+
+.cal-agenda__day {
+  border-block-end: 1px solid var(--cal-grid-line);
+  padding: 0.5rem 0.75rem 0.75rem;
+}
+
+.cal-agenda__date {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--cal-ink-700);
+}
+
+.cal-agenda__day--today .cal-agenda__date {
+  color: var(--cal-accent);
+}
+
+.cal-agenda__empty {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--cal-ink-faint);
+}
+
+.cal-agenda__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cal-agenda__row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  inline-size: 100%;
+  border: 0;
+  background: var(--cal-surface);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--cal-radius-sm);
+  cursor: pointer;
+}
+
+.cal-agenda__row:hover {
+  background: var(--cal-surface-2);
+}
+
+.cal-agenda__row:focus-visible {
+  outline: 2px solid var(--cal-ring);
+}
+
+.cal-agenda__dot {
+  inline-size: 0.6rem;
+  block-size: 0.6rem;
+  border-radius: var(--cal-radius-pill);
+  flex: 0 0 auto;
+}
+
+.cal-agenda__time {
+  font-size: 0.74rem;
+  color: var(--cal-ink-muted);
+  font-variant-numeric: tabular-nums;
+  min-inline-size: 9.5em;
+  flex: 0 0 auto;
+}
+
+.cal-agenda__title {
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@container (max-width: 420px) {
+  .cal-agenda__row {
+    flex-wrap: wrap;
+  }
+  .cal-agenda__time {
+    min-inline-size: 0;
+  }
+}
