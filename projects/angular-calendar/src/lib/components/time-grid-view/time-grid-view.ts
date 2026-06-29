@@ -409,6 +409,11 @@ export class CalTimeGridView<TMeta = unknown> {
     const snap = this.snapMinutes() ?? this.config.snapMinutes;
 
     if (!grabbing) {
+      if (dom.key === 'F2') {
+        // F2 is the conventional "rename" key — make inline edit keyboard-reachable.
+        this.startInlineEdit(ev, dom);
+        return;
+      }
       if (dom.key === 'Enter' || dom.key === ' ') {
         if (!this.editable() || ev.event.isReadonly === true || ev.event.editable === false) {
           return;
