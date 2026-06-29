@@ -68,7 +68,20 @@ calendar-system) + packing have ≥95% coverage incl. DST cases; CI green on all
 lines (distinct check names); published-package manifest shape correct (peerDeps pin the
 line's major); `npm pack` dry-run clean. **Gate review.**
 
-## Phase 2 — Month view + Year view
+## Phase 2 — Month view + Year view 🟡 IN PROGRESS
+
+**Done:** `buildMonthView` (grid, cross-week multi-day chip packing via the interval-tree
+row packer, overflow counting) + `<cal-month-view>` (spanning chips, status colours,
+selection, click outputs, `viewPeriodChanged`, default + overridable templates via
+`*calCellTemplate`/`*calEventTemplate`/`*calOverflow`, ARIA grid semantics, roving-tabindex
+arrow-key navigation, "+N more"). `buildYearView` + `<cal-year-view>` (12 mini-months,
+event-density heat + dots, today, drill-down day/month, non-Gregorian labels, roving
+keyboard). `CalCalendarA11y` DI provider. **106 unit tests** (TZ=UTC + DST). Demo app with a
+Month/Year toggle + light/dark theme switch — **visually verified via Playwright** (month
+light+dark, year light): spanning, status colours, today pill, density all correct.
+**Remaining:** richer "+N more" CDK-overlay popover (currently the control selects the day);
+formal Playwright e2e + axe-zero gate + committed screenshot baselines (light/dark/RTL); RTL
+visual pass (CSS already uses logical properties). These land with the shared e2e/axe harness.
 
 `<cal-month-view>` (chips, "+N more" overflow popover, multi-day spans, today, selection),
 default templates + override directives, a11y grid semantics, theming applied. Plus
