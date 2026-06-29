@@ -38,8 +38,14 @@
     }
   </div>
 
+  @if (compactFallback()) {
+    <p class="page__compact" data-testid="compact-banner" role="status">
+      📱 Compact screen — showing the agenda instead of the month grid.
+    </p>
+  }
+
   <section class="page__demo" data-testid="calendar-demo">
-    @switch (view()) {
+    @switch (effectiveView()) {
       @case ('month') {
         <cal-month-view
           [events]="filteredEvents()"
