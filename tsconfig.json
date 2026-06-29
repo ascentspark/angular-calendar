@@ -6,10 +6,14 @@
     "paths": {
       "angular-calendar": ["./dist/angular-calendar"]
     },
+    "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "isolatedModules": true,
     "experimentalDecorators": true,
@@ -20,7 +24,9 @@
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
-    "strictInputAccessModifiers": true
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true,
+    "typeCheckHostBindings": true
   },
   "files": [],
   "references": [
