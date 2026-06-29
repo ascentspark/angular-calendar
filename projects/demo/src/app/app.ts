@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  PLATFORM_ID,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import {
   eventsToCsv,
   eventsToIcs,
@@ -43,6 +53,35 @@ export class App {
   );
   protected readonly mode = signal<CalThemeMode>('light');
   protected readonly accent = signal('#3b82f6');
+
+  /** True when the demo viewport is phone-narrow (drives month→agenda fallback). */
+  protected readonly narrow = signal(false);
+
+  /**
+   * The view actually rendered. On a phone-narrow screen the dense month grid is
+   * impractical, so it degrades to the agenda list — the SPEC's adaptive fallback.
+   */
+  protected readonly effectiveView = computed(() =>
+    this.narrow() && this.view() === 'month' ? 'agenda' : this.view(),
+  );
+
+  /** Shown when the month view has been auto-swapped for the compact agenda. */
+  protected readonly compactFallback = computed(
+    () => this.narrow() && this.view() === 'month',
+  );
+
+  constructor() {
+    const platformId = inject(PLATFORM_ID);
+    const host = inject<ElementRef<HTMLElement>>(ElementRef);
+    if (isPlatformBrowser(platformId) && typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width ?? 0;
+        this.narrow.set(width > 0 && width < 600);
+      });
+      ro.observe(host.nativeElement);
+      effect((onCleanup) => onCleanup(() => ro.disconnect()));
+    }
+  }
 
   protected readonly viewDate = z('2026-06-15T16:00:00Z');
   protected readonly today = z('2026-06-15T16:00:00Z');

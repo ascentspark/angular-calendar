@@ -200,6 +200,14 @@ the Phase-1 adapter primitives; **responsive/adaptive layout** (container-query 
 mobile drawer, single-resource collapse, swipe nav, month→agenda fallback); virtualization
 extended to vertical views; perf budgets encoded as CI assertions.
 
+**Adaptive done:** every view host is `container-type: inline-size`; agenda + year carry
+`@container` breakpoints, and **month + time-grid now tighten at ≤640/≤420px** (smaller day
+numbers, denser chips, condensed weekday rail) so they stay tappable on a phone without
+horizontal scroll. The **month→agenda fallback** is demonstrated in the demo: a `ResizeObserver`
+drives a `narrow` signal, and below 600px the dense month grid auto-degrades to the agenda list
+with a "compact screen" status banner — **verified via UI** (390px → agenda + banner; 1200px →
+month grid restored).
+
 **Exit:** axe zero-violations gate across all views/modes/orientations/RTL **and calendar
 systems and adaptive (mobile) layout**; timezone picker honours the restricted subset; all
 perf budgets pass in CI; bundle-size budget passes.

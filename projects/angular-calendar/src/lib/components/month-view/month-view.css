@@ -166,9 +166,42 @@
   }
 }
 
+/* Adaptive: tighten the grid as the host narrows toward phone widths so the
+   month stays legible and tappable without horizontal scroll. */
+@container (max-width: 640px) {
+  :host {
+    --cal-day-head: 1.4rem;
+    --cal-chip-row: 1.2rem;
+  }
+  .cal-day__num {
+    font-size: 0.72rem;
+  }
+  .cal-chip {
+    font-size: 0.66rem;
+    padding-inline: 0.3rem;
+  }
+  .cal-month__weekday {
+    padding: 0.3rem 0.35rem;
+    font-size: 0.64rem;
+  }
+}
+
+@container (max-width: 420px) {
+  .cal-month__weekday {
+    padding: 0.25rem 0.2rem;
+    letter-spacing: 0;
+  }
+  .cal-day__head {
+    padding-inline: 0.25rem;
+  }
+  .cal-chip {
+    padding-inline: 0.22rem;
+  }
+}
+
 /* Print: faithful colours, page-break friendly weeks. */
 @media print {
-  .cal-month__chip {
+  .cal-chip {
     box-shadow: none;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
