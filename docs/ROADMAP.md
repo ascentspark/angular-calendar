@@ -172,9 +172,15 @@ following, with a real `UNTIL`-naive-space bug fixed via cynical testing). `dete
 (resource-aware sweep) + `filterByStatus`. **Recurrence wired into month + week + day + timeline
 views** (probe-window + expand) — **verified via UI** (a `FREQ=WEEKLY;BYDAY=WE` event renders on
 every Wednesday). **`<cal-recurrence-editor>`** standalone control done (signal `model()` on the
-RRULE string; frequency/interval/weekday/end; live preview; parse/serialize). **201 unit tests**
-(TZ=UTC + DST). **Remaining:** tooltips/popovers (CDK overlay); density modes; "edit which
-occurrences?" prompt flow + `recurrenceEdit` output.
+RRULE string; frequency/interval/weekday/end; live preview; parse/serialize). Native `title`
+tooltips on time-grid + timeline events (full title + localized time range). **Three-way
+"edit which occurrences?" flow** — editing a recurring occurrence (it carries `recurrenceId`)
+raises a This / This-and-following / All prompt; the demo applies it through the pure core helpers
+(`addRecurrenceException` for *this* → series exception + detached concrete event; `splitSeriesAt`
+for *following* → `UNTIL`-terminated head + new tail series; series mutation for *all*) —
+**verified via UI** (renamed one Wednesday: *All* relabelled every Wednesday; *This* relabelled
+only that date and left the rest). **201 unit tests** (TZ=UTC + DST). **Remaining:** density
+modes; richer CDK-overlay popovers (native `title` tooltips ship now).
 
 **Exit:** recurrence expansion property-tested (DST-correct); editor e2e; 3-way edit flows;
 overlap detection asserted.

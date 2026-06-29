@@ -191,4 +191,36 @@
       }
     }
   </section>
+
+  @if (pendingRecurringEdit(); as pending) {
+    <div class="rdialog__scrim" (click)="cancelRecurringEdit()">
+      <div
+        class="rdialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rdialog-title"
+        data-testid="recur-prompt"
+        (click)="$event.stopPropagation()"
+      >
+        <h2 class="rdialog__title" id="rdialog-title">Edit recurring event</h2>
+        <p class="rdialog__body">
+          “{{ pending.change.event?.title }}” repeats. Apply your change to:
+        </p>
+        <div class="rdialog__actions">
+          <button type="button" class="btn" (click)="applyRecurringEdit('this')" data-testid="recur-this">
+            This occurrence
+          </button>
+          <button type="button" class="btn" (click)="applyRecurringEdit('following')" data-testid="recur-following">
+            This &amp; following
+          </button>
+          <button type="button" class="btn" (click)="applyRecurringEdit('all')" data-testid="recur-all">
+            All occurrences
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="cancelRecurringEdit()" data-testid="recur-cancel">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </main>
