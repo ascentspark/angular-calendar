@@ -1,5 +1,13 @@
+# Dependabot lives only on the default branch (main) and manages every release line
+# via separate `target-branch` entries. Each npm entry ignores Angular *major* bumps so a
+# line never jumps majors automatically; the older lines additionally ignore TypeScript
+# *major* bumps (an Angular major pins a TS range — a TS-major bump would break the build).
+#
+# The 21.x / 20.x entries below activate when those maintenance branches are cut (see
+# docs/REPO-HARDENING.md); until then Dependabot simply skips the missing target-branch.
 version: 2
 updates:
+  # ── 22.x line (default branch `main`) ──────────────────────────────────────
   - package-ecosystem: npm
     directory: "/"
     schedule:
@@ -14,6 +22,46 @@ updates:
     ignore:
       - dependency-name: "@angular/*"
         update-types: ["version-update:semver-major"]
+
+  # ── 21.x maintenance line ──────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: "/"
+    target-branch: "21.x"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "21.x"]
+    groups:
+      angular:
+        patterns: ["@angular/*", "@angular-devkit/*", "ng-packagr", "angular-eslint"]
+      dev-dependencies:
+        dependency-type: development
+    ignore:
+      - dependency-name: "@angular/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
+  # ── 20.x maintenance line ──────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: "/"
+    target-branch: "20.x"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "20.x"]
+    groups:
+      angular:
+        patterns: ["@angular/*", "@angular-devkit/*", "ng-packagr", "angular-eslint"]
+      dev-dependencies:
+        dependency-type: development
+    ignore:
+      - dependency-name: "@angular/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
+  # ── GitHub Actions (default branch) ────────────────────────────────────────
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
