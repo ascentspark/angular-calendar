@@ -1,0 +1,81 @@
+<div class="cal-month" role="grid" [attr.aria-label]="'Month view'" (keydown)="onGridKeydown($event)">
+  <div class="cal-month__weekdays" role="row">
+    @for (wd of weekdayLabels(); track $index) {
+      <div class="cal-month__weekday" role="columnheader">
+        <span aria-hidden="true">{{ wd.short }}</span>
+      </div>
+    }
+  </div>
+
+  @for (week of viewModel().weeks; track trackWeek($index)) {
+    <div class="cal-month__week" role="row" [style.--cal-week-lanes]="weekLanes(week)">
+      @for (day of week.days; track trackDay($index, day); let col = $index) {
+        <div
+          class="cal-day"
+          role="gridcell"
+          [attr.aria-label]="dayLabel(day)"
+          [attr.aria-selected]="isSelected(day)"
+          [attr.tabindex]="isFocusTarget(day) ? 0 : -1"
+          [attr.data-col]="col"
+          [attr.data-epoch]="day.date.epochMs"
+          [class.cal-day--out]="!day.inMonth"
+          [class.cal-day--today]="day.isToday"
+          [class.cal-day--weekend]="day.isWeekend"
+          [class.cal-day--selected]="isSelected(day)"
+          (click)="onDayClick(day)"
+        >
+          @if (cellTemplate(); as tpl) {
+            <ng-container
+              [ngTemplateOutlet]="tpl.template"
+              [ngTemplateOutletContext]="{ $implicit: day }"
+            />
+          } @else {
+            <div class="cal-day__head">
+              <span class="cal-day__num" aria-hidden="true">{{ dayNumber(day) }}</span>
+            </div>
+
+            @for (chip of day.events; track trackChip($index, chip)) {
+              <button
+                type="button"
+                class="cal-chip"
+                [class.cal-chip--continues-before]="chip.continuesBefore"
+                [class.cal-chip--continues-after]="chip.continuesAfter"
+                [class]="chip.event.cssClass ?? ''"
+                [style]="chipStyle(chip)"
+                [attr.aria-label]="eventLabel(chip.event)"
+                (click)="onEventClick(chip.event, $event)"
+              >
+                @if (eventTemplate(); as etpl) {
+                  <ng-container
+                    [ngTemplateOutlet]="etpl.template"
+                    [ngTemplateOutletContext]="{ $implicit: chip.event, chip }"
+                  />
+                } @else {
+                  <span class="cal-chip__title">{{ chip.event.title }}</span>
+                }
+              </button>
+            }
+
+            @if (day.overflowCount > 0) {
+              @if (overflowTemplate(); as otpl) {
+                <ng-container
+                  [ngTemplateOutlet]="otpl.template"
+                  [ngTemplateOutletContext]="{ $implicit: day.overflowCount, day }"
+                />
+              } @else {
+                <button
+                  type="button"
+                  class="cal-day__more"
+                  [attr.aria-label]="moreLabel(day.overflowCount)"
+                  (click)="onDayClick(day)"
+                >
+                  +{{ day.overflowCount }}
+                </button>
+              }
+            }
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
