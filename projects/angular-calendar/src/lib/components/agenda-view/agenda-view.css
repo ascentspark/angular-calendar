@@ -4,6 +4,9 @@
   background: var(--cal-bg);
   color: var(--cal-ink);
   font-family: inherit;
+  /* Fill a tall container; the day list scrolls when longer than the viewport. */
+  block-size: 100%;
+  overflow-y: auto;
 }
 
 .cal-agenda__day {

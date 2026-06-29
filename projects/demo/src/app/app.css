@@ -3,7 +3,8 @@
    whole interface follows: this IS the adaptability story. No hard-coded hues. */
 
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
   min-block-size: 100vh;
   background: var(--cal-bg, #fff);
   color: var(--cal-ink, #18181b);
@@ -18,6 +19,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  flex: 1 1 auto;
+  min-block-size: 0;
   inline-size: min(100% - 2.5rem, var(--content));
   margin-inline: auto;
   padding-block: 1.6rem 2.5rem;
@@ -306,6 +309,15 @@
   box-shadow:
     0 1px 2px var(--cal-scrim, rgba(0, 0, 0, 0.04)),
     0 12px 28px -18px var(--cal-scrim, rgba(0, 0, 0, 0.18));
+  /* Fill the remaining viewport height; the active view stretches/scrolls inside. */
+  flex: 1 1 auto;
+  min-block-size: 0;
+  display: flex;
+  flex-direction: column;
+}
+.panel > *:last-child {
+  flex: 1 1 auto;
+  min-block-size: 0;
 }
 
 /* ── Field-service job card (consumer template) ──────────────────────────── */

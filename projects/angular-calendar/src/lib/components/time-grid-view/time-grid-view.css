@@ -1,11 +1,14 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
   container-type: inline-size;
   background: var(--cal-bg);
   color: var(--cal-ink);
   font-family: inherit;
+  /* Fill a tall container and scroll when the day is taller than it. */
+  overflow: auto;
 
-  --cal-tg-hour: 3rem; /* height of one hour row */
+  --cal-tg-hour: 3rem; /* min height of one hour row (grows to fill) */
   --cal-tg-gutter-w: 3.5rem;
   --cal-tg-allday-row: 1.4rem;
 }
@@ -20,6 +23,9 @@
     'gutter cols';
   border-block-start: 1px solid var(--cal-grid-line);
   border-inline-start: 1px solid var(--cal-grid-line);
+  /* Grow to fill the host (a flex column); the gutter/cols carry their hour-based
+     min-height, so the hours stretch to fill and a long day overflows + scrolls. */
+  flex: 1 1 auto;
 }
 
 .cal-tg__corner {
@@ -128,7 +134,7 @@
 .cal-tg__gutter {
   grid-area: gutter;
   position: relative;
-  block-size: calc(var(--cal-tg-hours) * var(--cal-tg-hour));
+  min-block-size: calc(var(--cal-tg-hours) * var(--cal-tg-hour));
   border-inline-end: 1px solid var(--cal-grid-line);
 }
 
@@ -151,7 +157,7 @@
   grid-area: cols;
   display: grid;
   grid-template-columns: repeat(var(--cal-tg-cols), 1fr);
-  block-size: calc(var(--cal-tg-hours) * var(--cal-tg-hour));
+  min-block-size: calc(var(--cal-tg-hours) * var(--cal-tg-hour));
 }
 
 .cal-tg__col {
