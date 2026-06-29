@@ -7,6 +7,9 @@
       "@ascentsparksoftware/angular-calendar": ["./projects/angular-calendar/src/public-api.ts"],
       "@ascentsparksoftware/angular-calendar/date-fns": [
         "./projects/angular-calendar/date-fns/src/public-api.ts"
+      ],
+      "@ascentsparksoftware/angular-calendar/recurrence": [
+        "./projects/angular-calendar/recurrence/src/public-api.ts"
       ]
     },
     "strict": true,
