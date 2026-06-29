@@ -86,3 +86,7 @@ scratchpad-shots/
 .playwright-mcp/
 /month-*.png
 /page-*.png
+
+# impeccable design-process context (not shipped)
+PRODUCT.md
+DESIGN.md

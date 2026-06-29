@@ -23,6 +23,8 @@ import {
   CalYearView,
   CalEventTemplate,
   filterByStatus,
+  deriveTheme,
+  applyTheme,
   DATE_ADAPTER,
   RECURRENCE_ADAPTER,
   addRecurrenceException,
@@ -57,7 +59,21 @@ export class App {
     'month',
   );
   protected readonly mode = signal<CalThemeMode>('light');
-  protected readonly accent = signal('#3b82f6');
+  /** Neutral anchor — tints every surface/ink. The whole UI derives from this. */
+  protected readonly base = signal('#ffffff');
+  /** Interactive accent — drives selection, today, focus, primary actions. */
+  protected readonly accent = signal('#4f46e5');
+
+  /** Quick-pick palettes so the adaptability is one tap away. */
+  protected readonly accentSwatches = ['#4f46e5', '#0d9488', '#e11d48', '#ea580c', '#2563eb'];
+  protected readonly baseSwatches = ['#ffffff', '#f5f3ef', '#eef2f6', '#f4f1fa'];
+
+  protected setAccent(hex: string): void {
+    this.accent.set(hex);
+  }
+  protected setBase(hex: string): void {
+    this.base.set(hex);
+  }
 
   /** True when the demo viewport is phone-narrow (drives month→agenda fallback). */
   protected readonly narrow = signal(false);
@@ -75,15 +91,24 @@ export class App {
     () => this.narrow() && this.view() === 'month',
   );
 
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly platformId = inject(PLATFORM_ID);
+
   constructor() {
-    const platformId = inject(PLATFORM_ID);
-    const host = inject<ElementRef<HTMLElement>>(ElementRef);
-    if (isPlatformBrowser(platformId) && typeof ResizeObserver !== 'undefined') {
+    // Derive the full `--cal-*` token set from base + accent + mode and apply it to
+    // the demo host, so the *entire* shell (top bar, panel, controls) themes off the
+    // same contract as the calendar — change a colour and everything follows.
+    effect(() => {
+      const tokens = deriveTheme(this.base(), this.accent(), this.mode(), this.statusColors);
+      applyTheme(this.host.nativeElement, tokens);
+    });
+
+    if (isPlatformBrowser(this.platformId) && typeof ResizeObserver !== 'undefined') {
       const ro = new ResizeObserver((entries) => {
         const width = entries[0]?.contentRect.width ?? 0;
         this.narrow.set(width > 0 && width < 600);
       });
-      ro.observe(host.nativeElement);
+      ro.observe(this.host.nativeElement);
       effect((onCleanup) => onCleanup(() => ro.disconnect()));
     }
   }

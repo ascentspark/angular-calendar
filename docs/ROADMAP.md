@@ -244,7 +244,13 @@ typed `DateTime` cells, XML-escaped) that Excel/Sheets/LibreOffice open natively
 verified through the demo UI** (Print → paginated agenda screenshot; CSV/Excel/ICS → real downloads
 inspected: valid SpreadsheetML, RFC 4180, VCALENDAR). Public `docs/ARCHITECTURE.md` + `docs/THEMING.md`
 (plus existing README/SECURITY/CONTRIBUTING/CODE_OF_CONDUCT/CHANGELOG from Phase 1) and
-`docs/MIGRATION.md`. SSR-safe demo app exercising all seven views + theme toggle + export toolbar.
+`docs/MIGRATION.md`. SSR-safe demo app exercising all seven views + export toolbar, with a
+**fully token-driven shell**: the demo derives the `--cal-*` set from two colour inputs (base +
+accent) plus light/dark and applies it to its own host, so the top bar, segmented view switcher,
+filters and panel re-theme in lockstep with the calendar — change one swatch and the whole UI
+follows (the image-editor theming contract). Live **base/accent swatches + custom pickers** and a
+mode toggle; responsive top bar (scrollable view switcher, month→agenda fallback) — **verified via
+UI** at desktop and 390px, light and dark, across multiple accent/base combinations.
 **`withTokenBridge()`** — the optional design-token adapter: `applyTheme` takes an optional
 `CalTokenBridge` overlay (re-applied after the derived theme so bridged `--cal-*` always win),
 `CAL_TOKEN_BRIDGE` is injected by every view, and `withTokenBridge({ '--cal-accent': '--brand' })`
