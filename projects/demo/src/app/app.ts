@@ -22,6 +22,8 @@ import {
   CalAgendaView,
   CalYearView,
   CalEventTemplate,
+  CalEventDialog,
+  CalEventDetailTemplate,
   filterByStatus,
   deriveTheme,
   applyTheme,
@@ -50,6 +52,8 @@ const z = (iso: string) => ({ epochMs: Date.parse(iso), zone: Z });
     CalAgendaView,
     CalYearView,
     CalEventTemplate,
+    CalEventDialog,
+    CalEventDetailTemplate,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -73,6 +77,12 @@ export class App {
   }
   protected setBase(hex: string): void {
     this.base.set(hex);
+  }
+
+  /** The event whose detail dialog is open (null = closed). */
+  protected readonly detailEvent = signal<CalendarEvent | null>(null);
+  protected openDetail(event: CalendarEvent): void {
+    this.detailEvent.set(event);
   }
 
   /** Vertical density for the week/day time-grid. */

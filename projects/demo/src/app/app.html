@@ -118,6 +118,7 @@
           [accentColor]="accent()"
           [statusColors]="statusColors"
           [maxLanes]="3"
+          (eventClicked)="openDetail($event.event)"
         />
       }
       @case ('week') {
@@ -136,6 +137,7 @@
           [accentColor]="accent()"
           [statusColors]="statusColors"
           (eventChanged)="onEventChanged($event)"
+          (eventClicked)="openDetail($event.event)"
         />
       }
       @case ('day') {
@@ -154,6 +156,7 @@
           [accentColor]="accent()"
           [statusColors]="statusColors"
           (eventChanged)="onEventChanged($event)"
+          (eventClicked)="openDetail($event.event)"
         />
       }
       @case ('timeline') {
@@ -189,6 +192,7 @@
           [statusColors]="statusColors"
           (externalDrop)="onExternalDrop($event)"
           (eventChanged)="onJobChanged($event)"
+          (eventClicked)="openDetail($event.event)"
         >
           <!-- Rich, consumer-defined job card (charter §1): avatar + title + status badge -->
           <ng-template calEventTemplate let-job>
@@ -226,6 +230,7 @@
           [baseColor]="base()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
+          (eventClicked)="openDetail($event.event)"
         >
           <ng-template calEventTemplate let-ev>
             <div class="job">
@@ -242,11 +247,13 @@
           [events]="filteredEvents()"
           [viewDate]="viewDate"
           [today]="today"
-          [days]="10"
+          [days]="30"
+          [hideEmptyDays]="true"
           [themeMode]="mode()"
           [baseColor]="base()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
+          (eventClicked)="openDetail($event.event)"
         />
       }
       @case ('year') {
@@ -263,15 +270,25 @@
     }
   </section>
 
+  <!-- Built-in event-detail dialog: default body out of the box. A host can override
+       the body with an <ng-template calEventDetail> (see the commented example). -->
+  <cal-event-dialog
+    [event]="detailEvent()"
+    [resources]="resources"
+    [timezone]="'America/New_York'"
+    (closed)="detailEvent.set(null)"
+  />
+
   @if (pendingRecurringEdit(); as pending) {
-    <div class="rdialog__scrim" (click)="cancelRecurringEdit()">
+    <div class="rdialog__scrim">
+      <div class="rdialog__backdrop" (click)="cancelRecurringEdit()" aria-hidden="true"></div>
       <div
         class="rdialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="rdialog-title"
         data-testid="recur-prompt"
-        (click)="$event.stopPropagation()"
+        (keydown.escape)="cancelRecurringEdit()"
       >
         <h2 class="rdialog__title" id="rdialog-title">Edit recurring event</h2>
         <p class="rdialog__body">

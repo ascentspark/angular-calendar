@@ -73,7 +73,7 @@
   text-align: center;
   font-size: 0.6rem;
   font-weight: 600;
-  color: var(--cal-ink-faint);
+  color: var(--cal-ink-muted);
   text-transform: uppercase;
 }
 
