@@ -36,7 +36,24 @@ spec and roadmap are the synthesized output.
 
 ---
 
-## Phase 1 — Scaffold + theming engine + headless core foundations
+## Phase 1 — Scaffold + theming engine + headless core foundations ✅ DONE
+
+**Completed.** Angular 22 CLI workspace (`angular-calendar` lib + SSR `demo`), strict TS
+(`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `strictTemplates`), ng-packagr
+with the published `@ascentsparksoftware/angular-calendar@22.0.0` manifest + a tree-shakable
+`/date-fns` secondary entry, Vitest (zoneless providers, coverage thresholds), angular-eslint
+flat config (prefix `cal`, no-`any`/no-`!`), Prettier, and community/Dependabot/CI files.
+Theming engine (`color`/`oklch`/`tokens`/`derive-theme`/`apply-theme`, `--cal-*`, OKLCH,
+AA-guaranteed, per-status colour map). Timezone-correct `ZonedDateTime` + `DateAdapter` +
+`date-fns(+tz)` adapter with calendar-system primitives (Gregorian/Islamic/Buddhist/
+Japanese/Persian via `Intl`). Pure layout core (interval row-packing, sweep-line column
+packing with back-fill, projection) — property-tested. `provideCalendar()` + config + public
+API. **77 unit tests green under `TZ=UTC` and `TZ=America/New_York`** (DST-verified); coverage
+~99% statements/functions/lines (residual branch % = provably-unreachable `noUncheckedIndexedAccess`
+guards); `ng build` builds both entry points; `npm pack` dry-run clean; lint clean; no shipped
+fingerprints. **Deferred to Phase 8:** the multi-line (20.x/21.x) CI matrix + per-branch
+check names — the maintenance branches don't exist until the library stabilises; `main` has a
+single-line CI workflow now.
 
 Repo, Angular-22 CLI workspace (lib `angular-calendar` + demo), ng-packagr, lint/format/
 test (Vitest) wiring, CI + community files (single-branch variant of `github_standard.md`).
