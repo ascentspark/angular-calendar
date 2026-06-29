@@ -228,7 +228,16 @@ workflow performs a successful tagged publish (verified on npm) with **no manual
 print/print-to-PDF produces correct paginated output (e2e); docs site builds; the shipped
 tree contains no build-tool or assistant fingerprints.
 
-## Phase 9 — Field-service proof surface (consumer demo)
+## Phase 9 — Field-service proof surface (consumer demo) 🟡 IN PROGRESS
+
+**Done:** the demo app proves the API against the charter §1 requirements using only the public
+surface — resource dispatch board (`<cal-timeline-view>`), 7-status theming via `statusColors`,
+**rich consumer-defined job cards** via `*calEventTemplate` (title + status badge), **status
+filters** via `filterByStatus`, now-indicator, off-hours/block-out shading, resource-tree
+collapse — **all verified via UI** (rich cards render; toggling a status hides those jobs).
+`docs/ADOPTION.md` documents the reference adoption pattern (preset lives in the consumer, not
+core). **Remaining:** unscheduled-jobs strip + external CDK drag-in; an explicit week-as-rows
+preset; assignee-avatar card example.
 
 A demo/preset proving the API against the "Lust for Dust" requirements: resource schedule,
 week-as-rows, 7-status theming, rich event cards, unscheduled strip, status filters,
