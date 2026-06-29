@@ -142,11 +142,12 @@ a full year virtualized; axe-clean; screenshots.
 direction-agnostic create; property-tested) + `EventChange`/`EventChangeRequest` model.
 **Drag-move + edge-resize on the time-grid** via Pointer Events: `dragState` signal, live `computed`
 preview (no event mutation), snap to `snapMinutes`, `validateChange` veto, tap-vs-drag threshold,
-`setPointerCapture` (guarded), `touch-action:none` for touch. Demo wired so week/day drag updates the
-store — **verified via real mouse drag in Playwright** (Morning standup moved 09:00→12:00, snapped,
-others unchanged). **159 unit tests.** **Remaining:** drag-create (empty-grid drag → new event),
-CDK external drag-in (unassigned list → lane), inline title edit (F2/Enter), full keyboard drag/resize,
-touch long-press tuning, and extending move/resize to the timeline view.
+`setPointerCapture` (guarded), `touch-action:none` for touch. **Drag-create** on the time-grid (empty-grid drag → new event with dashed ghost preview, snap, slot
+click → `slotSelected`). Demo wired so week/day drag-move/resize/create update the store — **all three
+verified via real mouse drag in Playwright** (move 09:00→12:00 snapped; create produced a "New event"
+block; existing events intact). **160 unit tests.** **Remaining:** CDK external drag-in (unassigned
+list → lane), inline title edit (F2/Enter), full keyboard drag/resize, touch long-press tuning, and
+extending move/resize/create to the timeline view.
 
 Custom Pointer-Events engine: drag-move, drag-create, edge resize, snap, touch long-press,
 `dragState` signal + `computed` preview, `validateChange` veto, cancellable async commit
