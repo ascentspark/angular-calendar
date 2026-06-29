@@ -264,6 +264,22 @@ describe('CalTimeGridView — inline edit', () => {
     expect(change!.title).toBe('New title');
   });
 
+  it('F2 opens the inline editor from the keyboard', async () => {
+    const ev: CalendarEvent = { id: 'a', title: 'Old', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T14:00:00Z') };
+    const { el, fixture } = await renderWithFixture({
+      events: [ev],
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      anchorToWeek: false,
+    });
+    const eventEl = el.querySelector<HTMLButtonElement>('.cal-tg__event')!;
+    expect(el.querySelector('.cal-tg__inline')).toBeNull();
+    eventEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'F2', bubbles: true }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.querySelector('.cal-tg__inline')).toBeTruthy();
+  });
+
   it('Escape cancels the inline edit without emitting', async () => {
     const ev: CalendarEvent = { id: 'a', title: 'Old', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T14:00:00Z') };
     const { el, cmp, fixture } = await renderWithFixture({

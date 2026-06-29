@@ -208,11 +208,18 @@ DI-overridable visible labels (all-day / no-events / resources-header / "+N"), w
 views; roving-tabindex keyboard nav in month + year; reduced-motion in every component;
 calendar systems supported by the adapter (`getEra`/`format`) and used by month/year/timeline
 labels. **RTL verified via UI** — month mirrors correctly (weekday order, alignment, multi-day
-spans, recurring events) thanks to logical CSS properties throughout. **Remaining:** full
-documented keyboard map across time-grid/timeline; keyboard drag/resize; configurable
-timezone-picker; non-Gregorian wired through *every* view's day grid; responsive/adaptive
-(mobile drawer, swipe, month→agenda fallback); vertical-view virtualization; perf + bundle
-budgets as CI assertions; axe-zero gate across the full matrix.
+spans, recurring events) thanks to logical CSS properties throughout. **Keyboard map fully
+documented** (`docs/KEYBOARD.md`) and verified against the code: month/year roving arrows +
+Home/End + Enter/Space; time-grid event grab-and-move (Enter/Space grab, arrows move, Shift+arrows
+resize, Enter drop, Esc cancel) and **`F2` inline rename** (added so editing is keyboard-reachable,
+not dblclick-only — verified via UI). **axe-zero gate across the full matrix** (all seven views ×
+light/dark + the "+N more" popover) is a CI check via Playwright + axe-core. **Perf + bundle budgets
+are CI assertions** — `perf-bench.spec.ts` (`toBeLessThan` ceilings on view-model builds, runs in
+the vitest suite) + `check-bundle-size.mjs` gzip gate. **Remaining (scoped follow-ups):**
+keyboard drag on the *timeline* (pointer drag ships; the time-grid has keyboard drag); large-fleet
+**virtualization** (the view-models are pure + memoized off the render path, so moderate datasets
+are fast; windowing 100×2000 needs a dedicated CDK-virtual-scroll pass against the frozen/sticky
+timeline layout).
 
 Full keyboard map, `CalCalendarA11y` strings, reduced-motion; `CalCalendarIntl`, locale,
 12/24h, **RTL in every view incl. timeline**; per-event timezone surfacing + a
