@@ -120,3 +120,26 @@ describe('CalTimelineView', () => {
     expect(el.querySelectorAll('.cal-tl__shade--off').length).toBeGreaterThan(0);
   });
 });
+
+describe('CalTimelineView — slot selection', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('emits slotSelected with the resource id when a lane is clicked', async () => {
+    const { el, cmp } = await render({
+      events: [],
+      resources,
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      dayStartMinutes: 0,
+      dayEndMinutes: 1440,
+      headerGroupings: ['hour'],
+    });
+    let resourceId: string | null = null;
+    cmp.slotSelected.subscribe((s) => (resourceId = s.resourceId));
+    const row = el.querySelector<HTMLElement>('.cal-tl__row')!;
+    row.getBoundingClientRect = () =>
+      ({ height: 40, top: 0, left: 0, right: 1000, bottom: 40, width: 1000, x: 0, y: 0, toJSON() {} }) as DOMRect;
+    row.dispatchEvent(new MouseEvent('click', { clientX: 500, clientY: 20, bubbles: true }));
+    expect(resourceId).toBe('t1');
+  });
+});
