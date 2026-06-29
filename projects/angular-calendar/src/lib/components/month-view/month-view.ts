@@ -218,13 +218,9 @@ export class CalMonthView<TMeta = unknown> {
     const status = chip.event.status;
     const key = status !== undefined ? sanitizeStatusKey(status) : '';
     const bg =
-      key !== ''
-        ? `var(--cal-event-${key}-soft, var(--cal-accent-soft))`
-        : 'var(--cal-accent-soft)';
+      key !== '' ? `var(--cal-event-${key}, var(--cal-accent))` : 'var(--cal-accent)';
     const fg =
-      key !== ''
-        ? `var(--cal-event-${key}-soft-ink, var(--cal-accent-soft-ink))`
-        : 'var(--cal-accent-soft-ink)';
+      key !== '' ? `var(--cal-event-${key}-ink, var(--cal-accent-ink))` : 'var(--cal-accent-ink)';
     return {
       top: `calc(var(--cal-day-head) + ${chip.lane} * var(--cal-chip-row))`,
       left: '1px',

@@ -23,11 +23,11 @@
 }
 
 .cal-month__weekday {
-  padding: 0.4rem 0.5rem;
+  padding: 0.6rem 0.6rem;
   font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   color: var(--cal-ink-muted);
   text-align: end;
   border-inline-end: 1px solid var(--cal-grid-line);
@@ -142,19 +142,20 @@
   inset-inline-start: 0.35rem;
   inset-block-end: 0.2rem;
   z-index: 2;
-  border: 0;
-  background: transparent;
-  color: var(--cal-ink-muted);
+  border: 1px solid var(--cal-line);
+  background: var(--cal-surface-2);
+  color: var(--cal-ink-700);
   font: inherit;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 600;
   cursor: pointer;
-  padding: 0.1rem 0.3rem;
-  border-radius: var(--cal-radius-sm);
+  padding: 0.06rem 0.4rem;
+  border-radius: var(--cal-radius-pill);
 }
 
 .cal-day__more:hover {
   background: var(--cal-surface-sunk);
+  border-color: var(--cal-line-strong);
   color: var(--cal-ink);
 }
 

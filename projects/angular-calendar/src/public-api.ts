@@ -143,6 +143,11 @@ export { CalCalendarIntl } from './lib/i18n/cal-calendar-intl';
 
 // ── Template-override directives ─────────────────────────────────────────────
 export { CalEventTemplate, type CalEventContext } from './lib/directives/cal-event-template';
+export {
+  CalEventDetailTemplate,
+  type CalEventDetailContext,
+} from './lib/directives/cal-event-detail-template';
+export { CalEventDialog } from './lib/components/event-dialog/event-dialog';
 export { CalCellTemplate, type CalCellContext } from './lib/directives/cal-cell-template';
 export {
   CalOverflowTemplate,

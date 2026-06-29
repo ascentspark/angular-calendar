@@ -44,6 +44,24 @@ for (const mode of MODES) {
   }
 }
 
+test('event-detail dialog has no axe violations', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('[data-testid="view-week"]').click();
+  await page.locator('button.cal-tg__event').first().click();
+  await page.locator('.cal-evd').waitFor();
+  await page.waitForTimeout(120);
+
+  const results = await new AxeBuilder({ page })
+    .include('main.app')
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+
+  expect(
+    results.violations,
+    results.violations.map((v) => `${v.id} (${v.nodes.length})`).join(', '),
+  ).toEqual([]);
+});
+
 test('month "+N more" overflow popover has no axe violations', async ({ page }) => {
   await page.goto('/');
   await page.locator('[data-testid="view-month"]').click();

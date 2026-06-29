@@ -74,6 +74,14 @@ const DARK: ModeConfig = {
 
 const AA = 4.5;
 const AAA = 7;
+/**
+ * Secondary-ink contrast floors, set *above* bare AA (4.5) so muted text reads
+ * comfortably (not just technically-passing) and the ink hierarchy stays distinct:
+ * ink (AAA) > ink-700 (STRONG) > ink-muted (CLEAR) > faint (decorative). These also
+ * leave headroom for the slightly darker surface-2 / sunk layers muted text sits on.
+ */
+const STRONG = 6.2;
+const CLEAR = 5.2;
 /** Minimum graphical contrast for the now-indicator line against its background. */
 const GRAPHIC = 3;
 
@@ -117,8 +125,8 @@ export function deriveTheme(
   const sunk = tint(cfg.surface.sunk);
 
   const ink = ensureContrastAA(tint(cfg.ink.ink), surface, AAA);
-  const ink700 = ensureContrastAA(tint(cfg.ink.ink700), surface, AA);
-  const inkMuted = ensureContrastAA(tint(cfg.ink.muted), surface, AA);
+  const ink700 = ensureContrastAA(tint(cfg.ink.ink700), surface, STRONG);
+  const inkMuted = ensureContrastAA(tint(cfg.ink.muted), surface, CLEAR);
   const inkFaint = tint(cfg.ink.faint);
 
   const line = tint(cfg.line.line);

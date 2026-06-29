@@ -336,12 +336,15 @@
 .job__badge {
   margin-inline-start: auto;
   font-size: 0.58rem;
-  font-weight: 600;
+  font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  background: rgba(255, 255, 255, 0.22);
-  border-radius: 4px;
-  padding: 0.05rem 0.32rem;
+  /* A solid surface tag (not a translucent overlay) so the status stays legible on
+     any event colour — always AA: ink-700 on the surface token. */
+  background: var(--cal-surface);
+  color: var(--cal-ink-700);
+  border-radius: 5px;
+  padding: 0.05rem 0.34rem;
   flex: 0 0 auto;
 }
 
@@ -384,15 +387,20 @@
 .rdialog__scrim {
   position: fixed;
   inset: 0;
-  background: var(--cal-scrim, rgba(0, 0, 0, 0.45));
-  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
   z-index: 100;
 }
+.rdialog__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--cal-scrim, rgba(0, 0, 0, 0.45));
+  backdrop-filter: blur(2px);
+}
 .rdialog {
+  position: relative;
   background: var(--cal-surface, #fff);
   color: var(--cal-ink, #18181b);
   border: 1px solid var(--cal-line, #e4e4e7);
