@@ -221,6 +221,19 @@
   inset-block-end: -1px;
 }
 
+.cal-tg__create-ghost {
+  position: absolute;
+  inset-inline: 1px;
+  inset-block-start: var(--ev-start);
+  block-size: var(--ev-size);
+  background: var(--cal-accent-soft);
+  border: 1px dashed var(--cal-accent);
+  border-radius: var(--cal-radius-sm);
+  opacity: 0.85;
+  z-index: 2;
+  pointer-events: none;
+}
+
 .cal-tg__now {
   position: absolute;
   inset-inline: 0;

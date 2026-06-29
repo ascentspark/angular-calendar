@@ -133,16 +133,27 @@ export class App {
     this.view.set(view);
   }
 
-  /** Apply a move/resize from the time-grid to the demo's event store. */
+  private createSeq = 0;
+
+  /** Apply a move/resize/create from the grid to the demo's event store. */
   protected onEventChanged(change: EventChange): void {
-    if (change.event === null || change.start === undefined || change.end === undefined) {
+    if (change.start === undefined || change.end === undefined) {
+      return;
+    }
+    const start = change.start;
+    const end = change.end;
+    if (change.kind === 'create') {
+      this.createSeq += 1;
+      this.events.update((list) => [
+        ...list,
+        { id: `new-${this.createSeq}`, title: 'New event', start, end, status: 'scheduled' },
+      ]);
+      return;
+    }
+    if (change.event === null) {
       return;
     }
     const id = change.event.id;
-    const start = change.start;
-    const end = change.end;
-    this.events.update((list) =>
-      list.map((e) => (e.id === id ? { ...e, start, end } : e)),
-    );
+    this.events.update((list) => list.map((e) => (e.id === id ? { ...e, start, end } : e)));
   }
 }
