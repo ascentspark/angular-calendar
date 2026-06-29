@@ -91,6 +91,10 @@ export {
   type TimeGridViewArgs,
 } from './lib/core/view-model/time-grid-view-model';
 export { buildTimeGridView } from './lib/core/view-model/build-time-grid-view';
+export {
+  flattenResources,
+  type FlatResource,
+} from './lib/core/view-model/flatten-resources';
 
 // ── Accessibility ───────────────────────────────────────────────────────────
 export { CalCalendarA11y } from './lib/a11y/cal-calendar-a11y';
