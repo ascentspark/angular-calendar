@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import {
   CalMonthView,
+  CalYearView,
   type CalThemeMode,
   type CalendarEvent,
 } from '@ascentsparksoftware/angular-calendar';
@@ -12,11 +13,12 @@ const z = (iso: string) => ({ epochMs: Date.parse(iso), zone: Z });
   selector: 'cal-root',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CalMonthView],
+  imports: [CalMonthView, CalYearView],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
 export class App {
+  protected readonly view = signal<'month' | 'year'>('month');
   protected readonly mode = signal<CalThemeMode>('light');
   protected readonly accent = signal('#3b82f6');
 
@@ -42,5 +44,9 @@ export class App {
 
   protected toggleMode(): void {
     this.mode.update((m) => (m === 'light' ? 'dark' : 'light'));
+  }
+
+  protected setView(view: 'month' | 'year'): void {
+    this.view.set(view);
   }
 }

@@ -1,22 +1,53 @@
 <main class="page" [class.page--dark]="mode() === 'dark'">
   <header class="page__bar">
-    <h1 class="page__title">angular-calendar — month view</h1>
+    <h1 class="page__title">angular-calendar</h1>
     <div class="page__controls">
+      <div class="seg" role="group" aria-label="View">
+        <button
+          type="button"
+          class="seg__btn"
+          [class.seg__btn--on]="view() === 'month'"
+          (click)="setView('month')"
+          data-testid="view-month"
+        >
+          Month
+        </button>
+        <button
+          type="button"
+          class="seg__btn"
+          [class.seg__btn--on]="view() === 'year'"
+          (click)="setView('year')"
+          data-testid="view-year"
+        >
+          Year
+        </button>
+      </div>
       <button type="button" class="btn" (click)="toggleMode()" data-testid="toggle-mode">
         {{ mode() === 'light' ? '🌙 Dark' : '☀️ Light' }}
       </button>
     </div>
   </header>
 
-  <section class="page__demo" data-testid="month-demo">
-    <cal-month-view
-      [events]="events"
-      [viewDate]="viewDate"
-      [today]="today"
-      [themeMode]="mode()"
-      [accentColor]="accent()"
-      [statusColors]="statusColors"
-      [maxLanes]="4"
-    />
+  <section class="page__demo" data-testid="calendar-demo">
+    @if (view() === 'month') {
+      <cal-month-view
+        [events]="events"
+        [viewDate]="viewDate"
+        [today]="today"
+        [themeMode]="mode()"
+        [accentColor]="accent()"
+        [statusColors]="statusColors"
+        [maxLanes]="4"
+      />
+    } @else {
+      <cal-year-view
+        [events]="events"
+        [viewDate]="viewDate"
+        [today]="today"
+        [themeMode]="mode()"
+        [accentColor]="accent()"
+        [statusColors]="statusColors"
+      />
+    }
   </section>
 </main>
