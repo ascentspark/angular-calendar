@@ -429,38 +429,62 @@ export class CalTimeGridView<TMeta = unknown> {
           deltaMinutes: 0,
           active: true,
         });
+        this.announce(this.a11y.grabbedLabel(ev.event));
       }
       return;
     }
 
     switch (dom.key) {
-      case 'ArrowUp':
+      case 'ArrowUp': {
         dom.preventDefault();
-        this.dragState.set({
-          ...drag,
-          kind: dom.shiftKey ? 'resize-end' : 'move',
-          deltaMinutes: drag.deltaMinutes - snap,
-        });
+        const kind = dom.shiftKey ? 'resize-end' : 'move';
+        const deltaMinutes = drag.deltaMinutes - snap;
+        this.dragState.set({ ...drag, kind, deltaMinutes });
+        this.announceGesture(kind, drag, deltaMinutes);
         break;
-      case 'ArrowDown':
+      }
+      case 'ArrowDown': {
         dom.preventDefault();
-        this.dragState.set({
-          ...drag,
-          kind: dom.shiftKey ? 'resize-end' : 'move',
-          deltaMinutes: drag.deltaMinutes + snap,
-        });
+        const kind = dom.shiftKey ? 'resize-end' : 'move';
+        const deltaMinutes = drag.deltaMinutes + snap;
+        this.dragState.set({ ...drag, kind, deltaMinutes });
+        this.announceGesture(kind, drag, deltaMinutes);
         break;
+      }
       case 'Enter':
       case ' ':
         dom.preventDefault();
+        this.announce(
+          this.a11y.droppedLabel(ev.event, this.zonedFromMs(drag.originStartMs + drag.deltaMinutes * 60_000)),
+        );
         this.commitGesture(ev, drag);
         break;
       case 'Escape':
         dom.preventDefault();
         this.dragState.set(null);
+        this.announce(this.a11y.moveCancelledLabel(ev.event));
         break;
       default:
         break;
+    }
+  }
+
+  /** Live-region text announced during keyboard drag (screen readers). */
+  protected readonly announcement = signal('');
+
+  private announce(message: string): void {
+    this.announcement.set(message);
+  }
+
+  private zonedFromMs(epochMs: number): ZonedDateTime {
+    return this.adapter.toZoned(new Date(epochMs), this.resolvedZone());
+  }
+
+  private announceGesture(kind: 'move' | 'resize-end', drag: DragGesture, deltaMinutes: number): void {
+    if (kind === 'resize-end') {
+      this.announce(this.a11y.resizedLabel(this.zonedFromMs(drag.originEndMs + deltaMinutes * 60_000)));
+    } else {
+      this.announce(this.a11y.movedLabel(this.zonedFromMs(drag.originStartMs + deltaMinutes * 60_000)));
     }
   }
 
