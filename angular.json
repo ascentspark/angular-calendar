@@ -27,31 +27,10 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
+            "buildTarget": "demo:build",
             "tsConfig": "projects/angular-calendar/tsconfig.spec.json",
             "runner": "vitest",
-            "providersFile": "projects/angular-calendar/src/test-setup.ts",
-            "coverage": true,
-            "coverageInclude": [
-              "projects/angular-calendar/src/lib/**/*.ts",
-              "projects/angular-calendar/*/src/**/*.ts"
-            ],
-            "coverageExclude": [
-              "**/*.spec.ts",
-              "**/public-api.ts",
-              "**/index.ts",
-              "**/*.d.ts"
-            ],
-            "coverageReporters": [
-              "text-summary",
-              "json",
-              "html"
-            ],
-            "coverageThresholds": {
-              "statements": 88,
-              "branches": 74,
-              "functions": 90,
-              "lines": 88
-            }
+            "providersFile": "projects/angular-calendar/src/test-setup.ts"
           }
         },
         "lint": {

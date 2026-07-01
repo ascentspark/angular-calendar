@@ -1,11 +1,13 @@
 {
   "name": "@ascentsparksoftware/angular-calendar",
-  "version": "22.0.0",
+  "version": "20.0.0",
   "description": "Modern, theme-agnostic, signal-first calendar & scheduler for Angular — zoneless, standalone, SSR-safe, timezone-correct, with recurrence and a custom touch-first interaction layer.",
   "author": "Ascentspark",
   "license": "MIT",
   "homepage": "https://github.com/ascentspark/angular-calendar",
-  "bugs": { "url": "https://github.com/ascentspark/angular-calendar/issues" },
+  "bugs": {
+    "url": "https://github.com/ascentspark/angular-calendar/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ascentspark/angular-calendar.git"
@@ -32,9 +34,9 @@
     "accessibility"
   ],
   "peerDependencies": {
-    "@angular/common": "^22.0.0",
-    "@angular/core": "^22.0.0",
-    "@angular/platform-browser": "^22.0.0"
+    "@angular/common": "^20.0.0",
+    "@angular/core": "^20.0.0",
+    "@angular/platform-browser": "^20.0.0"
   },
   "dependencies": {
     "date-fns": "^4.1.0",
@@ -43,5 +45,7 @@
     "tslib": "^2.3.0"
   },
   "sideEffects": false,
-  "publishConfig": { "access": "public" }
+  "publishConfig": {
+    "access": "public"
+  }
 }

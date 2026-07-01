@@ -5,6 +5,15 @@ Angular major. This project adheres to [Keep a Changelog](https://keepachangelog
 
 ## [Unreleased]
 
+## [20.0.0] - 2026-07-01
+
+### Added
+
+- Angular 20 release line. Feature-parity with `22.0.0` — the same views, timezone-correct
+  date adapter, RRULE recurrence, pointer drag/resize, OKLCH theming, and event-detail dialog —
+  built and tested against Angular 20 with `^20.0.0` peer dependencies (TypeScript ~5.9,
+  Vitest 3, ESLint 9). Install with `npm i @ascentsparksoftware/angular-calendar@ng20`.
+
 ### Added
 
 - Initial workspace, OKLCH theming engine, timezone-correct date adapter, and headless
