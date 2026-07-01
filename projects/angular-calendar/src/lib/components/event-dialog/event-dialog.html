@@ -2,11 +2,11 @@
   <div class="cal-evd__scrim">
     <div class="cal-evd__backdrop" (click)="close()" aria-hidden="true"></div>
     <div
-      #panel
       class="cal-evd"
       role="dialog"
       aria-modal="true"
       tabindex="-1"
+      calFocusTrap
       [attr.aria-label]="ev.title ?? 'Event'"
       (keydown.escape)="close()"
     >

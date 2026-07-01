@@ -139,6 +139,7 @@ export {
 
 // ── Accessibility ───────────────────────────────────────────────────────────
 export { CalCalendarA11y } from './lib/a11y/cal-calendar-a11y';
+export { CalFocusTrap } from './lib/a11y/cal-focus-trap';
 export { CalCalendarIntl } from './lib/i18n/cal-calendar-intl';
 
 // ── Template-override directives ─────────────────────────────────────────────

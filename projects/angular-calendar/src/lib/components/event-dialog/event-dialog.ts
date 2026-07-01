@@ -1,15 +1,13 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
   contentChild,
-  effect,
   inject,
   input,
   output,
-  viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
+import { CalFocusTrap } from '../../a11y/cal-focus-trap';
 import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
 import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
 import { CalCalendarIntl } from '../../i18n/cal-calendar-intl';
@@ -32,7 +30,7 @@ import { CalEventDetailTemplate } from '../../directives/cal-event-detail-templa
   selector: 'cal-event-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, CalFocusTrap],
   templateUrl: './event-dialog.html',
   styleUrl: './event-dialog.css',
 })
@@ -52,16 +50,6 @@ export class CalEventDialog<TMeta = unknown> {
   readonly closed = output<void>();
 
   readonly detailTemplate = contentChild(CalEventDetailTemplate);
-  private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
-
-  constructor() {
-    // Move focus into the dialog when it opens (a11y).
-    effect(() => {
-      if (this.event() !== null) {
-        this.panel()?.nativeElement.focus();
-      }
-    });
-  }
 
   protected close(): void {
     this.closed.emit();
