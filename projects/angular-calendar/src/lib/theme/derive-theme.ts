@@ -93,6 +93,28 @@ const betterExtreme = (bg: Rgb): Rgb =>
   contrastRatio(WHITE, bg) >= contrastRatio(BLACK, bg) ? WHITE : BLACK;
 
 /**
+ * Deepen `fill` (OKLCH lightness only — hue & chroma preserved) until `ink` clears
+ * `target` contrast on it, so event chips can use ONE consistent ink (white) and
+ * stay legible. Pure luminance contrast undersells how poorly dark text reads on a
+ * vivid mid-tone (e.g. black on `#3b82f6`), so we standardise on white ink and bring
+ * the colour to it. Stops at a lightness floor so a colour never collapses to black.
+ */
+function fitFillForInk(fill: Rgb, ink: Rgb, target: number): Rgb {
+  if (contrastRatio(ink, fill) >= target) {
+    return fill;
+  }
+  const o = srgbToOklch(fill);
+  let candidate = fill;
+  for (let l = o.l - 0.02; l >= 0.22; l -= 0.02) {
+    candidate = oklchColor(l, o.c, o.h);
+    if (contrastRatio(ink, candidate) >= target) {
+      return candidate;
+    }
+  }
+  return candidate;
+}
+
+/**
  * Build the complete theme token map.
  *
  * @param baseColor neutral anchor (hex) — surfaces/ink/lines tint toward its hue.
@@ -185,11 +207,14 @@ export function deriveTheme(
         console.warn(`[angular-calendar] invalid event colour for "${rawKey}": ${hex}`);
         continue;
       }
-      const soft = mixOklab(fill, surface, cfg.accentSoftMix);
-      tokens[`--cal-event-${key}`] = formatHex(fill);
-      tokens[`--cal-event-${key}-ink`] = formatHex(ensureContrastAA(betterExtreme(fill), fill, AA));
+      // Deepen the colour so white ink is legible on it, then use white everywhere
+      // for a consistent, high-legibility chip (no per-colour black/white flip).
+      const chip = fitFillForInk(fill, WHITE, AA);
+      const soft = mixOklab(chip, surface, cfg.accentSoftMix);
+      tokens[`--cal-event-${key}`] = formatHex(chip);
+      tokens[`--cal-event-${key}-ink`] = formatHex(ensureContrastAA(WHITE, chip, AA));
       tokens[`--cal-event-${key}-soft`] = formatHex(soft);
-      tokens[`--cal-event-${key}-soft-ink`] = formatHex(ensureContrastAA(fill, soft, AA));
+      tokens[`--cal-event-${key}-soft-ink`] = formatHex(ensureContrastAA(chip, soft, AA));
     }
   }
 

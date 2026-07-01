@@ -1,51 +1,91 @@
 name: Release
 
-# CI-only publish. Tag a release (`vMAJOR.MINOR.PATCH`) and this workflow builds,
-# tests, and publishes to npm with provenance. No manual `npm publish` ever.
+# Publishes the library to npm with provenance via OIDC trusted publishing (no npm token needed).
+# Run it from the branch of the line you are releasing, after bumping the version in
+# projects/angular-calendar/package.json. The npm dist-tag is DERIVED from the branch
+# automatically (main -> latest, <N>.x -> ng<N>), so a maintenance-line release can never clobber
+# `latest`. The version major is also checked against the branch as a safety net.
+# npm must have a Trusted Publisher configured for this package pointing at this repo + workflow
+# (npmjs.com -> package -> Settings -> Trusted Publisher -> GitHub Actions).
 on:
-  push:
-    tags: ['v*.*.*']
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Existing vMAJOR.MINOR.PATCH tag to (re)publish'
-        required: true
 
 permissions:
-  contents: read
-  id-token: write # npm provenance
+  contents: write # create the git tag + GitHub Release after publishing
+  id-token: write # required for npm provenance / trusted publishing
 
 jobs:
   publish:
-    name: build, test & publish
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
           registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Derive npm dist-tag from the branch and verify the version
+        id: meta
+        run: |
+          ref='${{ github.ref_name }}'
+          version="$(node -p "require('./projects/angular-calendar/package.json').version")"
+          major="${version%%.*}"
+          if [ "$ref" = "main" ]; then
+            tag="latest"
+          elif printf '%s' "$ref" | grep -qE '^[0-9]+\.x$'; then
+            line="${ref%.x}"
+            tag="ng${line}"
+            if [ "$major" != "$line" ]; then
+              echo "::error::Version $version (major $major) does not match release line $ref."
+              exit 1
+            fi
+          else
+            echo "::error::Refusing to publish from branch '$ref'. Run Release from main or an <N>.x branch."
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Publishing $version with dist-tag '$tag' from branch '$ref'."
+
+      # Trusted publishing (OIDC) needs a recent npm.
+      - run: npm install -g npm@latest
       - run: npm ci
       - run: npx ng build angular-calendar
-      - run: TZ=UTC npx ng test angular-calendar --watch=false
-      - run: TZ=America/New_York npx ng test angular-calendar --watch=false
-      - run: npx ng lint
-      - name: Derive npm dist-tag from the version major
-        id: tag
-        run: |
-          VERSION="$(node -p "require('./dist/angular-calendar/package.json').version")"
-          MAJOR="${VERSION%%.*}"
-          case "$MAJOR" in
-            22) DIST=latest ;;
-            *)  DIST="ng${MAJOR}" ;;
-          esac
-          echo "dist=$DIST" >> "$GITHUB_OUTPUT"
-          echo "Publishing $VERSION with dist-tag $DIST"
-      - name: Publish
+      - run: node scripts/check-bundle-size.mjs
+
+      # ng-packagr copies the library project's CLI-stub README; ship the marketing
+      # README + the MIT license instead so the npm page reads correctly.
+      - name: Bundle docs into the package
+        run: cp README.md LICENSE dist/angular-calendar/
+
+      - run: npm publish --provenance --access public --tag '${{ steps.meta.outputs.tag }}'
         working-directory: dist/angular-calendar
-        run: npm publish --provenance --access public --tag "${{ steps.tag.outputs.dist }}"
+
+      # Tag the published commit and cut a GitHub Release. Only the main line (dist-tag `latest`) is
+      # marked the latest GitHub Release; maintenance lines are non-latest so they never displace it.
+      # Idempotent: skips if the tag/release already exists.
+      - name: Create GitHub Release
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version='${{ steps.meta.outputs.version }}'
+          disttag='${{ steps.meta.outputs.tag }}'
+          if [ "$disttag" = "latest" ]; then
+            latest_flag="--latest"
+            install="npm i @ascentsparksoftware/angular-calendar"
+          else
+            latest_flag="--latest=false"
+            install="npm i @ascentsparksoftware/angular-calendar@$disttag"
+          fi
+          if gh release view "v$version" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release v$version already exists — skipping."
+          else
+            gh release create "v$version" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "v$version" \
+              --notes "npm dist-tag \`$disttag\` — \`$install\`. Published with provenance. See the [README](https://github.com/$GITHUB_REPOSITORY#readme)." \
+              $latest_flag
+          fi

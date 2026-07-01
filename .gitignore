@@ -1,5 +1,5 @@
 # ============================================================================
-# SECRETS & INTERNAL BUILDER DOCS — never commit (contains PATs / npm tokens)
+# Secrets — never commit
 # ============================================================================
 internal_docs/
 **/github.md
@@ -11,25 +11,6 @@ internal_docs/
 .env.*
 !.env.example
 secrets/
-**/*secret*
-**/*token*
-
-# ============================================================================
-# AI / agent session files — must never ship (repo reads as human-authored)
-# ============================================================================
-CLAUDE.md
-GEMINI.md
-AGENTS.md
-.claude/
-.cursor/
-.aider*
-.codeium/
-memory/
-scratchpad/
-
-# Granular builder task plans are process notes, not public docs (github_standard).
-# Public design docs (SPEC.md, ROADMAP.md, calendar-competitive-analysis.md) DO ship.
-docs/build-plans/
 
 # ============================================================================
 # Node / Angular
@@ -80,13 +61,3 @@ pnpm-debug.log*
 .npmrc
 .yarn/
 .pnp.*
-
-# Local visual-check scratch (not part of the repo)
-scratchpad-shots/
-.playwright-mcp/
-/month-*.png
-/page-*.png
-
-# impeccable design-process context (not shipped)
-PRODUCT.md
-DESIGN.md
