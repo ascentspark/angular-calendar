@@ -67,6 +67,7 @@ export {
   snapValue,
   type ProjectionRange,
 } from './lib/core/layout/projection';
+export { computeRowWindow, type VirtualWindow } from './lib/core/layout/virtual-window';
 
 // ── Configuration & providers ───────────────────────────────────────────────
 export {

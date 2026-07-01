@@ -124,6 +124,12 @@
 }
 
 /* Lane body */
+/* Virtualization spacers: a single full-width grid row standing in for the
+   off-screen rows above/below the window, so the scrollbar stays accurate. */
+.cal-tl__spacer {
+  grid-column: 1 / -1;
+}
+
 /* display:contents wrapper: groups each resource's header + lane into one ARIA
    row without introducing a box that would disturb the CSS grid. */
 .cal-tl__resrow {

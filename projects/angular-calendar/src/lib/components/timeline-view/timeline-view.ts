@@ -1,14 +1,17 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   contentChild,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
@@ -18,6 +21,7 @@ import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zone
 import type { CalendarEvent } from '../../core/model/calendar-event';
 import type { CalendarResource } from '../../core/model/calendar-resource';
 import { buildTimelineView } from '../../core/view-model/build-timeline-view';
+import { computeRowWindow, type VirtualWindow } from '../../core/layout/virtual-window';
 import type { TimeHeaderUnit, ResourceRow } from '../../core/view-model/timeline-view-model';
 import { RECURRENCE_ADAPTER } from '../../core/recurrence/recurrence-adapter';
 import { expandRecurringEvents } from '../../core/recurrence/expand-recurring-events';
@@ -194,8 +198,56 @@ export class CalTimelineView<TMeta = unknown> {
     }
   });
 
+  // ── Row virtualization ──────────────────────────────────────────────────────
+  /** Below this many resource rows, render everything (windowing overhead isn't worth it). */
+  private static readonly VIRTUAL_THRESHOLD = 40;
+  /** Extra pixels rendered above/below the viewport to avoid blank flashes on scroll. */
+  private static readonly OVERSCAN_PX = 400;
+
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
+  private readonly scrollTop = signal(0);
+  private readonly viewportHeight = signal(0);
+
+  /** The slice of resource rows to render, plus the spacer heights that preserve scroll height. */
+  protected readonly rowWindow = computed<VirtualWindow>(() => {
+    const rows = this.viewModel().resourceRows;
+    const vh = this.viewportHeight();
+    // Until measured, or for modest lists, render all rows (identical to the un-virtualized layout).
+    if (rows.length <= CalTimelineView.VIRTUAL_THRESHOLD || vh <= 0) {
+      return { start: 0, end: rows.length, padTop: 0, padBottom: 0 };
+    }
+    const laneH = this.laneHeight();
+    const heights = rows.map((r) => r.laneCount * laneH);
+    return computeRowWindow(heights, this.scrollTop(), vh, CalTimelineView.OVERSCAN_PX);
+  });
+
+  /** The resource rows currently in (or near) the viewport. */
+  protected readonly visibleRows = computed(() => {
+    const w = this.rowWindow();
+    return this.viewModel().resourceRows.slice(w.start, w.end);
+  });
+
+  protected onScroll(target: EventTarget | null): void {
+    if (target instanceof HTMLElement) {
+      this.scrollTop.set(target.scrollTop);
+    }
+  }
+
   constructor() {
     effect(() => applyTheme(this.host.nativeElement, this.theme(), this.tokenBridge));
+
+    // Track the scroll viewport's height (browser-only) so windowing knows how much to render.
+    afterNextRender(() => {
+      const el = this.scroller()?.nativeElement;
+      if (!el || typeof ResizeObserver === 'undefined') {
+        return;
+      }
+      this.viewportHeight.set(el.clientHeight);
+      const observer = new ResizeObserver(() => this.viewportHeight.set(el.clientHeight));
+      observer.observe(el);
+      this.destroyRef.onDestroy(() => observer.disconnect());
+    });
   }
 
   protected eventLabel(event: CalendarEvent<TMeta>): string {
