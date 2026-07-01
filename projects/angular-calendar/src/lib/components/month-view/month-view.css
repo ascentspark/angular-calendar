@@ -242,6 +242,17 @@
   box-shadow: 0 12px 32px -10px var(--cal-scrim);
   padding: 0.4rem;
 }
+/* Flip the popover toward the opposite edge when it would spill out of the grid
+   (measured on open) — right-edge columns open leftward, bottom rows open upward. */
+.cal-more--flip-x {
+  inset-inline-start: auto;
+  inset-inline-end: 0.2rem;
+}
+.cal-more--flip-y {
+  inset-block-start: auto;
+  inset-block-end: 0.2rem;
+}
+
 .cal-more:focus-visible {
   outline: 2px solid var(--cal-ring);
   outline-offset: -1px;

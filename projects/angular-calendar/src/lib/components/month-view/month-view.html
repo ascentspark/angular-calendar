@@ -84,6 +84,8 @@
               <div
                 #morePanel
                 class="cal-more"
+                [class.cal-more--flip-x]="morePlacement().flipX"
+                [class.cal-more--flip-y]="morePlacement().flipY"
                 role="dialog"
                 aria-modal="true"
                 tabindex="-1"

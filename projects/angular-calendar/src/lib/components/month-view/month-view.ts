@@ -340,6 +340,16 @@ export class CalMonthView<TMeta = unknown> {
   /** Element to restore focus to when the popover closes. */
   private moreTrigger: HTMLElement | null = null;
 
+  /**
+   * Which edges the "+N more" popover must flip toward so it never spills out of
+   * the calendar (right-edge columns flip horizontally, bottom rows flip up).
+   * Measured after the popover renders; reset on each open.
+   */
+  protected readonly morePlacement = signal<{ flipX: boolean; flipY: boolean }>({
+    flipX: false,
+    flipY: false,
+  });
+
   protected isMoreOpen(day: MonthDay<TMeta>): boolean {
     return this.openMoreEpoch() === day.date.epochMs;
   }
@@ -348,7 +358,22 @@ export class CalMonthView<TMeta = unknown> {
   protected openMore(day: MonthDay<TMeta>, dom: Event): void {
     dom.stopPropagation();
     this.moreTrigger = dom.currentTarget as HTMLElement;
+    this.morePlacement.set({ flipX: false, flipY: false });
     this.openMoreEpoch.set(day.date.epochMs);
+    // Measure once the popover has laid out, then flip it in-bounds if needed.
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => this.keepMoreInView());
+    }
+  }
+
+  private keepMoreInView(): void {
+    const panel = this.morePanel()?.nativeElement;
+    if (!panel) {
+      return;
+    }
+    const p = panel.getBoundingClientRect();
+    const h = this.host.nativeElement.getBoundingClientRect();
+    this.morePlacement.set({ flipX: p.right > h.right + 1, flipY: p.bottom > h.bottom + 1 });
   }
 
   protected closeMore(): void {
