@@ -60,8 +60,15 @@ jobs:
       - name: Bundle docs into the package
         run: cp README.md LICENSE dist/angular-calendar/
 
+      # First publish bootstrap: npm Trusted Publishers can only be configured on a
+      # package that already exists, so the initial publish authenticates with the
+      # NPM_TOKEN secret to create it (provenance still attaches via id-token). Once
+      # the package exists and a Trusted Publisher is set, drop the env below and the
+      # secret to return to tokenless OIDC publishing.
       - run: npm publish --provenance --access public --tag '${{ steps.meta.outputs.tag }}'
         working-directory: dist/angular-calendar
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Tag the published commit and cut a GitHub Release. Only the main line (dist-tag `latest`) is
       # marked the latest GitHub Release; maintenance lines are non-latest so they never displace it.
