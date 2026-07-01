@@ -225,7 +225,7 @@ function nextUnit(adapter: DateAdapter, d: ZonedDateTime, unit: TimeHeaderUnit):
 /** Off-hours shading bands (complement of the resource's working windows). */
 function buildOffHoursShade<TMeta>(
   adapter: DateAdapter,
-  workHours: ReadonlyArray<{ daysOfWeek: readonly number[]; startMinutes: number; endMinutes: number }> | undefined,
+  workHours: readonly { daysOfWeek: readonly number[]; startMinutes: number; endMinutes: number }[] | undefined,
   args: TimelineViewArgs<TMeta>,
   base: ZonedDateTime,
   rangeStart: ZonedDateTime,
@@ -235,7 +235,7 @@ function buildOffHoursShade<TMeta>(
     return [];
   }
   const minOf = (d: ZonedDateTime): number => adapter.differenceInMinutes(d, rangeStart);
-  const work: Array<[number, number]> = [];
+  const work: [number, number][] = [];
   for (let d = 0; d < args.days; d++) {
     const dayBase = adapter.startOfDay(adapter.addDays(base, d));
     const dow = adapter.getDayOfWeek(dayBase);
@@ -254,7 +254,7 @@ function buildOffHoursShade<TMeta>(
   }
   // Union then complement within [0, total].
   work.sort((a, b) => a[0] - b[0]);
-  const merged: Array<[number, number]> = [];
+  const merged: [number, number][] = [];
   for (const [s, e] of work) {
     const last = merged[merged.length - 1];
     if (last && s <= last[1]) {

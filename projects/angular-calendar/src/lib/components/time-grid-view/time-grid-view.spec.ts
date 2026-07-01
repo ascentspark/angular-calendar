@@ -108,7 +108,7 @@ describe('CalTimeGridView', () => {
     const eventEl = el.querySelector<HTMLButtonElement>('.cal-tg__event')!;
     // jsdom reports a 0px column height → guard against that for the math
     eventEl.closest<HTMLElement>('.cal-tg__col')!.getBoundingClientRect = () =>
-      ({ height: 1440, top: 0, left: 0, right: 0, bottom: 1440, width: 100, x: 0, y: 0, toJSON() {} }) as DOMRect;
+      ({ height: 1440, top: 0, left: 0, right: 0, bottom: 1440, width: 100, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
     eventEl.dispatchEvent(makePointer('pointerdown', 1, 100));
     eventEl.dispatchEvent(makePointer('pointermove', 1, 160)); // +60px → +60min at 1px/min
     eventEl.dispatchEvent(makePointer('pointerup', 1, 160));
@@ -150,7 +150,7 @@ describe('CalTimeGridView — drag-create', () => {
     cmp.eventChanged.subscribe((c) => (change = c));
     const col = el.querySelector<HTMLElement>('.cal-tg__col')!;
     col.getBoundingClientRect = () =>
-      ({ height: 1440, top: 0, left: 0, right: 100, bottom: 1440, width: 100, x: 0, y: 0, toJSON() {} }) as DOMRect;
+      ({ height: 1440, top: 0, left: 0, right: 100, bottom: 1440, width: 100, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
     col.dispatchEvent(makePointerXY('pointerdown', 1, 0, 540)); // 09:00
     col.dispatchEvent(makePointerXY('pointermove', 1, 0, 660)); // 11:00
     col.dispatchEvent(makePointerXY('pointerup', 1, 0, 660));
@@ -188,7 +188,7 @@ describe('CalTimeGridView — resize & veto', () => {
     cmp.eventChanged.subscribe((c) => (change = c));
     const handle = el.querySelector<HTMLElement>('.cal-tg__resize--end')!;
     handle.closest<HTMLElement>('.cal-tg__col')!.getBoundingClientRect = () =>
-      ({ height: 1440, top: 0, left: 0, right: 0, bottom: 1440, width: 100, x: 0, y: 0, toJSON() {} }) as DOMRect;
+      ({ height: 1440, top: 0, left: 0, right: 0, bottom: 1440, width: 100, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
     handle.dispatchEvent(makePointer('pointerdown', 1, 100));
     handle.dispatchEvent(makePointer('pointermove', 1, 160));
     handle.dispatchEvent(makePointer('pointerup', 1, 160));
@@ -211,7 +211,7 @@ describe('CalTimeGridView — resize & veto', () => {
     cmp.eventChanged.subscribe(() => (emitted = true));
     const eventEl = el.querySelector<HTMLButtonElement>('.cal-tg__event')!;
     eventEl.closest<HTMLElement>('.cal-tg__col')!.getBoundingClientRect = () =>
-      ({ height: 1440, top: 0, left: 0, right: 0, bottom: 1440, width: 100, x: 0, y: 0, toJSON() {} }) as DOMRect;
+      ({ height: 1440, top: 0, left: 0, right: 0, bottom: 1440, width: 100, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
     eventEl.dispatchEvent(makePointer('pointerdown', 1, 100));
     eventEl.dispatchEvent(makePointer('pointermove', 1, 160));
     eventEl.dispatchEvent(makePointer('pointerup', 1, 160));
@@ -231,7 +231,7 @@ describe('CalTimeGridView — resize & veto', () => {
     cmp.slotSelected.subscribe(() => (slot += 1));
     const col = el.querySelector<HTMLElement>('.cal-tg__col')!;
     col.getBoundingClientRect = () =>
-      ({ height: 1440, top: 0, left: 0, right: 100, bottom: 1440, width: 100, x: 0, y: 0, toJSON() {} }) as DOMRect;
+      ({ height: 1440, top: 0, left: 0, right: 100, bottom: 1440, width: 100, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
     col.dispatchEvent(makePointerXY('pointerdown', 1, 0, 540));
     col.dispatchEvent(makePointerXY('pointerup', 1, 0, 540));
     expect(slot).toBe(1);

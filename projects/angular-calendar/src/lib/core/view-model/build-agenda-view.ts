@@ -1,6 +1,4 @@
 import type { DateAdapter } from '../date-adapter/date-adapter';
-import type { ZonedDateTime } from '../date-adapter/zoned-date-time';
-import type { CalendarEvent } from '../model/calendar-event';
 import type { AgendaDay, AgendaViewArgs, AgendaViewModel } from './agenda-view-model';
 import type { ViewPeriod } from './view-period';
 

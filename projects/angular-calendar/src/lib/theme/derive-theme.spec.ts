@@ -5,7 +5,7 @@ import { THEME_TOKEN_NAMES } from './tokens';
 
 const modes: CalThemeMode[] = ['light', 'dark'];
 // A spread of base/accent pairs incl. near-black, near-white, saturated, desaturated.
-const pairs: ReadonlyArray<[string, string]> = [
+const pairs: readonly [string, string][] = [
   ['#ffffff', '#3b82f6'],
   ['#0b0b0c', '#22c55e'],
   ['#f4f4f5', '#e5484d'],

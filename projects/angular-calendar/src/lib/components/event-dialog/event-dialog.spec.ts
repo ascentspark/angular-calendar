@@ -72,8 +72,9 @@ describe('CalEventDialog', () => {
     el.querySelector<HTMLButtonElement>('.cal-evd__close')!.click();
     expect(closes).toBe(1);
 
-    const scrim = el.querySelector<HTMLElement>('.cal-evd__scrim')!;
-    scrim.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    // Escape targets the focused dialog panel (keydown.escape binding).
+    const panel = el.querySelector<HTMLElement>('.cal-evd')!;
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(closes).toBe(2);
   });
 

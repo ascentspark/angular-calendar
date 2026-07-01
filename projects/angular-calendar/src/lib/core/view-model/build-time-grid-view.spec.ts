@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { DateFnsDateAdapter } from '@ascentsparksoftware/angular-calendar/date-fns';
-import type { CalendarEvent, ZonedDateTime } from '@ascentsparksoftware/angular-calendar';
+import type { ZonedDateTime } from '@ascentsparksoftware/angular-calendar';
 import { buildTimeGridView } from './build-time-grid-view';
 
 const adapter = new DateFnsDateAdapter();

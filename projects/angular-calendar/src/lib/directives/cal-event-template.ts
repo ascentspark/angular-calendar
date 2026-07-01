@@ -24,6 +24,7 @@ export class CalEventTemplate<TMeta = unknown> {
 
   static ngTemplateContextGuard<T>(
     _dir: CalEventTemplate<T>,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in the type predicate below
     ctx: unknown,
   ): ctx is CalEventContext<T> {
     return true;

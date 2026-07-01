@@ -138,7 +138,7 @@ describe('CalTimelineView — slot selection', () => {
     cmp.slotSelected.subscribe((s) => (resourceId = s.resourceId));
     const row = el.querySelector<HTMLElement>('.cal-tl__row')!;
     row.getBoundingClientRect = () =>
-      ({ height: 40, top: 0, left: 0, right: 1000, bottom: 40, width: 1000, x: 0, y: 0, toJSON() {} }) as DOMRect;
+      ({ height: 40, top: 0, left: 0, right: 1000, bottom: 40, width: 1000, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
     row.dispatchEvent(new MouseEvent('click', { clientX: 500, clientY: 20, bubbles: true }));
     expect(resourceId).toBe('t1');
   });
@@ -161,7 +161,7 @@ describe('CalTimelineView — external drop', () => {
     cmp.externalDrop.subscribe((d) => (drop = d));
     const row = el.querySelector<HTMLElement>('.cal-tl__row')!;
     row.getBoundingClientRect = () =>
-      ({ height: 40, top: 0, left: 0, right: 1000, bottom: 40, width: 1000, x: 0, y: 0, toJSON() {} }) as DOMRect;
+      ({ height: 40, top: 0, left: 0, right: 1000, bottom: 40, width: 1000, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
     const evt = new Event('drop', { bubbles: true });
     Object.defineProperty(evt, 'clientX', { value: 500 });
     Object.defineProperty(evt, 'clientY', { value: 20 });

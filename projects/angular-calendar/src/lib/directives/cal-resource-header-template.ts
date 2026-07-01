@@ -21,6 +21,7 @@ export class CalResourceHeaderTemplate<TMeta = unknown> {
 
   static ngTemplateContextGuard<T>(
     _dir: CalResourceHeaderTemplate<T>,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in the type predicate below
     ctx: unknown,
   ): ctx is CalResourceHeaderContext<T> {
     return true;

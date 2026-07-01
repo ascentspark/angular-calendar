@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { eventsToIcs } from '@ascentsparksoftware/angular-calendar/export';
-import type { CalendarEvent, ZonedDateTime } from '@ascentsparksoftware/angular-calendar';
+import type { ZonedDateTime } from '@ascentsparksoftware/angular-calendar';
 
 const NY = 'America/New_York';
 const z = (iso: string): ZonedDateTime => ({ epochMs: Date.parse(iso), zone: NY });

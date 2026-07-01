@@ -47,6 +47,7 @@ export function expandRecurringEvents<TMeta = unknown>(
       zone: ctx.zone,
     });
     // Omit the series-level recurrence fields; each occurrence is concrete.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- fields intentionally omitted from `rest`
     const { recurrenceRule, recurrenceExceptions, ...rest } = event;
     for (const occ of occurrences) {
       const occEnd = ctx.dates.addMinutes(occ, durationMinutes);

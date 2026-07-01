@@ -1,3 +1,5 @@
+<!-- Roving-tabindex grid: day cells are the focus targets; arrow/Home/End/Enter/Space are handled centrally here, so the container is intentionally not a tab stop. -->
+<!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
 <div class="cal-year" (keydown)="onGridKeydown($event)">
   <div class="cal-year__grid">
     @for (month of viewModel().months; track trackMonth($index); let mi = $index) {
