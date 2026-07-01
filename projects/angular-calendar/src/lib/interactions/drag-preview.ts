@@ -70,7 +70,7 @@ export function computeDragTimes(input: DragInput): DragTimes {
     case 'create': {
       const anchor = snapMs(input.originStartMs, input.snapMinutes);
       const pointer = snapMs(input.pointerMs ?? input.originStartMs, input.snapMinutes);
-      let start = Math.min(anchor, pointer);
+      const start = Math.min(anchor, pointer);
       let end = Math.max(anchor, pointer);
       if (end - start < minMs) {
         end = start + minMs;

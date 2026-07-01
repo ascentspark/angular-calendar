@@ -18,6 +18,7 @@ export class CalCellTemplate<TMeta = unknown> {
 
   static ngTemplateContextGuard<T>(
     _dir: CalCellTemplate<T>,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in the type predicate below
     ctx: unknown,
   ): ctx is CalCellContext<T> {
     return true;

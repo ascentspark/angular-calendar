@@ -10,10 +10,20 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
+}
+
+/* Click-to-dismiss backdrop. Kept aria-hidden and behind the panel so it is
+   purely a mouse convenience — keyboard users dismiss via Esc or the × button. */
+.cal-evd__backdrop {
+  position: fixed;
+  inset: 0;
+  border: 0;
   background: var(--cal-scrim, rgba(0, 0, 0, 0.45));
 }
 
 .cal-evd {
+  position: relative;
+  z-index: 1;
   inline-size: 100%;
   max-inline-size: 26rem;
   background: var(--cal-surface, #fff);

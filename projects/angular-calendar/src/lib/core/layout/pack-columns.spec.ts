@@ -76,8 +76,7 @@ describe('packColumns', () => {
         (intervals) => {
           const r = packColumns(intervals);
           const placed = intervals.map((interval, i) => ({ interval, p: r.items[i]! }));
-          for (let i = 0; i < placed.length; i++) {
-            const { p } = placed[i]!;
+          for (const { p } of placed) {
             // geometry fractions within [0,1]
             const left = p.column / p.columns;
             const width = p.span / p.columns;

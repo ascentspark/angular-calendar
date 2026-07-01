@@ -1,5 +1,6 @@
 @if (event(); as ev) {
-  <div class="cal-evd__scrim" (click)="close()" (keydown)="onScrimKeydown($event)">
+  <div class="cal-evd__scrim">
+    <div class="cal-evd__backdrop" (click)="close()" aria-hidden="true"></div>
     <div
       #panel
       class="cal-evd"
@@ -7,7 +8,7 @@
       aria-modal="true"
       tabindex="-1"
       [attr.aria-label]="ev.title ?? 'Event'"
-      (click)="$event.stopPropagation()"
+      (keydown.escape)="close()"
     >
       @if (detailTemplate(); as tpl) {
         <ng-container

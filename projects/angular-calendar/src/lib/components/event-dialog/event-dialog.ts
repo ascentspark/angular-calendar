@@ -130,12 +130,6 @@ export class CalEventDialog<TMeta = unknown> {
   protected isRecurring(ev: CalendarEvent<TMeta>): boolean {
     return ev.recurrenceRule !== undefined || ev.recurrenceId !== undefined;
   }
-
-  protected onScrimKeydown(dom: KeyboardEvent): void {
-    if (dom.key === 'Escape') {
-      this.close();
-    }
-  }
 }
 
 function hostZone(): string {
