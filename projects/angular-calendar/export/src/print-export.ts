@@ -156,12 +156,21 @@ export function printDocument(
       : typeof window === 'undefined'
         ? null
         : (window.open('', '_blank') as Window | null);
+  // `window.open` returns null when a popup blocker (or SSR) prevents the window.
   if (win === null) {
     return false;
   }
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
+  const doc = win.document;
+  // Trusted-Types / strict-CSP safe: parse the HTML off-document with DOMParser (which
+  // neither executes scripts nor is a Trusted-Types sink) and adopt the parsed tree,
+  // instead of `document.write()` / `innerHTML=` which throw a TypeError under strict CSP.
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
+  const root = doc.documentElement;
+  if (root === null) {
+    doc.appendChild(doc.importNode(parsed.documentElement, true));
+  } else {
+    doc.replaceChild(doc.importNode(parsed.documentElement, true), root);
+  }
   win.focus();
   win.print();
   return true;
