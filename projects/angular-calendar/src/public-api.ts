@@ -67,6 +67,7 @@ export {
   snapValue,
   type ProjectionRange,
 } from './lib/core/layout/projection';
+export { computeRowWindow, type VirtualWindow } from './lib/core/layout/virtual-window';
 
 // ── Configuration & providers ───────────────────────────────────────────────
 export {
@@ -79,6 +80,9 @@ export {
   withDefaults,
   withDateAdapter,
   withTokenBridge,
+  withVirtualization,
+  CAL_VIRTUALIZATION,
+  type CalVirtualizationOptions,
   CAL_TOKEN_BRIDGE,
   type CalendarFeature,
   type CalendarFeatureKind,
@@ -139,6 +143,7 @@ export {
 
 // ── Accessibility ───────────────────────────────────────────────────────────
 export { CalCalendarA11y } from './lib/a11y/cal-calendar-a11y';
+export { CalFocusTrap } from './lib/a11y/cal-focus-trap';
 export { CalCalendarIntl } from './lib/i18n/cal-calendar-intl';
 
 // ── Template-override directives ─────────────────────────────────────────────
@@ -168,11 +173,7 @@ export { CalRecurrenceEditor } from './lib/components/recurrence-editor/recurren
 export { CalTimezonePicker } from './lib/components/timezone-picker/timezone-picker';
 
 // ── Interactions ────────────────────────────────────────────────────────────
-export {
-  type EventChange,
-  type EventChangeKind,
-  type EventChangeRequest,
-} from './lib/interactions/event-change';
+export { type EventChange, type EventChangeKind } from './lib/interactions/event-change';
 export {
   computeDragTimes,
   type DragKind,

@@ -12,7 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
+import { CALENDAR_CONFIG, resolveTimeFormat } from '../../core/config/calendar-config';
 import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
 import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zoned-date-time';
 import type { CalendarEvent } from '../../core/model/calendar-event';
@@ -73,6 +73,8 @@ export class CalMonthView<TMeta = unknown> {
   readonly accentColor = input<string>(FALLBACK_ACCENT);
   readonly themeMode = input<CalThemeMode>('light');
   readonly statusColors = input<Record<string, string>>({});
+  /** Optional hex override for on-accent text (`--cal-accent-ink`); null = auto. */
+  readonly accentInk = input<string | null>(null);
 
   // ── outputs ─────────────────────────────────────────────────────────────
   readonly eventClicked = output<{ event: CalendarEvent<TMeta> }>();
@@ -170,7 +172,7 @@ export class CalMonthView<TMeta = unknown> {
 
   private readonly theme = computed(() => {
     try {
-      return deriveTheme(this.baseColor(), this.accentColor(), this.themeMode(), this.statusColors());
+      return deriveTheme(this.baseColor(), this.accentColor(), this.themeMode(), this.statusColors(), this.accentInk());
     } catch {
       return deriveTheme(FALLBACK_BASE, FALLBACK_ACCENT, this.themeMode(), this.statusColors());
     }
@@ -228,6 +230,12 @@ export class CalMonthView<TMeta = unknown> {
       background: bg,
       color: fg,
     };
+  }
+
+  /** `top` for the "+N more" pill: the row immediately below the day's last visible chip. */
+  protected moreTop(day: MonthDay<TMeta>): string {
+    const lastLane = day.events.reduce((max, chip) => Math.max(max, chip.lane), -1);
+    return `calc(var(--cal-day-head) + ${lastLane + 1} * var(--cal-chip-row))`;
   }
 
   /** Lane rows to reserve in a week (max visible lane + an overflow row if any). */
@@ -340,6 +348,16 @@ export class CalMonthView<TMeta = unknown> {
   /** Element to restore focus to when the popover closes. */
   private moreTrigger: HTMLElement | null = null;
 
+  /**
+   * Which edges the "+N more" popover must flip toward so it never spills out of
+   * the calendar (right-edge columns flip horizontally, bottom rows flip up).
+   * Measured after the popover renders; reset on each open.
+   */
+  protected readonly morePlacement = signal<{ flipX: boolean; flipY: boolean }>({
+    flipX: false,
+    flipY: false,
+  });
+
   protected isMoreOpen(day: MonthDay<TMeta>): boolean {
     return this.openMoreEpoch() === day.date.epochMs;
   }
@@ -348,7 +366,22 @@ export class CalMonthView<TMeta = unknown> {
   protected openMore(day: MonthDay<TMeta>, dom: Event): void {
     dom.stopPropagation();
     this.moreTrigger = dom.currentTarget as HTMLElement;
+    this.morePlacement.set({ flipX: false, flipY: false });
     this.openMoreEpoch.set(day.date.epochMs);
+    // Measure once the popover has laid out, then flip it in-bounds if needed.
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => this.keepMoreInView());
+    }
+  }
+
+  private keepMoreInView(): void {
+    const panel = this.morePanel()?.nativeElement;
+    if (!panel) {
+      return;
+    }
+    const p = panel.getBoundingClientRect();
+    const h = this.host.nativeElement.getBoundingClientRect();
+    this.morePlacement.set({ flipX: p.right > h.right + 1, flipY: p.bottom > h.bottom + 1 });
   }
 
   protected closeMore(): void {
@@ -371,7 +404,7 @@ export class CalMonthView<TMeta = unknown> {
       return this.intl.allDay;
     }
     const zone = this.resolvedZone();
-    return this.adapter.format(this.adapter.toZoned(event.start, zone), 'h:mm a', this.resolvedLocale());
+    return this.adapter.format(this.adapter.toZoned(event.start, zone), resolveTimeFormat(this.config.hour12), this.resolvedLocale());
   }
 
   /** Header date for the popover, e.g. "Wed 17". */

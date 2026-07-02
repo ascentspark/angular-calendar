@@ -5,6 +5,13 @@ Angular major. This project adheres to [Keep a Changelog](https://keepachangelog
 
 ## [Unreleased]
 
+## [21.0.1] - 2026-07-02
+
+Angular 21 build of the 22.0.1 adoption-audit fixes (orientation input, timeline keyboard +
+validateChange, DST fix, print Trusted-Types, recurrence in agenda/year, hour12 unification,
+virtualization, focus trap, on-accent ink, and month/timeline polish). Feature-parity with 22.0.1.
+
+
 ## [21.0.0] - 2026-07-01
 
 ### Added

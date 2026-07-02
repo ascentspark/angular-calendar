@@ -72,13 +72,18 @@ describe('eventsToPrintHtml', () => {
 });
 
 describe('printDocument', () => {
-  it('writes the html to the target window and triggers print', () => {
-    const write = vi.fn();
-    const fakeDoc = { open: vi.fn(), write, close: vi.fn() } as unknown as Document;
-    const target = { document: fakeDoc, focus: vi.fn(), print: vi.fn() };
-    const ok = printDocument('<html></html>', target);
+  it('renders the html into the target document (no document.write) and triggers print', () => {
+    const targetDoc = document.implementation.createHTMLDocument('blank');
+    const target = { document: targetDoc, focus: vi.fn(), print: vi.fn() };
+    const ok = printDocument(
+      '<html><head><title>Schedule</title></head><body><h1 id="h">Agenda</h1></body></html>',
+      target,
+    );
     expect(ok).toBe(true);
-    expect(write).toHaveBeenCalledWith('<html></html>');
+    // Parsed + adopted via DOM APIs (Trusted-Types safe), not document.write.
+    expect(targetDoc.querySelector('#h')?.textContent).toBe('Agenda');
+    expect(targetDoc.title).toBe('Schedule');
+    expect(target.focus).toHaveBeenCalledOnce();
     expect(target.print).toHaveBeenCalledOnce();
   });
 

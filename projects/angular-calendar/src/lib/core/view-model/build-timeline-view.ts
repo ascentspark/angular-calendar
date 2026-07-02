@@ -4,6 +4,7 @@ import type { CalendarEvent } from '../model/calendar-event';
 import { packColumns } from '../layout/pack-columns';
 import type { Interval } from '../layout/interval';
 import { offsetFraction, type ProjectionRange } from '../layout/projection';
+import { resolveTimeFormat } from '../config/calendar-config';
 import { flattenResources } from './flatten-resources';
 import type { PositionedEvent, ShadeBand } from './positioned-event';
 import type {
@@ -66,11 +67,22 @@ export function buildTimelineView<TMeta = unknown>(
   }
 
   // ── resource rows ─────────────────────────────────────────────────────────
+  // Bucket events by resource id once (O(events)) instead of filtering the full
+  // event list per resource (O(resources × events)).
+  const eventsByResource = new Map<string, CalendarEvent<TMeta>[]>();
+  for (const event of args.events) {
+    for (const rid of event.resourceIds ?? []) {
+      const bucket = eventsByResource.get(rid);
+      if (bucket === undefined) {
+        eventsByResource.set(rid, [event]);
+      } else {
+        bucket.push(event);
+      }
+    }
+  }
   const flat = flattenResources(args.resources);
   const resourceRows: ResourceRow<TMeta>[] = flat.map(({ resource, depth, hasChildren }) => {
-    const mine = args.events.filter(
-      (e) => e.resourceIds !== undefined && e.resourceIds.includes(resource.id),
-    );
+    const mine = eventsByResource.get(resource.id) ?? [];
 
     const intervals: Interval<{
       event: CalendarEvent<TMeta>;
@@ -163,10 +175,14 @@ function buildHeaderCells<TMeta>(
     const cellEndMs = Math.min(next.epochMs, rangeEnd.epochMs);
     const sMin = (cellStartMs - rangeStart.epochMs) / 60000;
     const eMin = (cellEndMs - rangeStart.epochMs) / 60000;
+    const pattern =
+      unit === 'hour' || unit === 'minute'
+        ? resolveTimeFormat(args.hour12 ?? null)
+        : LABEL_PATTERN[unit];
     cells.push({
       offset: offsetFraction(sMin, range),
       span: (eMin - sMin) / range.total,
-      label: adapter.format(cursor, LABEL_PATTERN[unit], args.locale),
+      label: adapter.format(cursor, pattern, args.locale),
       isNow: nowMin !== null && nowMin >= sMin && nowMin < eMin,
     });
     cursor = next;

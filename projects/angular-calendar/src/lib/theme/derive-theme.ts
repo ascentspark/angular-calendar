@@ -88,9 +88,31 @@ const GRAPHIC = 3;
 const WHITE: Rgb = { r: 255, g: 255, b: 255 };
 const BLACK: Rgb = { r: 0, g: 0, b: 0 };
 
-/** The black/white extreme that already contrasts best with `bg` (a good AA seed). */
-const betterExtreme = (bg: Rgb): Rgb =>
-  contrastRatio(WHITE, bg) >= contrastRatio(BLACK, bg) ? WHITE : BLACK;
+/**
+ * On-accent text colour. Prefers **white** — it reads crisply on saturated brand
+ * colours, where pure black looks muddy even at a passing WCAG-luminance ratio (e.g.
+ * black on teal/orange) — as long as white clears large-text AA (3:1; on-accent text is
+ * bold buttons / date badges). Falls back to the higher-contrast extreme only for light
+ * accents where white would be illegible.
+ */
+const onAccentInk = (accent: Rgb): Rgb => {
+  if (contrastRatio(WHITE, accent) >= 3) {
+    return WHITE;
+  }
+  return contrastRatio(WHITE, accent) >= contrastRatio(BLACK, accent) ? WHITE : BLACK;
+};
+
+/** Parse an optional on-accent ink override; blank/invalid values fall through to the default. */
+const resolveInkOverride = (hex: string | null | undefined): Rgb | null => {
+  if (hex === undefined || hex === null || hex === '') {
+    return null;
+  }
+  try {
+    return parseHex(hex);
+  } catch {
+    return null;
+  }
+};
 
 /**
  * Deepen `fill` (OKLCH lightness only — hue & chroma preserved) until `ink` clears
@@ -122,6 +144,8 @@ function fitFillForInk(fill: Rgb, ink: Rgb, target: number): Rgb {
  * @param mode `'light'` or `'dark'`.
  * @param eventColors optional status/category → hex map; each yields a guaranteed-AA
  *   `--cal-event-<key>` / `-ink` / `-soft` / `-soft-ink` quartet (invalid entries skipped).
+ * @param accentInk optional hex override for on-accent text (`--cal-accent-ink`); when a
+ *   valid hex is given it is used verbatim, letting the consumer fully control that colour.
  * @throws {Error} if `baseColor` or `accentColor` is not valid hex.
  */
 export function deriveTheme(
@@ -129,6 +153,7 @@ export function deriveTheme(
   accentColor: string,
   mode: CalThemeMode,
   eventColors?: Record<string, string>,
+  accentInk?: string | null,
 ): CalThemeTokens {
   const base = parseHex(baseColor);
   const accent = parseHex(accentColor);
@@ -155,7 +180,7 @@ export function deriveTheme(
   const lineStrong = tint(cfg.line.strong);
 
   const accentL = srgbToOklch(accent).l;
-  const accentInk = ensureContrastAA(betterExtreme(accent), accent, AA);
+  const accentInkColor = resolveInkOverride(accentInk) ?? onAccentInk(accent);
   const accentHover = withLightness(accent, accentL + cfg.accentHoverDelta);
   const accentSoft = mixOklab(accent, surface, cfg.accentSoftMix);
   const accentSoftInk = ensureContrastAA(accent, accentSoft, AA);
@@ -176,7 +201,7 @@ export function deriveTheme(
     '--cal-line': formatHex(line),
     '--cal-line-strong': formatHex(lineStrong),
     '--cal-accent': formatHex(accent),
-    '--cal-accent-ink': formatHex(accentInk),
+    '--cal-accent-ink': formatHex(accentInkColor),
     '--cal-accent-hover': formatHex(accentHover),
     '--cal-accent-soft': formatHex(accentSoft),
     '--cal-accent-soft-ink': formatHex(accentSoftInk),

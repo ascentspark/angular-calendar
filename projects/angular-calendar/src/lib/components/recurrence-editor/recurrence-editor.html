@@ -4,7 +4,7 @@
     <select
       id="cal-rec-freq"
       class="cal-rec__select"
-      (change)="setFreq($any($event.target).value)"
+      (change)="setFreq($event)"
     >
       @for (f of freqs; track f) {
         <option [value]="f" [selected]="f === currentFreq()">{{ f }}</option>
@@ -20,7 +20,7 @@
       type="number"
       min="1"
       [value]="intervalValue"
-      (change)="setInterval($any($event.target).value)"
+      (change)="setInterval($event)"
     />
     <span class="cal-rec__unit">{{ currentFreq() }} interval</span>
   </div>
@@ -71,7 +71,7 @@
           min="1"
           [value]="countValue"
           [disabled]="endType !== 'count'"
-          (change)="setCount($any($event.target).value)"
+          (change)="setCount($event)"
         />
         times
       </label>

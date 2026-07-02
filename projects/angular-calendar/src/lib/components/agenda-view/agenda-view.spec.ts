@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideCalendar, withDateAdapter } from '@ascentsparksoftware/angular-calendar';
 import { provideDateFnsAdapter } from '@ascentsparksoftware/angular-calendar/date-fns';
+import { provideRruleAdapter } from '@ascentsparksoftware/angular-calendar/recurrence';
 import type { CalendarEvent, ZonedDateTime } from '@ascentsparksoftware/angular-calendar';
 import { CalAgendaView } from './agenda-view';
 
@@ -70,5 +71,36 @@ describe('CalAgendaView', () => {
       hideEmptyDays: true,
     });
     expect(el.querySelectorAll('.cal-agenda__day').length).toBe(1);
+  });
+});
+
+describe('CalAgendaView — recurrence', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('expands a recurring event into the agenda window', async () => {
+    TestBed.configureTestingModule({
+      providers: [provideCalendar(withDateAdapter(provideDateFnsAdapter())), provideRruleAdapter()],
+    });
+    const fixture = TestBed.createComponent(CalAgendaView);
+    fixture.componentRef.setInput('events', [
+      {
+        id: 'weekly',
+        title: 'Weekly sync',
+        start: at('2026-06-15T13:00:00Z'),
+        end: at('2026-06-15T13:30:00Z'),
+        recurrenceRule: 'FREQ=WEEKLY;BYDAY=MO;COUNT=4',
+      },
+    ]);
+    fixture.componentRef.setInput('viewDate', at('2026-06-15T12:00:00Z'));
+    fixture.componentRef.setInput('days', 30);
+    fixture.componentRef.setInput('timezone', zone);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const rows = [...el.querySelectorAll('.cal-agenda__row')].filter((r) =>
+      r.textContent?.includes('Weekly sync'),
+    );
+    // 4 Monday occurrences (Jun 15, 22, 29, Jul 6) fall inside the 30-day window
+    expect(rows.length).toBe(4);
   });
 });

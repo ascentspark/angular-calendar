@@ -51,7 +51,11 @@ export interface DateAdapter {
   isSameDay(a: ZonedDateTime, b: ZonedDateTime): boolean;
   /** Day of week in the value's zone, 0=Sun … 6=Sat (Gregorian). */
   getDayOfWeek(d: ZonedDateTime): number;
-  /** Physical minutes since local midnight; on a DST day spans 0…1380 or 0…1500. */
+  /**
+   * Wall-clock minutes into the local day (0…1440): the zone's clock reading, so it is
+   * DST-stable — 09:00 is always 540 even on a spring-forward / fall-back day. Used for
+   * time-axis positioning, which must line up with the hour labels.
+   */
   getMinutesIntoDay(d: ZonedDateTime): number;
 
   // ── calendar-system-aware display fields (default 'gregory') ──────────────

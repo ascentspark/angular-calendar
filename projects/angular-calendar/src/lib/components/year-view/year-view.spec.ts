@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideCalendar, withDateAdapter } from '@ascentsparksoftware/angular-calendar';
 import { provideDateFnsAdapter } from '@ascentsparksoftware/angular-calendar/date-fns';
+import { provideRruleAdapter } from '@ascentsparksoftware/angular-calendar/recurrence';
 import type { CalendarEvent, ZonedDateTime } from '@ascentsparksoftware/angular-calendar';
 import { CalYearView } from './year-view';
 
@@ -87,5 +88,34 @@ describe('CalYearView', () => {
       new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
     );
     expect(cmp.focusedEpoch()).not.toBe(before);
+  });
+});
+
+describe('CalYearView — recurrence', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('expands a recurring event across the year (multiple days marked)', async () => {
+    TestBed.configureTestingModule({
+      providers: [provideCalendar(withDateAdapter(provideDateFnsAdapter())), provideRruleAdapter()],
+    });
+    const fixture = TestBed.createComponent(CalYearView);
+    fixture.componentRef.setInput('events', [
+      {
+        id: 'weekly',
+        title: 'Weekly sync',
+        start: at('2026-06-15T13:00:00Z'),
+        recurrenceRule: 'FREQ=WEEKLY;BYDAY=MO;COUNT=6',
+      },
+    ]);
+    fixture.componentRef.setInput('viewDate', at('2026-06-15T12:00:00Z'));
+    fixture.componentRef.setInput('timezone', zone);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    // 6 weekly occurrences → 6 distinct days carry an event density marker (> 0).
+    const withEvents = [...el.querySelectorAll('.cal-mini__day[data-density]')].filter(
+      (d) => (d.getAttribute('data-density') ?? '0') !== '0',
+    );
+    expect(withEvents.length).toBe(6);
   });
 });

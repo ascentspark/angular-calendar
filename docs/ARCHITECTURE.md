@@ -54,8 +54,8 @@ events + resources (consumer-owned, immutable)
 [component]  renders the view-model; emits outputs on interaction
         │
         ▼
-outputs:  eventClicked · eventChanged (move/resize/create/inline-edit) · rangeSelected ·
-          slotSelected · daySelected · viewPeriodChanged · recurrenceEdit
+outputs:  eventClicked · eventChanged (move/resize/create/inline-edit) · slotSelected ·
+          daySelected · monthSelected · viewPeriodChanged · resourceToggled · externalDrop
         │
         ▼
 consumer applies the change to its own store → feeds new immutable data back in
@@ -70,7 +70,7 @@ drag/resize before it commits (the preview snaps back).
 - **Date adapter** — implement `DateAdapter` (default: `/date-fns`); Luxon/Temporal are drop-ins.
 - **Recurrence adapter** — implement `RecurrenceAdapter` (default: `/recurrence`, RFC 5545).
 - **Templates** — structural directives with typed `$implicit` contexts: `*calEventTemplate`,
-  `*calCellTemplate`, `*calOverflow`, `*calResourceHeader`.
+  `*calCellTemplate`, `*calOverflow`, `*calResourceHeader`, `*calEventDetail`.
 - **Services** — `CalCalendarA11y` (screen-reader strings) and `CalCalendarIntl` (visible labels)
   are DI-overridable for localisation.
 - **Config** — `provideCalendar(withDateAdapter(...), withDefaults({...}))` seeds defaults; every

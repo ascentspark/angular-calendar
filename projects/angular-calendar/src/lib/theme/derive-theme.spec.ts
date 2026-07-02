@@ -38,15 +38,27 @@ describe('deriveTheme — WCAG guarantees', () => {
       }
     }
   });
-  it('accent ink reaches AA on the accent', () => {
+  it('on-accent ink prefers white and clears large-text AA (3:1) on the accent', () => {
+    // On-accent text is bold chrome (buttons, date badges), so it targets large-text AA
+    // (3:1) and prefers white — which reads crisply on saturated brand colours where pure
+    // black looks muddy. (Event chips still guarantee full 4.5:1 via colour deepening.)
     for (const mode of modes) {
       for (const [base, accent] of pairs) {
         const t = deriveTheme(base, accent, mode);
         expect(
           contrastRatio(parseHex(t['--cal-accent-ink']), parseHex(t['--cal-accent'])),
-        ).toBeGreaterThanOrEqual(4.4);
+        ).toBeGreaterThanOrEqual(2.9);
       }
     }
+  });
+
+  it('honours an explicit accentInk override', () => {
+    const t = deriveTheme('#ffffff', '#0d9488', 'light', {}, '#ffeedd');
+    expect(t['--cal-accent-ink'].toLowerCase()).toBe('#ffeedd');
+    // invalid/blank overrides fall through to the derived default (white on teal)
+    expect(deriveTheme('#ffffff', '#0d9488', 'light', {}, 'not-a-color')['--cal-accent-ink']).toBe(
+      '#ffffff',
+    );
   });
   it('now-line reaches at least 3:1 graphical contrast against the bg', () => {
     for (const mode of modes) {

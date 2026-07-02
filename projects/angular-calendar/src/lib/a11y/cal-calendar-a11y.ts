@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { CALENDAR_CONFIG } from '../core/config/calendar-config';
+import { CALENDAR_CONFIG, resolveTimeFormat } from '../core/config/calendar-config';
 import { DATE_ADAPTER } from '../core/date-adapter/date-adapter';
 import type { ZonedDateTime } from '../core/date-adapter/zoned-date-time';
 import type { CalendarEvent } from '../core/model/calendar-event';
@@ -44,5 +44,42 @@ export class CalCalendarA11y {
   daySelectedLabel(date: ZonedDateTime): string {
     const label = this.dayLabel(date);
     return label ? `Selected ${label}` : 'Selected day';
+  }
+
+  /** Short time label, e.g. "10:30 AM", used in drag announcements. */
+  private timeLabel(instant: ZonedDateTime): string {
+    if (this.adapter === null) {
+      return '';
+    }
+    return this.adapter.format(instant, resolveTimeFormat(this.config.hour12), this.config.locale, this.config.calendarSystem);
+  }
+
+  /** Announced when a keyboard drag grab begins. */
+  grabbedLabel(event: CalendarEvent): string {
+    return `Grabbed ${this.eventLabel(event)}. Use the arrow keys to move, Enter to drop, Escape to cancel.`;
+  }
+
+  /** Announced as a grabbed event is moved to a new start instant. */
+  movedLabel(start: ZonedDateTime): string {
+    const time = this.timeLabel(start);
+    return time ? `Moved to ${time}` : 'Moved';
+  }
+
+  /** Announced as a grabbed event's end edge is resized. */
+  resizedLabel(end: ZonedDateTime): string {
+    const time = this.timeLabel(end);
+    return time ? `Resized, ends ${time}` : 'Resized';
+  }
+
+  /** Announced when a keyboard drag is committed. */
+  droppedLabel(event: CalendarEvent, start: ZonedDateTime): string {
+    const time = this.timeLabel(start);
+    const label = this.eventLabel(event);
+    return time ? `${label} moved to ${time}` : `${label} moved`;
+  }
+
+  /** Announced when a keyboard drag is cancelled. */
+  moveCancelledLabel(event: CalendarEvent): string {
+    return `Move cancelled. ${this.eventLabel(event)} returned to its original time.`;
   }
 }

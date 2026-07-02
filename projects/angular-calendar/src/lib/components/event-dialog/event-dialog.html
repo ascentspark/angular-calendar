@@ -2,11 +2,11 @@
   <div class="cal-evd__scrim">
     <div class="cal-evd__backdrop" (click)="close()" aria-hidden="true"></div>
     <div
-      #panel
       class="cal-evd"
       role="dialog"
       aria-modal="true"
       tabindex="-1"
+      calFocusTrap
       [attr.aria-label]="ev.title ?? 'Event'"
       (keydown.escape)="close()"
     >
@@ -18,18 +18,18 @@
       } @else {
         <header class="cal-evd__head">
           <span class="cal-evd__bar" [style.background]="statusColor(ev)" aria-hidden="true"></span>
-          <h2 class="cal-evd__title">{{ ev.title ?? '(untitled)' }}</h2>
-          <button type="button" class="cal-evd__close" aria-label="Close" (click)="close()">×</button>
+          <h2 class="cal-evd__title">{{ ev.title ?? intl.untitledEvent }}</h2>
+          <button type="button" class="cal-evd__close" [attr.aria-label]="intl.close" (click)="close()">×</button>
         </header>
 
         <dl class="cal-evd__body">
           <div class="cal-evd__row">
-            <dt>When</dt>
+            <dt>{{ intl.dialogWhen }}</dt>
             <dd>{{ dateLabel(ev) }}<br /><span class="cal-evd__time">{{ timeLabel(ev) }}</span></dd>
           </div>
           @if (ev.status) {
             <div class="cal-evd__row">
-              <dt>Status</dt>
+              <dt>{{ intl.dialogStatus }}</dt>
               <dd>
                 <span
                   class="cal-evd__badge"
@@ -50,8 +50,8 @@
           }
           @if (isRecurring(ev)) {
             <div class="cal-evd__row">
-              <dt>Repeats</dt>
-              <dd>Recurring event</dd>
+              <dt>{{ intl.dialogRepeats }}</dt>
+              <dd>{{ intl.recurringEvent }}</dd>
             </div>
           }
         </dl>

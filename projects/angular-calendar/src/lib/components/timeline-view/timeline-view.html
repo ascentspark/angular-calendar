@@ -1,8 +1,10 @@
 @let vm = viewModel();
 <div
+  #scroller
   class="cal-tl"
   [style.--cal-tl-time-width.px]="totalHours() * hourWidth()"
   [style.--cal-tl-hour-w.px]="hourWidth()"
+  (scroll)="onScroll($event.target)"
 >
   <div class="cal-tl__grid" role="grid" aria-label="Resource timeline">
     <!-- Corner (frozen top-left). Decorative: resource lanes are self-labelled. -->
@@ -30,8 +32,13 @@
     </div>
 
     <!-- Resource rows: frozen header + lane body. The display:contents wrapper is
-         the ARIA row (rowheader + gridcell) without disturbing the CSS grid. -->
-    @for (row of vm.resourceRows; track trackRow($index, row)) {
+         the ARIA row (rowheader + gridcell) without disturbing the CSS grid.
+         Long resource lists are virtualized: only rows near the viewport render,
+         with top/bottom spacers preserving the scroll height (see rowWindow). -->
+    @if (rowWindow().padTop > 0) {
+      <div class="cal-tl__spacer" [style.block-size.px]="rowWindow().padTop" aria-hidden="true"></div>
+    }
+    @for (row of visibleRows(); track trackRow($index, row)) {
       <div class="cal-tl__resrow" role="row">
       <div
         class="cal-tl__rhead"
@@ -83,7 +90,7 @@
           ></div>
         }
 
-        @for (ev of row.events; track trackEvent($index, ev)) {
+        @for (ev of visibleEvents(row); track trackEvent($index, ev)) {
           <button
             type="button"
             class="cal-tl__event"
@@ -100,6 +107,7 @@
             (pointerup)="onEventPointerUp(ev, $event)"
             (pointercancel)="onEventPointerCancel($event)"
             (click)="onEventClick(ev.event, $event)"
+            (keydown)="onEventKeydown(ev, row, $event)"
           >
             @if (eventTemplate(); as tpl) {
               <ng-container
@@ -118,5 +126,11 @@
       </div>
       </div>
     }
+    @if (rowWindow().padBottom > 0) {
+      <div class="cal-tl__spacer" [style.block-size.px]="rowWindow().padBottom" aria-hidden="true"></div>
+    }
   </div>
+
+  <!-- Screen-reader announcements for keyboard move/resize (grab, step, lane, drop, cancel). -->
+  <div class="cal-tl__sr" role="status" aria-live="polite">{{ announcement() }}</div>
 </div>

@@ -40,6 +40,9 @@ const PRESETS: Readonly<Record<string, Intl.DateTimeFormatOptions>> = {
   'HH:mm': { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' },
   'h a': { hour: 'numeric', hour12: true },
   'h:mm a': { hour: 'numeric', minute: '2-digit', hour12: true },
+  // Locale-default time: Intl picks 12- or 24-hour by the locale (e.g. en-US → 1:30 PM,
+  // de-DE → 13:30). Used when the calendar's `hour12` config is left unset (null).
+  time: { hour: 'numeric', minute: '2-digit' },
   'full-date': { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
 };
 
@@ -107,7 +110,11 @@ export class DateFnsDateAdapter implements DateAdapter {
   }
 
   getMinutesIntoDay(d: ZonedDateTime): number {
-    return (d.epochMs - this.startOfDay(d).epochMs) / MS_PER_MINUTE;
+    // Wall-clock minutes into the local day, read from the zone's clock so a DST
+    // transition never shifts it: 09:00 is always 540, even on a day whose
+    // midnight→09:00 span is only 8 real hours (spring forward) or 10 (fall back).
+    const local = toZonedTime(d.epochMs, d.zone);
+    return local.getHours() * 60 + local.getMinutes() + local.getSeconds() / 60;
   }
 
   getEra(d: ZonedDateTime, system: CalendarSystem): EraFields {
@@ -128,16 +135,21 @@ export class DateFnsDateAdapter implements DateAdapter {
     return eraName ? { ...fields, eraName } : fields;
   }
 
+  private readonly formatCache = new Map<string, Intl.DateTimeFormat>();
+
   format(d: ZonedDateTime, pattern: string, locale: string, system: CalendarSystem = 'gregory'): string {
     const opts = PRESETS[pattern];
     if (opts === undefined) {
       throw new Error(`Unsupported format pattern: "${pattern}"`);
     }
-    const dtf = new Intl.DateTimeFormat(locale, {
-      timeZone: d.zone,
-      calendar: system,
-      ...opts,
-    });
+    // Cache the (locale, zone, calendar, pattern) formatter — Intl.DateTimeFormat
+    // construction is costly and `format` is called once per label during layout.
+    const key = `${locale}|${d.zone}|${system}|${pattern}`;
+    let dtf = this.formatCache.get(key);
+    if (dtf === undefined) {
+      dtf = new Intl.DateTimeFormat(locale, { timeZone: d.zone, calendar: system, ...opts });
+      this.formatCache.set(key, dtf);
+    }
     return dtf.format(new Date(d.epochMs));
   }
 
