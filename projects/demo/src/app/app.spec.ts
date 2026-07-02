@@ -1,22 +1,22 @@
 import { TestBed } from '@angular/core/testing';
-import { provideCalendar, withDateAdapter } from '@ascentsparksoftware/angular-calendar';
-import { provideDateFnsAdapter } from '@ascentsparksoftware/angular-calendar/date-fns';
+import { provideRouter } from '@angular/router';
 import { App } from './app';
 
-describe('Demo App', () => {
+describe('Demo shell', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideCalendar(withDateAdapter(provideDateFnsAdapter()))],
+      providers: [provideRouter([])],
     }).compileComponents();
   });
 
-  it('creates and renders the month view', async () => {
+  it('renders the branded header and sidebar nav', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('cal-month-view')).toBeTruthy();
-    expect(el.querySelector('[role="grid"]')).toBeTruthy();
+    expect(el.querySelector('.brand__text strong')?.textContent).toContain('angular-calendar');
+    expect(el.querySelector('.site-nav')).toBeTruthy();
+    expect(el.querySelector('router-outlet')).toBeTruthy();
   });
 });

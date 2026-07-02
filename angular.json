@@ -87,12 +87,9 @@
               "projects/demo/src/styles.css"
             ],
             "server": "projects/demo/src/main.server.ts",
-            "outputMode": "server",
+            "outputMode": "static",
             "security": {
               "allowedHosts": []
-            },
-            "ssr": {
-              "entry": "projects/demo/src/server.ts"
             }
           },
           "configurations": {
