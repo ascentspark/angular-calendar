@@ -165,7 +165,14 @@
   color: var(--site-ink-soft);
 }
 .nav-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   color: var(--site-accent);
+  text-decoration: none;
+}
+.nav-footer a:hover {
+  text-decoration: underline;
 }
 
 .site-main {

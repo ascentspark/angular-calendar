@@ -8,6 +8,7 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NAV } from './nav';
+import { AscGlyph } from './shared/asc-glyph';
 
 /**
  * Site shell: branded header (dark toggle) + grouped sidebar nav + routed content.
@@ -17,7 +18,7 @@ import { NAV } from './nav';
   selector: 'cal-root',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, AscGlyph],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
