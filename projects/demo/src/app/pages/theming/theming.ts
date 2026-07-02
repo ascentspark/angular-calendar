@@ -18,8 +18,8 @@ export class ThemingPage {
   protected readonly statusColors = STATUS_COLORS;
 
   /** Live-bound theme controls for the "two colours" demo. */
-  protected readonly base = signal('#4f46e5');
-  protected readonly accent = signal('#4f46e5');
+  protected readonly base = signal('#ff4806');
+  protected readonly accent = signal('#ff4806');
   protected readonly mode = signal<CalThemeMode>('light');
 
   protected toggleMode(): void {
@@ -52,8 +52,8 @@ export class ThemingPage {
       lang: 'ts',
       code: `import { CalThemeMode } from '@ascentsparksoftware/angular-calendar';
 
-base = signal('#4f46e5');          // neutral anchor (hex)
-accent = signal('#4f46e5');        // interactive accent (hex)
+base = signal('#ff4806');          // neutral anchor (hex)
+accent = signal('#ff4806');        // interactive accent (hex)
 mode = signal<CalThemeMode>('light');`,
     },
   ];
@@ -102,7 +102,7 @@ cal-month-view {
       code: `import { deriveTheme, applyTheme } from '@ascentsparksoftware/angular-calendar';
 
 // Pure, SSR-safe, OKLCH-based; guarantees AA contrast in both modes.
-const tokens = deriveTheme('#0f172a', '#4f46e5', 'dark', { scheduled: '#2563eb' });
+const tokens = deriveTheme('#0f172a', '#ff4806', 'dark', { scheduled: '#2563eb' });
 applyTheme(hostEl, tokens); // writes scoped --cal-* on hostEl`,
     },
   ];

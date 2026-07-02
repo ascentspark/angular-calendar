@@ -1,4 +1,14 @@
 /* Global styles for the docs/demo site. */
+
+/* Self-hosted Ascentspark UI font (Outfit, variable) — no external requests. */
+@font-face {
+  font-family: 'Outfit';
+  src: url('/fonts/Outfit.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -6,6 +16,13 @@ html,
 body {
   margin: 0;
   padding: 0;
+  font-family:
+    'Outfit',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
 }
 html.dark {
   color-scheme: dark;
@@ -35,12 +52,12 @@ html.dark {
   line-height: 1.65;
 }
 .page a {
-  color: var(--site-accent, #4f46e5);
+  color: var(--site-accent, #ff4806);
 }
 .page code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.88em;
-  background: color-mix(in srgb, var(--site-accent, #4f46e5) 10%, transparent);
+  background: color-mix(in srgb, var(--site-accent, #ff4806) 10%, transparent);
   padding: 0.1em 0.35em;
   border-radius: 0.3rem;
 }
@@ -55,7 +72,7 @@ html.dark {
   place-items: center;
   min-block-size: 16rem;
   border-radius: 0.5rem;
-  background: var(--site-accent-soft, #eef0fe);
+  background: var(--site-accent-soft, rgba(255,76,5,0.07));
   color: var(--site-ink-soft, #5b606b);
   font-size: 0.9rem;
 }

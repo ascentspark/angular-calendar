@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, PLATFORM_ID, inject, signal } from 
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NAV } from './nav';
-import { AscGlyph } from './shared/asc-glyph';
 import { SeoService } from './shared/seo.service';
 
 /**
@@ -13,7 +12,7 @@ import { SeoService } from './shared/seo.service';
   selector: 'cal-root',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, AscGlyph],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

@@ -66,10 +66,10 @@ export class Playground {
   /** Neutral anchor — tints every surface/ink. The whole UI derives from this. */
   protected readonly base = signal('#ffffff');
   /** Interactive accent — drives selection, today, focus, primary actions. */
-  protected readonly accent = signal('#4f46e5');
+  protected readonly accent = signal('#ff4806');
 
   /** Quick-pick palettes so the adaptability is one tap away. */
-  protected readonly accentSwatches = ['#4f46e5', '#0d9488', '#e11d48', '#ea580c', '#2563eb'];
+  protected readonly accentSwatches = ['#ff4806', '#0d9488', '#e11d48', '#ea580c', '#2563eb'];
   protected readonly baseSwatches = ['#ffffff', '#f5f3ef', '#eef2f6', '#f4f1fa'];
 
   protected setAccent(hex: string): void {

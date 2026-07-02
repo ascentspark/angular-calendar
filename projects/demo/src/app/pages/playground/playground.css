@@ -47,7 +47,7 @@
   block-size: 2.1rem;
   flex: 0 0 auto;
   fill: none;
-  stroke: var(--cal-accent, #4f46e5);
+  stroke: var(--cal-accent, #ff4806);
   stroke-width: 1.8;
   stroke-linecap: round;
 }
@@ -107,7 +107,7 @@
 .swatch--on {
   box-shadow:
     0 0 0 2px var(--cal-bg, #fff),
-    0 0 0 4px var(--cal-accent, #4f46e5);
+    0 0 0 4px var(--cal-accent, #ff4806);
 }
 .swatch--custom {
   display: inline-flex;
@@ -200,7 +200,7 @@
 }
 .segment__btn--on,
 .segment__btn--on:hover {
-  background: var(--cal-accent, #4f46e5);
+  background: var(--cal-accent, #ff4806);
   color: var(--cal-accent-ink, #fff);
 }
 
@@ -234,8 +234,8 @@
   background: transparent;
 }
 .primarybtn {
-  border: 1px solid var(--cal-accent, #4f46e5);
-  background: var(--cal-accent, #4f46e5);
+  border: 1px solid var(--cal-accent, #ff4806);
+  background: var(--cal-accent, #ff4806);
   color: var(--cal-accent-ink, #fff);
   padding: 0.45rem 0.95rem;
   border-radius: 9px;
@@ -401,7 +401,7 @@
   font-weight: 550;
   padding: 0.32rem 0.65rem;
   border-radius: 8px;
-  background: var(--cal-accent, #4f46e5);
+  background: var(--cal-accent, #ff4806);
   color: var(--cal-accent-ink, #fff);
   cursor: grab;
   user-select: none;
@@ -465,7 +465,7 @@
 .chip:focus-visible,
 .swatch:focus-visible,
 .swatch--custom:focus-within {
-  outline: 2px solid var(--cal-ring, #4f46e5);
+  outline: 2px solid var(--cal-ring, #ff4806);
   outline-offset: 2px;
 }
 
@@ -546,12 +546,12 @@
   text-decoration: none;
 }
 .hero__btn:hover {
-  border-color: var(--site-accent, #4f46e5);
-  color: var(--site-accent, #4f46e5);
+  border-color: var(--site-accent, #ff4806);
+  color: var(--site-accent, #ff4806);
 }
 .hero__btn--primary {
-  background: var(--site-accent, #4f46e5);
-  border-color: var(--site-accent, #4f46e5);
+  background: var(--site-accent, #ff4806);
+  border-color: var(--site-accent, #ff4806);
   color: #fff;
 }
 .hero__btn--primary:hover {
@@ -566,7 +566,7 @@
   border-radius: 0.5rem;
   background: #12141a;
   color: #e6e6e6;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.82rem;
   white-space: nowrap;
 }
