@@ -128,7 +128,7 @@ export interface ExampleSource {
       padding: 0.4rem 0.8rem;
       font-size: 0.76rem;
       cursor: pointer;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     .ex__tab:hover {
       color: #fff;
@@ -163,7 +163,7 @@ export interface ExampleSource {
       padding: 1.05rem 1.35rem;
       overflow-x: auto;
       color: #e6e6e6;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 0.8rem;
       line-height: 1.6;
     }
