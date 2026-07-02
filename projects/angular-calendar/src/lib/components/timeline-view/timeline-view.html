@@ -90,7 +90,7 @@
           ></div>
         }
 
-        @for (ev of row.events; track trackEvent($index, ev)) {
+        @for (ev of visibleEvents(row); track trackEvent($index, ev)) {
           <button
             type="button"
             class="cal-tl__event"

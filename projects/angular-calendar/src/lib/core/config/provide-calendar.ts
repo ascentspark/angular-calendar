@@ -12,7 +12,27 @@ import {
 import type { CalTokenBridge } from '../../theme/apply-theme';
 
 /** Discriminates the optional building blocks passed to {@link provideCalendar}. */
-export type CalendarFeatureKind = 'defaults' | 'date-adapter' | 'token-bridge';
+export type CalendarFeatureKind =
+  | 'defaults'
+  | 'date-adapter'
+  | 'token-bridge'
+  | 'virtualization';
+
+/** Tuning for list/range virtualization (currently the timeline's resource rows). */
+export interface CalVirtualizationOptions {
+  /** Turn windowing on/off. Default `true`. */
+  readonly enabled?: boolean;
+  /** Only virtualize once a view has more than this many rows. Default `40`. */
+  readonly rowThreshold?: number;
+  /** Extra pixels rendered beyond the viewport (both axes) to avoid blank flashes. Default `400`. */
+  readonly overscanPx?: number;
+}
+
+/** Resolved virtualization settings; injected by virtualizing views. */
+export const CAL_VIRTUALIZATION = new InjectionToken<Required<CalVirtualizationOptions>>(
+  'CAL_VIRTUALIZATION',
+  { providedIn: 'root', factory: () => ({ enabled: true, rowThreshold: 40, overscanPx: 400 }) },
+);
 
 /**
  * Optional bridge mapping `--cal-*` tokens to the host's own design-system CSS
@@ -96,5 +116,25 @@ export function withTokenBridge(bridge: CalTokenBridge): CalendarFeature {
   return {
     kind: 'token-bridge',
     providers: [{ provide: CAL_TOKEN_BRIDGE, useValue: bridge }],
+  };
+}
+
+/**
+ * Tune (or disable) virtualization. Views window their rows automatically above a
+ * threshold; pass this to change the threshold/overscan or turn it off:
+ *
+ * ```ts
+ * provideCalendar(withVirtualization({ rowThreshold: 100, overscanPx: 600 }))
+ * ```
+ */
+export function withVirtualization(options: CalVirtualizationOptions = {}): CalendarFeature {
+  return {
+    kind: 'virtualization',
+    providers: [
+      {
+        provide: CAL_VIRTUALIZATION,
+        useValue: { enabled: true, rowThreshold: 40, overscanPx: 400, ...options },
+      },
+    ],
   };
 }

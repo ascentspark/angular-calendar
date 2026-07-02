@@ -27,7 +27,7 @@ import { RECURRENCE_ADAPTER } from '../../core/recurrence/recurrence-adapter';
 import { expandRecurringEvents } from '../../core/recurrence/expand-recurring-events';
 import type { PositionedEvent, ShadeBand } from '../../core/view-model/positioned-event';
 import { applyTheme } from '../../theme/apply-theme';
-import { CAL_TOKEN_BRIDGE } from '../../core/config/provide-calendar';
+import { CAL_TOKEN_BRIDGE, CAL_VIRTUALIZATION } from '../../core/config/provide-calendar';
 import { deriveTheme, type CalThemeMode } from '../../theme/derive-theme';
 import { sanitizeStatusKey } from '../../theme/tokens';
 import { CalCalendarA11y } from '../../a11y/cal-calendar-a11y';
@@ -202,28 +202,26 @@ export class CalTimelineView<TMeta = unknown> {
     }
   });
 
-  // ── Row virtualization ──────────────────────────────────────────────────────
-  /** Below this many resource rows, render everything (windowing overhead isn't worth it). */
-  private static readonly VIRTUAL_THRESHOLD = 40;
-  /** Extra pixels rendered above/below the viewport to avoid blank flashes on scroll. */
-  private static readonly OVERSCAN_PX = 400;
-
+  // ── Virtualization (rows windowed vertically, events culled horizontally) ────
+  private readonly virtual = inject(CAL_VIRTUALIZATION);
   private readonly destroyRef = inject(DestroyRef);
   private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
   private readonly scrollTop = signal(0);
+  private readonly scrollLeft = signal(0);
   private readonly viewportHeight = signal(0);
+  private readonly viewportWidth = signal(0);
 
   /** The slice of resource rows to render, plus the spacer heights that preserve scroll height. */
   protected readonly rowWindow = computed<VirtualWindow>(() => {
     const rows = this.viewModel().resourceRows;
     const vh = this.viewportHeight();
-    // Until measured, or for modest lists, render all rows (identical to the un-virtualized layout).
-    if (rows.length <= CalTimelineView.VIRTUAL_THRESHOLD || vh <= 0) {
+    // Disabled, unmeasured, or a modest list ⇒ render everything (un-virtualized layout).
+    if (!this.virtual.enabled || rows.length <= this.virtual.rowThreshold || vh <= 0) {
       return { start: 0, end: rows.length, padTop: 0, padBottom: 0 };
     }
     const laneH = this.laneHeight();
     const heights = rows.map((r) => r.laneCount * laneH);
-    return computeRowWindow(heights, this.scrollTop(), vh, CalTimelineView.OVERSCAN_PX);
+    return computeRowWindow(heights, this.scrollTop(), vh, this.virtual.overscanPx);
   });
 
   /** The resource rows currently in (or near) the viewport. */
@@ -232,9 +230,30 @@ export class CalTimelineView<TMeta = unknown> {
     return this.viewModel().resourceRows.slice(w.start, w.end);
   });
 
+  /**
+   * Events in a lane that intersect the horizontal viewport (+overscan) — so a wide
+   * month timeline doesn't render thousands of off-screen event nodes. Falls back to
+   * the full lane when virtualization is off or the width isn't measured yet.
+   */
+  protected visibleEvents(row: ResourceRow<TMeta>): readonly PositionedEvent<TMeta>[] {
+    const vw = this.viewportWidth();
+    if (!this.virtual.enabled || vw <= 0) {
+      return row.events;
+    }
+    const totalW = this.totalHours() * this.hourWidth();
+    const left = this.scrollLeft() - this.virtual.overscanPx;
+    const right = this.scrollLeft() + vw + this.virtual.overscanPx;
+    return row.events.filter((e) => {
+      const x0 = e.startOffset * totalW;
+      const x1 = (e.startOffset + e.span) * totalW;
+      return x1 >= left && x0 <= right;
+    });
+  }
+
   protected onScroll(target: EventTarget | null): void {
     if (target instanceof HTMLElement) {
       this.scrollTop.set(target.scrollTop);
+      this.scrollLeft.set(target.scrollLeft);
     }
   }
 
@@ -242,14 +261,19 @@ export class CalTimelineView<TMeta = unknown> {
     effect(() => applyTheme(this.host.nativeElement, this.theme(), this.tokenBridge));
     effect(() => this.viewPeriodChanged.emit(this.viewModel().period));
 
-    // Track the scroll viewport's height (browser-only) so windowing knows how much to render.
+    // Track the scroll viewport's size (browser-only) so windowing + culling know
+    // how much to render on each axis.
     afterNextRender(() => {
       const el = this.scroller()?.nativeElement;
       if (!el || typeof ResizeObserver === 'undefined') {
         return;
       }
-      this.viewportHeight.set(el.clientHeight);
-      const observer = new ResizeObserver(() => this.viewportHeight.set(el.clientHeight));
+      const measure = (): void => {
+        this.viewportHeight.set(el.clientHeight);
+        this.viewportWidth.set(el.clientWidth);
+      };
+      measure();
+      const observer = new ResizeObserver(measure);
       observer.observe(el);
       this.destroyRef.onDestroy(() => observer.disconnect());
     });
