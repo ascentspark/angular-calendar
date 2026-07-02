@@ -9,6 +9,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NAV } from './nav';
 import { AscGlyph } from './shared/asc-glyph';
+import { SeoService } from './shared/seo.service';
 
 /**
  * Site shell: branded header (dark toggle) + grouped sidebar nav + routed content.
@@ -24,11 +25,13 @@ import { AscGlyph } from './shared/asc-glyph';
 })
 export class App {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly seo = inject(SeoService);
   protected readonly nav = NAV;
   protected readonly dark = signal(false);
   protected readonly menuOpen = signal(false);
 
   constructor() {
+    this.seo.init();
     if (isPlatformBrowser(this.platformId)) {
       const stored = localStorage.getItem('cal-demo-theme');
       if (stored === 'dark') {
