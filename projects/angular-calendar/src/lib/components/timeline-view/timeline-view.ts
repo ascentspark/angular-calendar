@@ -1,29 +1,33 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   contentChild,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
-import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
+import { CALENDAR_CONFIG, resolveTimeFormat } from '../../core/config/calendar-config';
 import type { EventChange } from '../../interactions/event-change';
 import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
 import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zoned-date-time';
 import type { CalendarEvent } from '../../core/model/calendar-event';
 import type { CalendarResource } from '../../core/model/calendar-resource';
 import { buildTimelineView } from '../../core/view-model/build-timeline-view';
+import { computeRowWindow, type VirtualWindow } from '../../core/layout/virtual-window';
 import type { TimeHeaderUnit, ResourceRow } from '../../core/view-model/timeline-view-model';
 import { RECURRENCE_ADAPTER } from '../../core/recurrence/recurrence-adapter';
 import { expandRecurringEvents } from '../../core/recurrence/expand-recurring-events';
 import type { PositionedEvent, ShadeBand } from '../../core/view-model/positioned-event';
 import { applyTheme } from '../../theme/apply-theme';
-import { CAL_TOKEN_BRIDGE } from '../../core/config/provide-calendar';
+import { CAL_TOKEN_BRIDGE, CAL_VIRTUALIZATION } from '../../core/config/provide-calendar';
 import { deriveTheme, type CalThemeMode } from '../../theme/derive-theme';
 import { sanitizeStatusKey } from '../../theme/tokens';
 import { CalCalendarA11y } from '../../a11y/cal-calendar-a11y';
@@ -36,17 +40,23 @@ const FALLBACK_ACCENT = '#3b82f6';
 /** Movement past this many px before a press is treated as a drag (not a click). */
 const DRAG_THRESHOLD_PX = 4;
 
-/** In-flight pointer gesture moving a timeline block along time / across lanes. */
+/** In-flight gesture moving/resizing a timeline block along time / across lanes. */
 interface TimelineDrag {
   readonly eventId: string;
+  readonly kind: 'move' | 'resize-end';
   readonly originStartMs: number;
   readonly originEndMs: number;
   readonly originResourceId: string;
+  /** Resource lane the block will land in (keyboard lane moves change this). */
+  readonly targetResourceId: string;
   readonly pointerId: number;
   readonly startClientX: number;
   readonly deltaMinutes: number;
   readonly active: boolean;
 }
+
+/** Sentinel pointerId marking a keyboard-driven grab (vs a real pointer). */
+const KEYBOARD_POINTER = -1;
 
 /** Absolute epoch ms of a `Date | ZonedDateTime`. */
 function epochOf(value: Date | ZonedDateTime): number {
@@ -100,13 +110,18 @@ export class CalTimelineView<TMeta = unknown> {
   readonly accentColor = input<string>(FALLBACK_ACCENT);
   readonly themeMode = input<CalThemeMode>('light');
   readonly statusColors = input<Record<string, string>>({});
+  /** Optional hex override for on-accent text (`--cal-accent-ink`); null = auto. */
+  readonly accentInk = input<string | null>(null);
 
   /** Whether blocks can be dragged to reschedule / reassign. */
   readonly editable = input<boolean>(true);
   /** Drag quantisation in minutes; defaults to the config snap. */
   readonly snapMinutes = input<number | null>(null);
+  /** Live veto: return false to reject an in-flight change (the block snaps back). */
+  readonly validateChange = input<((change: EventChange<TMeta>) => boolean) | null>(null);
 
   readonly eventClicked = output<{ event: CalendarEvent<TMeta> }>();
+  readonly viewPeriodChanged = output<{ start: ZonedDateTime; end: ZonedDateTime; zone: string }>();
   /** Fired when a block is dragged to a new time and/or resource lane. */
   readonly eventChanged = output<EventChange<TMeta>>();
   readonly slotSelected = output<{ date: ZonedDateTime; resourceId: string }>();
@@ -154,6 +169,7 @@ export class CalTimelineView<TMeta = unknown> {
       orientation: 'horizontal' as const,
       weekStartsOn: this.weekStartsOn() ?? this.config.weekStartsOn,
       locale: this.resolvedLocale(),
+      hour12: this.config.hour12,
       ...(nowValue !== null ? { now: this.adapter.toZoned(nowValue, zone) } : {}),
       ...(todayValue !== null ? { today: this.adapter.toZoned(todayValue, zone) } : {}),
     };
@@ -188,14 +204,87 @@ export class CalTimelineView<TMeta = unknown> {
 
   private readonly theme = computed(() => {
     try {
-      return deriveTheme(this.baseColor(), this.accentColor(), this.themeMode(), this.statusColors());
+      return deriveTheme(this.baseColor(), this.accentColor(), this.themeMode(), this.statusColors(), this.accentInk());
     } catch {
       return deriveTheme(FALLBACK_BASE, FALLBACK_ACCENT, this.themeMode(), this.statusColors());
     }
   });
 
+  // ── Virtualization (rows windowed vertically, events culled horizontally) ────
+  private readonly virtual = inject(CAL_VIRTUALIZATION);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
+  private readonly scrollTop = signal(0);
+  private readonly scrollLeft = signal(0);
+  private readonly viewportHeight = signal(0);
+  private readonly viewportWidth = signal(0);
+
+  /** The slice of resource rows to render, plus the spacer heights that preserve scroll height. */
+  protected readonly rowWindow = computed<VirtualWindow>(() => {
+    const rows = this.viewModel().resourceRows;
+    const vh = this.viewportHeight();
+    // Disabled, unmeasured, or a modest list ⇒ render everything (un-virtualized layout).
+    if (!this.virtual.enabled || rows.length <= this.virtual.rowThreshold || vh <= 0) {
+      return { start: 0, end: rows.length, padTop: 0, padBottom: 0 };
+    }
+    const laneH = this.laneHeight();
+    const heights = rows.map((r) => r.laneCount * laneH);
+    return computeRowWindow(heights, this.scrollTop(), vh, this.virtual.overscanPx);
+  });
+
+  /** The resource rows currently in (or near) the viewport. */
+  protected readonly visibleRows = computed(() => {
+    const w = this.rowWindow();
+    return this.viewModel().resourceRows.slice(w.start, w.end);
+  });
+
+  /**
+   * Events in a lane that intersect the horizontal viewport (+overscan) — so a wide
+   * month timeline doesn't render thousands of off-screen event nodes. Falls back to
+   * the full lane when virtualization is off or the width isn't measured yet.
+   */
+  protected visibleEvents(row: ResourceRow<TMeta>): readonly PositionedEvent<TMeta>[] {
+    const vw = this.viewportWidth();
+    if (!this.virtual.enabled || vw <= 0) {
+      return row.events;
+    }
+    const totalW = this.totalHours() * this.hourWidth();
+    const left = this.scrollLeft() - this.virtual.overscanPx;
+    const right = this.scrollLeft() + vw + this.virtual.overscanPx;
+    return row.events.filter((e) => {
+      const x0 = e.startOffset * totalW;
+      const x1 = (e.startOffset + e.span) * totalW;
+      return x1 >= left && x0 <= right;
+    });
+  }
+
+  protected onScroll(target: EventTarget | null): void {
+    if (target instanceof HTMLElement) {
+      this.scrollTop.set(target.scrollTop);
+      this.scrollLeft.set(target.scrollLeft);
+    }
+  }
+
   constructor() {
     effect(() => applyTheme(this.host.nativeElement, this.theme(), this.tokenBridge));
+    effect(() => this.viewPeriodChanged.emit(this.viewModel().period));
+
+    // Track the scroll viewport's size (browser-only) so windowing + culling know
+    // how much to render on each axis.
+    afterNextRender(() => {
+      const el = this.scroller()?.nativeElement;
+      if (!el || typeof ResizeObserver === 'undefined') {
+        return;
+      }
+      const measure = (): void => {
+        this.viewportHeight.set(el.clientHeight);
+        this.viewportWidth.set(el.clientWidth);
+      };
+      measure();
+      const observer = new ResizeObserver(measure);
+      observer.observe(el);
+      this.destroyRef.onDestroy(() => observer.disconnect());
+    });
   }
 
   protected eventLabel(event: CalendarEvent<TMeta>): string {
@@ -207,11 +296,11 @@ export class CalTimelineView<TMeta = unknown> {
     const title = event.title ?? '';
     const zone = this.resolvedZone();
     const locale = this.resolvedLocale();
-    const start = this.adapter.format(this.adapter.toZoned(event.start, zone), 'h:mm a', locale);
+    const start = this.adapter.format(this.adapter.toZoned(event.start, zone), resolveTimeFormat(this.config.hour12), locale);
     if (event.end === undefined) {
       return `${title} · ${start}`.trim();
     }
-    const end = this.adapter.format(this.adapter.toZoned(event.end, zone), 'h:mm a', locale);
+    const end = this.adapter.format(this.adapter.toZoned(event.end, zone), resolveTimeFormat(this.config.hour12), locale);
     return `${title} · ${start}–${end}`.trim();
   }
 
@@ -269,6 +358,10 @@ export class CalTimelineView<TMeta = unknown> {
   protected readonly drag = signal<TimelineDrag | null>(null);
   /** Set briefly after an active drag so the trailing click doesn't also fire. */
   private suppressClick = false;
+  /** Live-region text announced during keyboard move/resize. */
+  protected readonly announcement = signal('');
+  /** Lane order (resource ids top→bottom) for keyboard lane navigation. */
+  private readonly laneOrder = computed(() => this.viewModel().resourceRows.map((r) => r.resource.id));
 
   protected onEventClick(event: CalendarEvent<TMeta>, dom: Event): void {
     dom.stopPropagation();
@@ -291,9 +384,11 @@ export class CalTimelineView<TMeta = unknown> {
     const endMs = ev.event.end !== undefined ? epochOf(ev.event.end) : startMs + 3_600_000;
     this.drag.set({
       eventId: ev.event.id,
+      kind: 'move',
       originStartMs: startMs,
       originEndMs: endMs,
       originResourceId: row.resource.id,
+      targetResourceId: row.resource.id,
       pointerId: dom.pointerId,
       startClientX: dom.clientX,
       deltaMinutes: 0,
@@ -333,19 +428,33 @@ export class CalTimelineView<TMeta = unknown> {
       return; // a plain click; let (click) handle selection
     }
     this.suppressClick = true;
+    const targetResource = this.resourceAtPoint(dom.clientX, dom.clientY) ?? d.originResourceId;
+    this.commitDrag(ev.event, { ...d, targetResourceId: targetResource });
+  }
+
+  /** Build the change for a gesture, run it past `validateChange`, and emit if allowed. */
+  private commitDrag(event: CalendarEvent<TMeta>, d: TimelineDrag): void {
     const zone = this.resolvedZone();
     const deltaMs = d.deltaMinutes * 60_000;
-    const targetResource = this.resourceAtPoint(dom.clientX, dom.clientY) ?? d.originResourceId;
-    if (deltaMs === 0 && targetResource === d.originResourceId) {
+    if (deltaMs === 0 && d.targetResourceId === d.originResourceId) {
       return; // no net change
     }
+    const start =
+      d.kind === 'resize-end'
+        ? this.adapter.toZoned(new Date(d.originStartMs), zone)
+        : this.adapter.toZoned(new Date(d.originStartMs + deltaMs), zone);
+    const end = this.adapter.toZoned(new Date(d.originEndMs + deltaMs), zone);
     const change: EventChange<TMeta> = {
-      kind: 'move',
-      event: ev.event,
-      start: this.adapter.toZoned(new Date(d.originStartMs + deltaMs), zone),
-      end: this.adapter.toZoned(new Date(d.originEndMs + deltaMs), zone),
-      resourceId: targetResource,
+      kind: d.kind === 'resize-end' ? 'resize' : 'move',
+      event,
+      start,
+      end,
+      resourceId: d.targetResourceId,
     };
+    const validate = this.validateChange();
+    if (validate !== null && !validate(change)) {
+      return; // vetoed — preview already cleared, so the block snaps back
+    }
     this.eventChanged.emit(change);
   }
 
@@ -354,6 +463,106 @@ export class CalTimelineView<TMeta = unknown> {
     if (d !== null && d.pointerId === dom.pointerId) {
       this.drag.set(null);
     }
+  }
+
+  /**
+   * Keyboard move/resize on a focused block (a11y). Enter/Space grabs; Left/Right move
+   * by one snap step (Shift = resize the end); Up/Down move across resource lanes; Enter
+   * drops (→ `validateChange` → `eventChanged`), Escape cancels.
+   */
+  protected onEventKeydown(
+    ev: PositionedEvent<TMeta>,
+    row: ResourceRow<TMeta>,
+    dom: KeyboardEvent,
+  ): void {
+    if (!this.editable() || ev.event.isReadonly === true) {
+      return;
+    }
+    const d = this.drag();
+    const grabbing = d !== null && d.pointerId === KEYBOARD_POINTER && d.eventId === ev.event.id;
+    const snap = this.snapMinutes() ?? this.config.snapMinutes;
+
+    if (!grabbing) {
+      if (dom.key === 'Enter' || dom.key === ' ') {
+        dom.preventDefault();
+        const startMs = epochOf(ev.event.start);
+        const endMs = ev.event.end !== undefined ? epochOf(ev.event.end) : startMs + 3_600_000;
+        this.drag.set({
+          eventId: ev.event.id,
+          kind: 'move',
+          originStartMs: startMs,
+          originEndMs: endMs,
+          originResourceId: row.resource.id,
+          targetResourceId: row.resource.id,
+          pointerId: KEYBOARD_POINTER,
+          startClientX: 0,
+          deltaMinutes: 0,
+          active: true,
+        });
+        this.announcement.set(this.a11y.grabbedLabel(ev.event));
+      }
+      return;
+    }
+
+    switch (dom.key) {
+      case 'ArrowLeft':
+        dom.preventDefault();
+        this.nudge(d, dom.shiftKey ? 'resize-end' : 'move', -snap);
+        break;
+      case 'ArrowRight':
+        dom.preventDefault();
+        this.nudge(d, dom.shiftKey ? 'resize-end' : 'move', snap);
+        break;
+      case 'ArrowUp':
+        dom.preventDefault();
+        this.moveLane(d, -1);
+        break;
+      case 'ArrowDown':
+        dom.preventDefault();
+        this.moveLane(d, 1);
+        break;
+      case 'Enter':
+      case ' ':
+        dom.preventDefault();
+        this.drag.set(null);
+        this.announcement.set(
+          this.a11y.droppedLabel(ev.event, this.zonedFromMs(d.originStartMs + d.deltaMinutes * 60_000)),
+        );
+        this.commitDrag(ev.event, d);
+        break;
+      case 'Escape':
+        dom.preventDefault();
+        this.drag.set(null);
+        this.announcement.set(this.a11y.moveCancelledLabel(ev.event));
+        break;
+      default:
+        break;
+    }
+  }
+
+  private nudge(d: TimelineDrag, kind: 'move' | 'resize-end', step: number): void {
+    const deltaMinutes = d.deltaMinutes + step;
+    this.drag.set({ ...d, kind, deltaMinutes });
+    if (kind === 'resize-end') {
+      this.announcement.set(this.a11y.resizedLabel(this.zonedFromMs(d.originEndMs + deltaMinutes * 60_000)));
+    } else {
+      this.announcement.set(this.a11y.movedLabel(this.zonedFromMs(d.originStartMs + deltaMinutes * 60_000)));
+    }
+  }
+
+  private moveLane(d: TimelineDrag, dir: number): void {
+    const order = this.laneOrder();
+    const idx = order.indexOf(d.targetResourceId);
+    const next = order[Math.min(order.length - 1, Math.max(0, idx + dir))];
+    if (next !== undefined && next !== d.targetResourceId) {
+      this.drag.set({ ...d, targetResourceId: next });
+      const name = this.resources().find((r) => r.id === next)?.name ?? next;
+      this.announcement.set(`Moved to lane ${name}`);
+    }
+  }
+
+  private zonedFromMs(epochMs: number): ZonedDateTime {
+    return this.adapter.toZoned(new Date(epochMs), this.resolvedZone());
   }
 
   protected isDragging(ev: PositionedEvent<TMeta>): boolean {

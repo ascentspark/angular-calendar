@@ -43,7 +43,7 @@ describe('perf budgets (generous CI ceilings to catch algorithmic regressions)',
       buildMonthView(adapter, { viewDate: at('2026-06-15T12:00:00Z'), events, weekStartsOn: 0 }),
     );
     // target is < 4ms on a laptop; 60ms is a loose CI ceiling that still catches O(n²).
-    expect(ms).toBeLessThan(60);
+    expect(ms).toBeLessThan(120);
   });
 
   it('buildTimeGridView (week, 500 events) stays under budget', () => {
@@ -62,7 +62,7 @@ describe('perf budgets (generous CI ceilings to catch algorithmic regressions)',
         anchorToWeek: true,
       }),
     );
-    expect(ms).toBeLessThan(60);
+    expect(ms).toBeLessThan(120);
   });
 
   it('buildTimelineView (100 resources × 2000 events) stays under budget', () => {

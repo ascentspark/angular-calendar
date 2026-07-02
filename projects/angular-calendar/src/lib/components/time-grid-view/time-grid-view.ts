@@ -12,9 +12,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
+import { CALENDAR_CONFIG, resolveTimeFormat } from '../../core/config/calendar-config';
 import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
 import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zoned-date-time';
+import type { TimeAxisOrientation } from '../../core/model/view';
 import type { CalendarEvent } from '../../core/model/calendar-event';
 import { buildTimeGridView } from '../../core/view-model/build-time-grid-view';
 import { RECURRENCE_ADAPTER } from '../../core/recurrence/recurrence-adapter';
@@ -71,6 +72,7 @@ const FALLBACK_ACCENT = '#3b82f6';
   styleUrl: './time-grid-view.css',
   host: {
     '[class.cal-tg--compact]': "density() === 'compact'",
+    '[class.cal-tg--horizontal]': "orientation() === 'horizontal'",
   },
 })
 export class CalTimeGridView<TMeta = unknown> {
@@ -85,7 +87,17 @@ export class CalTimeGridView<TMeta = unknown> {
   readonly events = input.required<readonly CalendarEvent<TMeta>[]>();
   readonly viewDate = input.required<Date | ZonedDateTime>();
   readonly days = input<number>(7);
-  readonly anchorToWeek = input<boolean>(true);
+  /**
+   * Time-axis direction. `'vertical'` (default) stacks hours top→bottom with days as
+   * columns; `'horizontal'` runs time left→right with days as stacked rows (week-as-rows).
+   */
+  readonly orientation = input<TimeAxisOrientation>('vertical');
+  /**
+   * Anchor the columns to the start of `viewDate`'s week. `null` (default) is smart:
+   * a week/work-week (`days > 1`) anchors, a single-day view (`days === 1`) does not,
+   * so `[days]="1"` shows `viewDate` itself. Set `true`/`false` to force it.
+   */
+  readonly anchorToWeek = input<boolean | null>(null);
   /** Vertical density: `'compact'` shrinks hour rows and type for dense schedules. */
   readonly density = input<'comfortable' | 'compact'>('comfortable');
   readonly today = input<Date | ZonedDateTime | null>(null);
@@ -104,6 +116,8 @@ export class CalTimeGridView<TMeta = unknown> {
   readonly accentColor = input<string>(FALLBACK_ACCENT);
   readonly themeMode = input<CalThemeMode>('light');
   readonly statusColors = input<Record<string, string>>({});
+  /** Optional hex override for on-accent text (`--cal-accent-ink`); null = auto. */
+  readonly accentInk = input<string | null>(null);
 
   /** Whether events can be dragged / resized. */
   readonly editable = input<boolean>(true);
@@ -113,6 +127,7 @@ export class CalTimeGridView<TMeta = unknown> {
   readonly validateChange = input<((change: EventChange<TMeta>) => boolean) | null>(null);
 
   readonly eventClicked = output<{ event: CalendarEvent<TMeta> }>();
+  readonly viewPeriodChanged = output<{ start: ZonedDateTime; end: ZonedDateTime; zone: string }>();
   readonly slotSelected = output<{ date: ZonedDateTime; minutes: number }>();
   readonly eventChanged = output<EventChange<TMeta>>();
 
@@ -142,12 +157,13 @@ export class CalTimeGridView<TMeta = unknown> {
       viewDate: this.adapter.toZoned(this.viewDate(), zone),
       days: this.days(),
       weekStartsOn: this.weekStartsOn() ?? this.config.weekStartsOn,
-      orientation: 'vertical' as const,
+      orientation: this.orientation(),
       slotMinutes: this.slotMinutes() ?? this.config.slotMinutes,
       dayStartMinutes: this.dayStartMinutes() ?? this.config.dayStartMinutes,
       dayEndMinutes: this.dayEndMinutes() ?? this.config.dayEndMinutes,
       locale: this.resolvedLocale(),
-      anchorToWeek: this.anchorToWeek(),
+      hour12: this.config.hour12,
+      anchorToWeek: this.anchorToWeek() ?? this.days() !== 1,
       ...(todayValue !== null ? { today: this.adapter.toZoned(todayValue, zone) } : {}),
       ...(nowValue !== null ? { now: this.adapter.toZoned(nowValue, zone) } : {}),
       ...(exclude !== null ? { excludeDays: exclude } : {}),
@@ -200,7 +216,7 @@ export class CalTimeGridView<TMeta = unknown> {
 
   private readonly theme = computed(() => {
     try {
-      return deriveTheme(this.baseColor(), this.accentColor(), this.themeMode(), this.statusColors());
+      return deriveTheme(this.baseColor(), this.accentColor(), this.themeMode(), this.statusColors(), this.accentInk());
     } catch {
       return deriveTheme(FALLBACK_BASE, FALLBACK_ACCENT, this.themeMode(), this.statusColors());
     }
@@ -210,6 +226,7 @@ export class CalTimeGridView<TMeta = unknown> {
 
   constructor() {
     effect(() => applyTheme(this.host.nativeElement, this.theme(), this.tokenBridge));
+    effect(() => this.viewPeriodChanged.emit(this.viewModel().period));
     effect(() => {
       if (this.editingId() !== null) {
         const el = this.inlineInput()?.nativeElement;
@@ -233,11 +250,11 @@ export class CalTimeGridView<TMeta = unknown> {
     }
     const zone = this.resolvedZone();
     const locale = this.resolvedLocale();
-    const start = this.adapter.format(this.adapter.toZoned(event.start, zone), 'h:mm a', locale);
+    const start = this.adapter.format(this.adapter.toZoned(event.start, zone), resolveTimeFormat(this.config.hour12), locale);
     if (event.end === undefined) {
       return `${title} · ${start}`.trim();
     }
-    const end = this.adapter.format(this.adapter.toZoned(event.end, zone), 'h:mm a', locale);
+    const end = this.adapter.format(this.adapter.toZoned(event.end, zone), resolveTimeFormat(this.config.hour12), locale);
     return `${title} · ${start}–${end}`.trim();
   }
 
@@ -312,7 +329,7 @@ export class CalTimeGridView<TMeta = unknown> {
     }
     const vm = this.viewModel();
     const total = vm.dayEndMinutes - vm.dayStartMinutes;
-    const pxPerMinute = colEl.getBoundingClientRect().height / Math.max(1, total);
+    const pxPerMinute = this.axisSize(colEl.getBoundingClientRect()) / Math.max(1, total);
     const zone = this.resolvedZone();
     const start = this.adapter.toZoned(ev.event.start, zone);
     const end = ev.event.end === undefined ? start : this.adapter.toZoned(ev.event.end, zone);
@@ -331,11 +348,24 @@ export class CalTimeGridView<TMeta = unknown> {
       originStartMs: start.epochMs,
       originEndMs: end.epochMs,
       pointerId: dom.pointerId,
-      startClientY: dom.clientY,
+      startClientY: this.axisClient(dom),
       pxPerMinute,
       deltaMinutes: 0,
       active: false,
     });
+  }
+
+  /** Pointer coordinate along the time axis (Y for vertical, X for horizontal). */
+  private axisClient(dom: { clientX: number; clientY: number }): number {
+    return this.orientation() === 'horizontal' ? dom.clientX : dom.clientY;
+  }
+  /** Element size along the time axis. */
+  private axisSize(rect: { width: number; height: number }): number {
+    return this.orientation() === 'horizontal' ? rect.width : rect.height;
+  }
+  /** Element start edge along the time axis (left for horizontal, top for vertical). */
+  private axisStart(rect: { left: number; top: number }): number {
+    return this.orientation() === 'horizontal' ? rect.left : rect.top;
   }
 
   protected onEventPointerMove(dom: PointerEvent): void {
@@ -343,7 +373,7 @@ export class CalTimeGridView<TMeta = unknown> {
     if (drag === null || drag.pointerId !== dom.pointerId) {
       return;
     }
-    const dyPx = dom.clientY - drag.startClientY;
+    const dyPx = this.axisClient(dom) - drag.startClientY;
     const active = drag.active || Math.abs(dyPx) > DRAG_THRESHOLD_PX;
     this.dragState.set({ ...drag, deltaMinutes: dyPx / drag.pxPerMinute, active });
   }
@@ -429,38 +459,62 @@ export class CalTimeGridView<TMeta = unknown> {
           deltaMinutes: 0,
           active: true,
         });
+        this.announce(this.a11y.grabbedLabel(ev.event));
       }
       return;
     }
 
     switch (dom.key) {
-      case 'ArrowUp':
+      case 'ArrowUp': {
         dom.preventDefault();
-        this.dragState.set({
-          ...drag,
-          kind: dom.shiftKey ? 'resize-end' : 'move',
-          deltaMinutes: drag.deltaMinutes - snap,
-        });
+        const kind = dom.shiftKey ? 'resize-end' : 'move';
+        const deltaMinutes = drag.deltaMinutes - snap;
+        this.dragState.set({ ...drag, kind, deltaMinutes });
+        this.announceGesture(kind, drag, deltaMinutes);
         break;
-      case 'ArrowDown':
+      }
+      case 'ArrowDown': {
         dom.preventDefault();
-        this.dragState.set({
-          ...drag,
-          kind: dom.shiftKey ? 'resize-end' : 'move',
-          deltaMinutes: drag.deltaMinutes + snap,
-        });
+        const kind = dom.shiftKey ? 'resize-end' : 'move';
+        const deltaMinutes = drag.deltaMinutes + snap;
+        this.dragState.set({ ...drag, kind, deltaMinutes });
+        this.announceGesture(kind, drag, deltaMinutes);
         break;
+      }
       case 'Enter':
       case ' ':
         dom.preventDefault();
+        this.announce(
+          this.a11y.droppedLabel(ev.event, this.zonedFromMs(drag.originStartMs + drag.deltaMinutes * 60_000)),
+        );
         this.commitGesture(ev, drag);
         break;
       case 'Escape':
         dom.preventDefault();
         this.dragState.set(null);
+        this.announce(this.a11y.moveCancelledLabel(ev.event));
         break;
       default:
         break;
+    }
+  }
+
+  /** Live-region text announced during keyboard drag (screen readers). */
+  protected readonly announcement = signal('');
+
+  private announce(message: string): void {
+    this.announcement.set(message);
+  }
+
+  private zonedFromMs(epochMs: number): ZonedDateTime {
+    return this.adapter.toZoned(new Date(epochMs), this.resolvedZone());
+  }
+
+  private announceGesture(kind: 'move' | 'resize-end', drag: DragGesture, deltaMinutes: number): void {
+    if (kind === 'resize-end') {
+      this.announce(this.a11y.resizedLabel(this.zonedFromMs(drag.originEndMs + deltaMinutes * 60_000)));
+    } else {
+      this.announce(this.a11y.movedLabel(this.zonedFromMs(drag.originStartMs + deltaMinutes * 60_000)));
     }
   }
 
@@ -534,8 +588,8 @@ export class CalTimeGridView<TMeta = unknown> {
     const vm = this.viewModel();
     const total = vm.dayEndMinutes - vm.dayStartMinutes;
     const rect = colEl.getBoundingClientRect();
-    const pxPerMinute = rect.height / Math.max(1, total);
-    const frac = (dom.clientY - rect.top) / Math.max(1, rect.height);
+    const pxPerMinute = this.axisSize(rect) / Math.max(1, total);
+    const frac = (this.axisClient(dom) - this.axisStart(rect)) / Math.max(1, this.axisSize(rect));
     const minutes = vm.dayStartMinutes + Math.max(0, Math.min(1, frac)) * total;
     const anchorMs = this.adapter.addMinutes(column.date, Math.round(minutes)).epochMs;
     if (typeof colEl.setPointerCapture === 'function') {
@@ -551,7 +605,7 @@ export class CalTimeGridView<TMeta = unknown> {
       originStartMs: anchorMs,
       originEndMs: anchorMs,
       pointerId: dom.pointerId,
-      startClientY: dom.clientY,
+      startClientY: this.axisClient(dom),
       pxPerMinute,
       deltaMinutes: 0,
       active: false,
@@ -564,7 +618,7 @@ export class CalTimeGridView<TMeta = unknown> {
     if (drag === null || drag.kind !== 'create' || drag.pointerId !== dom.pointerId) {
       return;
     }
-    const dyPx = dom.clientY - drag.startClientY;
+    const dyPx = this.axisClient(dom) - drag.startClientY;
     const active = drag.active || Math.abs(dyPx) > DRAG_THRESHOLD_PX;
     this.dragState.set({ ...drag, deltaMinutes: dyPx / drag.pxPerMinute, active });
   }

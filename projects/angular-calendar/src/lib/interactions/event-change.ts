@@ -5,9 +5,16 @@ import type { CalendarEvent } from '../core/model/calendar-event';
 export type EventChangeKind = 'move' | 'resize' | 'create' | 'inline-edit';
 
 /**
- * A committed user edit, emitted for the host to apply to its own store. The
- * library never mutates the consumer's data; it reports the intended change and
- * the consumer feeds new immutable data back in.
+ * A committed user edit, emitted (via `eventChanged`) for the host to apply to its
+ * own store — the library never mutates the consumer's data.
+ *
+ * **State contract.** The host is authoritative: on `eventChanged` you update your
+ * event data and feed the new immutable array back into `[events]`; the view
+ * re-renders from it. There is no built-in optimistic-preview/rollback protocol —
+ * for an async backend you apply the change optimistically and revert your own
+ * store if the request fails (the view follows your data), and you can reject a
+ * change *before* it commits with the synchronous `validateChange` predicate input
+ * (returning `false` snaps the drag preview back).
  */
 export interface EventChange<TMeta = unknown> {
   readonly kind: EventChangeKind;
@@ -21,20 +28,4 @@ export interface EventChange<TMeta = unknown> {
   readonly resourceId?: string;
   /** New title (inline-edit). */
   readonly title?: string;
-}
-
-/**
- * Cancellable async commit handle attached to a change emission. Optimistic UIs
- * can `await confirm(promise)` for a backend round-trip, or `preventDefault()` to
- * reject the change so the preview snaps back. Modelled after the DayPilot
- * before/after protocol.
- */
-export interface EventChangeRequest<TMeta = unknown> {
-  readonly change: EventChange<TMeta>;
-  /** Reject the change (preview snaps back). */
-  preventDefault(): void;
-  /** Whether `preventDefault()` was called. */
-  readonly defaultPrevented: boolean;
-  /** Await an async commit; rejection rolls the preview back. */
-  confirm(result: Promise<boolean>): void;
 }

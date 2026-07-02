@@ -5,6 +5,7 @@ import { packColumns } from '../layout/pack-columns';
 import { packRows } from '../layout/pack-rows';
 import type { Interval } from '../layout/interval';
 import { offsetFraction, sizeFraction, type ProjectionRange } from '../layout/projection';
+import { resolveTimeFormat } from '../config/calendar-config';
 import type { PositionedChip } from './positioned-chip';
 import type { PositionedEvent } from './positioned-event';
 import type {
@@ -81,15 +82,30 @@ export function buildTimeGridView<TMeta = unknown>(
 
   // ── timed events per column ────────────────────────────────────────────
   const columns: TimeColumn<TMeta>[] = columnDays.map((day) => {
-    const dayStart0 = day; // start-of-day
+    // A normal day is 1439 min from its start to its end (23:59); a DST-transition day
+    // is ~60 min shorter/longer. Only on those two days a year does elapsed-since-midnight
+    // diverge from the wall clock, so we keep the cheap arithmetic path for every other day
+    // and fall back to the exact (tz-aware) wall-clock read only when it actually matters.
+    const isDstDay = Math.abs(adapter.differenceInMinutes(adapter.endOfDay(day), day) - 1439) > 1;
+    // Wall-clock minutes into THIS column's day (DST-safe). Uses the entry's precomputed
+    // start-of-day epoch (a cheap integer compare, no per-event tz call); instants on another
+    // day resolve outside the window so they clamp with the continues flags.
+    const wallMinInto = (instant: ZonedDateTime, instantDayEpoch: number): number => {
+      if (instantDayEpoch !== day.epochMs) {
+        return instant.epochMs < day.epochMs ? -1 : args.dayEndMinutes + 1;
+      }
+      return isDstDay
+        ? adapter.getMinutesIntoDay(instant)
+        : (instant.epochMs - day.epochMs) / 60_000;
+    };
     const timed: Interval<{ entry: DayRange<TMeta>; cs: number; ce: number; cb: boolean; ca: boolean }>[] =
       [];
     for (const entry of resolved) {
       if (entry.allDayLike) {
         continue;
       }
-      const evStartMin = adapter.differenceInMinutes(entry.start, dayStart0);
-      const evEndMin = adapter.differenceInMinutes(entry.end, dayStart0);
+      const evStartMin = wallMinInto(entry.start, entry.startDayEpoch);
+      const evEndMin = wallMinInto(entry.end, entry.lastDayEpoch);
       const overlapsWindow = evEndMin > args.dayStartMinutes && evStartMin < args.dayEndMinutes;
       const pointInWindow =
         evStartMin === evEndMin &&
@@ -127,7 +143,7 @@ export function buildTimeGridView<TMeta = unknown>(
 
     let nowOffset: number | null = null;
     if (args.now !== undefined && adapter.isSameDay(args.now, day)) {
-      const nowMin = adapter.differenceInMinutes(args.now, dayStart0);
+      const nowMin = adapter.getMinutesIntoDay(args.now);
       if (nowMin >= args.dayStartMinutes && nowMin <= args.dayEndMinutes) {
         nowOffset = offsetFraction(nowMin, range);
       }
@@ -202,7 +218,7 @@ export function buildTimeGridView<TMeta = unknown>(
     ticks.push({
       offset: offsetFraction(m, range),
       minutes: m,
-      label: adapter.format(instant, 'HH:mm', args.locale),
+      label: adapter.format(instant, resolveTimeFormat(args.hour12 ?? null), args.locale),
     });
   }
 

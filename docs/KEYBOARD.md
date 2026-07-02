@@ -48,6 +48,20 @@ editing are all keyboard-driven.
 | Editing | <kbd>Enter</kbd> | Commit the new title (`eventChanged`, `kind:'inline-edit'`) |
 | Editing | <kbd>Esc</kbd> | Cancel the edit |
 
+## Resource timeline (`cal-timeline-view`)
+
+Each event block is focusable. Move, lane-reassign, and resize are keyboard-driven, with
+screen-reader announcements on every step.
+
+| Context | Key | Action |
+|---------|-----|--------|
+| Block focused | <kbd>Enter</kbd> / <kbd>Space</kbd> | **Grab** the block (enter move mode) |
+| Grabbed | <kbd>←</kbd> / <kbd>→</kbd> | Move earlier / later by one snap step |
+| Grabbed | <kbd>↑</kbd> / <kbd>↓</kbd> | Reassign to the previous / next resource lane |
+| Grabbed | <kbd>Shift</kbd> + <kbd>←</kbd> / <kbd>→</kbd> | Resize the **end** by one snap step |
+| Grabbed | <kbd>Enter</kbd> / <kbd>Space</kbd> | **Drop** — commit (runs `validateChange`, then `eventChanged`) |
+| Grabbed | <kbd>Esc</kbd> | Cancel the move/resize (snaps back) |
+
 ## Recurrence editor (`cal-recurrence-editor`) and timezone picker
 
 Standard form controls: native `<select>` / inputs, fully keyboard-operable, labelled

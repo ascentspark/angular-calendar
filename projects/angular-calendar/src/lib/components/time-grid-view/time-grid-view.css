@@ -11,6 +11,12 @@
   --cal-tg-hour: 3rem; /* min height of one hour row (grows to fill) */
   --cal-tg-gutter-w: 3.5rem;
   --cal-tg-allday-row: 1.4rem;
+
+  /* Horizontal orientation (week-as-rows) knobs. */
+  --cal-tg-hour-w: 5rem; /* width of one hour along the time axis */
+  --cal-tg-day-w: 4.75rem; /* width of the left day-label column */
+  --cal-tg-time-head: 1.75rem; /* height of the top time-axis strip */
+  --cal-tg-row-h: 4.75rem; /* height of one day-row */
 }
 
 .cal-tg {
@@ -277,6 +283,19 @@
   }
 }
 
+/* Visually-hidden live region (announced to screen readers only). */
+.cal-tg__sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .cal-tg__inline {
   inline-size: 100%;
   font: inherit;
@@ -319,4 +338,123 @@
   min-inline-size: 1.4em;
   block-size: 1.4em;
   font-size: 0.72rem;
+}
+
+/* ── Horizontal orientation (time flows left→right; days stack as rows) ────────
+   Transpose of the vertical layout. The component emits axis-neutral --ev-*,
+   --tick-pos and --now-pos fractions, so only their axis mapping changes here. */
+:host(.cal-tg--horizontal) .cal-tg {
+  /* Content-sized rows (don't stretch to fill the host) so day-rows stay compact and
+     events aren't rendered as tall slivers; scroll horizontally for the full day. */
+  flex: 0 0 auto;
+  grid-template-columns: var(--cal-tg-day-w) 1fr;
+  grid-template-rows: var(--cal-tg-time-head) 1fr;
+  grid-template-areas:
+    'corner gutter'
+    'headers cols';
+}
+/* All-day band is omitted in week-as-rows. */
+:host(.cal-tg--horizontal) .cal-tg__allday-gutter,
+:host(.cal-tg--horizontal) .cal-tg__allday {
+  display: none;
+}
+/* Day headers: a vertical stack on the left, one label per day-row. */
+:host(.cal-tg--horizontal) .cal-tg__headers {
+  grid-template-columns: none;
+  grid-auto-rows: var(--cal-tg-row-h);
+}
+:host(.cal-tg--horizontal) .cal-tg__colhead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  padding: 0.2rem;
+  border-inline-end: 1px solid var(--cal-grid-line);
+  border-block-end: 1px solid var(--cal-grid-line);
+}
+/* Time strip on top; ticks positioned by inline offset, left-aligned so the first
+   label never clips at the edge. */
+:host(.cal-tg--horizontal) .cal-tg__gutter {
+  min-block-size: 0;
+  min-inline-size: calc(var(--cal-tg-hours) * var(--cal-tg-hour-w));
+  border-inline-end: 0;
+  border-block-end: 1px solid var(--cal-grid-line);
+}
+:host(.cal-tg--horizontal) .cal-tg__tick {
+  inset-block: 0;
+  inset-inline: auto;
+  inset-inline-start: var(--tick-pos);
+  text-align: start;
+  padding: 0;
+  transform: none;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+:host(.cal-tg--horizontal) .cal-tg__tick-label {
+  padding-inline: 0.15rem 0.3rem;
+}
+/* Day rows: stacked vertically at a fixed height; each spans the full time width. */
+:host(.cal-tg--horizontal) .cal-tg__cols {
+  grid-template-columns: none;
+  grid-auto-rows: var(--cal-tg-row-h);
+  min-block-size: 0;
+  min-inline-size: calc(var(--cal-tg-hours) * var(--cal-tg-hour-w));
+}
+:host(.cal-tg--horizontal) .cal-tg__col {
+  border-inline-end: 0;
+  border-block-end: 1px solid var(--cal-grid-line);
+}
+/* Hour lines run vertically, positioned by inline offset. */
+:host(.cal-tg--horizontal) .cal-tg__line {
+  inset-block: 0;
+  inset-inline-start: var(--tick-pos);
+  border-block-start: 0;
+  border-inline-start: 1px solid var(--cal-grid-line);
+}
+/* Events: time on the inline axis, lane on the block axis. */
+:host(.cal-tg--horizontal) .cal-tg__event {
+  inset-inline-start: var(--ev-start);
+  inline-size: var(--ev-size);
+  inset-block-start: calc(var(--ev-cross-start) + 1px);
+  block-size: calc(var(--ev-cross-size) - 2px);
+  min-block-size: 0;
+  min-inline-size: 2.75rem; /* keep short events readable */
+}
+:host(.cal-tg--horizontal) .cal-tg__event-title {
+  -webkit-line-clamp: 3;
+}
+/* Now-indicator runs vertically. */
+:host(.cal-tg--horizontal) .cal-tg__now {
+  inset-block: 0;
+  inset-inline-start: var(--now-pos);
+  border-block-start: 0;
+  border-inline-start: 2px solid var(--cal-now-line);
+}
+:host(.cal-tg--horizontal) .cal-tg__now-dot {
+  inset-block-start: -3px;
+  inset-inline-start: -3px;
+}
+/* Resize handles move to the left/right edges. */
+:host(.cal-tg--horizontal) .cal-tg__resize {
+  inset-block: 0;
+  block-size: auto;
+  inline-size: 7px;
+  cursor: ew-resize;
+}
+:host(.cal-tg--horizontal) .cal-tg__resize--start {
+  inset-inline-start: -1px;
+  inset-block-start: 0;
+}
+:host(.cal-tg--horizontal) .cal-tg__resize--end {
+  inset-inline-end: -1px;
+  inset-block-start: 0;
+}
+/* Create-ghost spans the lane height at the dragged time range. */
+:host(.cal-tg--horizontal) .cal-tg__create-ghost {
+  inset-block: 1px;
+  inset-inline-start: var(--ev-start);
+  inline-size: var(--ev-size);
+  block-size: auto;
 }

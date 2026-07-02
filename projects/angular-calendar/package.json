@@ -1,6 +1,6 @@
 {
   "name": "@ascentsparksoftware/angular-calendar",
-  "version": "20.0.0",
+  "version": "20.0.1",
   "description": "Modern, theme-agnostic, signal-first calendar & scheduler for Angular — zoneless, standalone, SSR-safe, timezone-correct, with recurrence and a custom touch-first interaction layer.",
   "author": "Ascentspark",
   "license": "MIT",

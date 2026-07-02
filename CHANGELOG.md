@@ -5,6 +5,11 @@ Angular major. This project adheres to [Keep a Changelog](https://keepachangelog
 
 ## [Unreleased]
 
+## [20.0.1] - 2026-07-02
+
+Angular 20 build of the 22.0.1 adoption-audit fixes. Feature-parity with 22.0.1.
+
+
 ## [20.0.0] - 2026-07-01
 
 ### Added

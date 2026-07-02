@@ -7,7 +7,7 @@
   font-family: inherit;
 
   /* Internal layout knobs (overridable by the host). */
-  --cal-day-head: 1.6rem;
+  --cal-day-head: 1.9rem;
   --cal-chip-row: 1.35rem;
 }
 
@@ -87,9 +87,9 @@
 .cal-day__head {
   block-size: var(--cal-day-head);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-end;
-  padding-inline: 0.35rem;
+  padding: 0.3rem 0.4rem 0;
 }
 
 .cal-day__num {
@@ -147,7 +147,8 @@
 .cal-day__more {
   position: absolute;
   inset-inline-start: 0.35rem;
-  inset-block-end: 0.2rem;
+  /* Sits directly under the day's last visible chip (top bound in the template),
+     not pinned to the cell floor — so it stays noticeable in tall fill-viewport cells. */
   z-index: 2;
   border: 1px solid var(--cal-line);
   background: var(--cal-surface-2);
@@ -242,6 +243,17 @@
   box-shadow: 0 12px 32px -10px var(--cal-scrim);
   padding: 0.4rem;
 }
+/* Flip the popover toward the opposite edge when it would spill out of the grid
+   (measured on open) — right-edge columns open leftward, bottom rows open upward. */
+.cal-more--flip-x {
+  inset-inline-start: auto;
+  inset-inline-end: 0.2rem;
+}
+.cal-more--flip-y {
+  inset-block-start: auto;
+  inset-block-end: 0.2rem;
+}
+
 .cal-more:focus-visible {
   outline: 2px solid var(--cal-ring);
   outline-offset: -1px;

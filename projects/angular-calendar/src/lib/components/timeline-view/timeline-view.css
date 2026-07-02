@@ -124,6 +124,25 @@
 }
 
 /* Lane body */
+/* Virtualization spacers: a single full-width grid row standing in for the
+   off-screen rows above/below the window, so the scrollbar stays accurate. */
+.cal-tl__spacer {
+  grid-column: 1 / -1;
+}
+
+/* Visually-hidden live region (announced to screen readers only). */
+.cal-tl__sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* display:contents wrapper: groups each resource's header + lane into one ARIA
    row without introducing a box that would disturb the CSS grid. */
 .cal-tl__resrow {

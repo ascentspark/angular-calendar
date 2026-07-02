@@ -154,6 +154,7 @@ describe('buildTimeGridView — now indicator & ticks', () => {
       events: [],
       days: 1,
       anchorToWeek: false,
+      hour12: false, // 24-hour labels regardless of locale
     });
     expect(vm.ticks.map((t) => t.label)).toEqual(['08:00', '09:00', '10:00']);
     expect(vm.ticks[0]!.offset).toBe(0);
@@ -172,5 +173,63 @@ describe('buildTimeGridView — DST day', () => {
     });
     expect(vm.columns.length).toBe(1);
     expect(vm.columns[0]!.events.length).toBe(1);
+  });
+});
+
+describe('buildTimeGridView — DST', () => {
+  it('positions events by wall-clock time on a spring-forward day (no 1h drift)', () => {
+    // 2026-03-08 America/New_York springs forward 02:00 EST → 03:00 EDT.
+    // A 09:00 local event must render at the 09:00 row (540/1440), not 08:00 (480/1440,
+    // the absolute-elapsed-minutes bug that skips the lost hour).
+    const start = at('2026-03-08T13:00:00Z'); // 09:00 EDT
+    const end = at('2026-03-08T14:00:00Z'); // 10:00 EDT
+    const vm = buildTimeGridView(adapter, {
+      ...baseArgs,
+      viewDate: start,
+      events: [{ id: 'a', start, end }],
+      days: 1,
+      anchorToWeek: false,
+    });
+    const ev = vm.columns[0]!.events[0]!;
+    expect(ev.startOffset).toBeCloseTo(540 / 1440, 3);
+    expect(ev.span).toBeCloseTo(60 / 1440, 3);
+  });
+
+  it('positions the now-line by wall-clock time on a spring-forward day', () => {
+    const now = at('2026-03-08T17:30:00Z'); // 13:30 EDT
+    const vm = buildTimeGridView(adapter, {
+      ...baseArgs,
+      viewDate: now,
+      now,
+      today: now,
+      events: [],
+      days: 1,
+      anchorToWeek: false,
+    });
+    // 13:30 wall clock → 810/1440, not 750/1440 (absolute, one hour short)
+    expect(vm.columns[0]!.nowOffset).toBeCloseTo(810 / 1440, 3);
+  });
+});
+
+describe('buildTimeGridView — hour12', () => {
+  const base = {
+    ...baseArgs,
+    viewDate: at('2026-06-15T12:00:00Z'),
+    events: [],
+    days: 1,
+    anchorToWeek: false,
+    slotMinutes: 60,
+  };
+  const tickLabel = (vm: ReturnType<typeof buildTimeGridView>, min: number): string | undefined =>
+    vm.ticks.find((t) => t.minutes === min)?.label;
+
+  it('renders 24-hour tick labels when hour12 is false', () => {
+    const vm = buildTimeGridView(adapter, { ...base, hour12: false });
+    expect(tickLabel(vm, 780)).toBe('13:00'); // 1pm
+  });
+
+  it('renders 12-hour tick labels when hour12 is true', () => {
+    const vm = buildTimeGridView(adapter, { ...base, hour12: true });
+    expect(tickLabel(vm, 780)).toMatch(/1:00\s?PM/i);
   });
 });

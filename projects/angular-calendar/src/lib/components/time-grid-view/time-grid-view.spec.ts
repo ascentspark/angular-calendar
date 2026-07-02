@@ -18,7 +18,7 @@ async function render(inputs: Record<string, unknown>) {
   }
   await fixture.whenStable();
   fixture.detectChanges();
-  return { el: fixture.nativeElement as HTMLElement, cmp: fixture.componentInstance };
+  return { el: fixture.nativeElement as HTMLElement, cmp: fixture.componentInstance, fixture };
 }
 
 describe('CalTimeGridView', () => {
@@ -353,5 +353,34 @@ describe('CalTimeGridView — keyboard move', () => {
     eventEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
     eventEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(emitted).toBe(false);
+  });
+
+  it('announces keyboard grab / move / cancel to the live region', async () => {
+    const ev: CalendarEvent = {
+      id: 'a',
+      title: 'Standup',
+      start: at('2026-06-15T13:00:00Z'),
+      end: at('2026-06-15T14:00:00Z'),
+    };
+    const { el, fixture } = await render({
+      events: [ev],
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      anchorToWeek: false,
+    });
+    const eventEl = el.querySelector<HTMLButtonElement>('.cal-tg__event')!;
+    const live = () => el.querySelector('.cal-tg__sr')!.textContent?.toLowerCase() ?? '';
+
+    eventEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+    expect(live()).toContain('grabbed');
+
+    eventEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    fixture.detectChanges();
+    expect(live()).toContain('moved to');
+
+    eventEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(live()).toContain('cancelled');
   });
 });

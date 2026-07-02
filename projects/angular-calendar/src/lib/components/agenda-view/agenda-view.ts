@@ -8,12 +8,14 @@ import {
   input,
   output,
 } from '@angular/core';
-import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
+import { CALENDAR_CONFIG, resolveTimeFormat } from '../../core/config/calendar-config';
 import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
 import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zoned-date-time';
 import type { CalendarEvent } from '../../core/model/calendar-event';
 import { buildAgendaView } from '../../core/view-model/build-agenda-view';
 import type { AgendaDay } from '../../core/view-model/agenda-view-model';
+import { RECURRENCE_ADAPTER } from '../../core/recurrence/recurrence-adapter';
+import { expandRecurringEvents } from '../../core/recurrence/expand-recurring-events';
 import { applyTheme } from '../../theme/apply-theme';
 import { CAL_TOKEN_BRIDGE } from '../../core/config/provide-calendar';
 import { deriveTheme, type CalThemeMode } from '../../theme/derive-theme';
@@ -41,6 +43,7 @@ export class CalAgendaView<TMeta = unknown> {
   private readonly adapter = inject(DATE_ADAPTER);
   private readonly config = inject(CALENDAR_CONFIG);
   private readonly tokenBridge = inject(CAL_TOKEN_BRIDGE, { optional: true });
+  private readonly recurrence = inject(RECURRENCE_ADAPTER, { optional: true });
   readonly a11y = inject(CalCalendarA11y);
   readonly intl = inject(CalCalendarIntl);
 
@@ -57,8 +60,11 @@ export class CalAgendaView<TMeta = unknown> {
   readonly accentColor = input<string>(FALLBACK_ACCENT);
   readonly themeMode = input<CalThemeMode>('light');
   readonly statusColors = input<Record<string, string>>({});
+  /** Optional hex override for on-accent text (`--cal-accent-ink`); null = auto. */
+  readonly accentInk = input<string | null>(null);
 
   readonly eventClicked = output<{ event: CalendarEvent<TMeta> }>();
+  readonly viewPeriodChanged = output<{ start: ZonedDateTime; end: ZonedDateTime; zone: string }>();
 
   private readonly resolvedLocale = computed(() => this.locale() ?? this.config.locale);
   private readonly resolvedSystem = computed(
@@ -71,18 +77,40 @@ export class CalAgendaView<TMeta = unknown> {
   protected readonly viewModel = computed(() => {
     const zone = this.resolvedZone();
     const todayValue = this.today();
+    const viewDate = this.adapter.toZoned(this.viewDate(), zone);
+    const days = this.days();
     return buildAgendaView<TMeta>(this.adapter, {
-      viewDate: this.adapter.toZoned(this.viewDate(), zone),
-      events: this.events(),
-      days: this.days(),
+      viewDate,
+      events: this.expandedEvents(zone, viewDate, days),
+      days,
       hideEmptyDays: this.hideEmptyDays(),
       ...(todayValue !== null ? { today: this.adapter.toZoned(todayValue, zone) } : {}),
     });
   });
 
+  /** Expand recurring events into the agenda window when a recurrence adapter is present. */
+  private expandedEvents(
+    zone: string,
+    viewDate: ZonedDateTime,
+    days: number,
+  ): readonly CalendarEvent<TMeta>[] {
+    const raw = this.events();
+    if (this.recurrence === null || !raw.some((e) => e.recurrenceRule !== undefined)) {
+      return raw;
+    }
+    const probe = buildAgendaView<TMeta>(this.adapter, { viewDate, events: [], days });
+    return expandRecurringEvents<TMeta>(raw, {
+      recurrence: this.recurrence,
+      dates: this.adapter,
+      windowStart: probe.period.start,
+      windowEnd: probe.period.end,
+      zone,
+    });
+  }
+
   private readonly theme = computed(() => {
     try {
-      return deriveTheme(this.baseColor(), this.accentColor(), this.themeMode(), this.statusColors());
+      return deriveTheme(this.baseColor(), this.accentColor(), this.themeMode(), this.statusColors(), this.accentInk());
     } catch {
       return deriveTheme(FALLBACK_BASE, FALLBACK_ACCENT, this.themeMode(), this.statusColors());
     }
@@ -90,6 +118,7 @@ export class CalAgendaView<TMeta = unknown> {
 
   constructor() {
     effect(() => applyTheme(this.host.nativeElement, this.theme(), this.tokenBridge));
+    effect(() => this.viewPeriodChanged.emit(this.viewModel().period));
   }
 
   protected dayHeading(day: AgendaDay<TMeta>): string {
@@ -102,12 +131,12 @@ export class CalAgendaView<TMeta = unknown> {
     }
     const zone = this.resolvedZone();
     const start = this.adapter.toZoned(event.start, zone);
-    const startLabel = this.adapter.format(start, 'h:mm a', this.resolvedLocale());
+    const startLabel = this.adapter.format(start, resolveTimeFormat(this.config.hour12), this.resolvedLocale());
     if (event.end === undefined) {
       return startLabel;
     }
     const end = this.adapter.toZoned(event.end, zone);
-    return `${startLabel} – ${this.adapter.format(end, 'h:mm a', this.resolvedLocale())}`;
+    return `${startLabel} – ${this.adapter.format(end, resolveTimeFormat(this.config.hour12), this.resolvedLocale())}`;
   }
 
   protected eventLabel(event: CalendarEvent<TMeta>): string {

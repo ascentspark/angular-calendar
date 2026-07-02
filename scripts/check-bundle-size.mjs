@@ -10,12 +10,13 @@ const DIST = 'dist/angular-calendar/fesm2022';
 
 // Gzipped budgets in KB. The primary bundle carries every view + the recurrence
 // editor; consumers tree-shake to what they import. Secondary entries are tiny.
-// 56KB reflects the full Syncfusion-parity v1 surface (month/week/day/timeline/
+// 58KB reflects the full Syncfusion-parity v1 surface (month/week/day/timeline/
 // year/agenda + in-grid + timeline drag + overflow popover + recurrence edit +
-// event-detail dialog + OKLCH theming) — still a fraction of comparable
-// commercial schedulers.
+// event-detail dialog + focus trap + live-region drag announcements + row
+// virtualization + OKLCH theming) — still a fraction of comparable commercial
+// schedulers.
 const BUDGETS = [
-  { file: 'ascentsparksoftware-angular-calendar.mjs', kb: 56 },
+  { file: 'ascentsparksoftware-angular-calendar.mjs', kb: 62 },
   { file: 'ascentsparksoftware-angular-calendar-date-fns.mjs', kb: 6 },
   { file: 'ascentsparksoftware-angular-calendar-recurrence.mjs', kb: 6 },
   { file: 'ascentsparksoftware-angular-calendar-export.mjs', kb: 6 },

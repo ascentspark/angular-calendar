@@ -62,12 +62,13 @@ export class CalRecurrenceEditor {
     }
   });
 
-  protected setFreq(freq: RecurrenceFreq): void {
+  protected setFreq(event: Event): void {
+    const freq = (event.target as HTMLSelectElement).value as RecurrenceFreq;
     this.commit({ ...this.parts(), freq });
   }
 
-  protected setInterval(value: string): void {
-    const n = Math.max(1, Number.parseInt(value, 10) || 1);
+  protected setInterval(event: Event): void {
+    const n = Math.max(1, Number.parseInt((event.target as HTMLInputElement).value, 10) || 1);
     this.commit({ ...this.parts(), interval: n });
   }
 
@@ -98,8 +99,8 @@ export class CalRecurrenceEditor {
     this.commit({ ...this.parts(), end });
   }
 
-  protected setCount(value: string): void {
-    const n = Math.max(1, Number.parseInt(value, 10) || 1);
+  protected setCount(event: Event): void {
+    const n = Math.max(1, Number.parseInt((event.target as HTMLInputElement).value, 10) || 1);
     this.commit({ ...this.parts(), end: { type: 'count', count: n } });
   }
 
