@@ -73,6 +73,8 @@ export class CalMonthView<TMeta = unknown> {
   readonly accentColor = input<string>(FALLBACK_ACCENT);
   readonly themeMode = input<CalThemeMode>('light');
   readonly statusColors = input<Record<string, string>>({});
+  /** Optional hex override for on-accent text (`--cal-accent-ink`); null = auto. */
+  readonly accentInk = input<string | null>(null);
 
   // ── outputs ─────────────────────────────────────────────────────────────
   readonly eventClicked = output<{ event: CalendarEvent<TMeta> }>();
@@ -170,7 +172,7 @@ export class CalMonthView<TMeta = unknown> {
 
   private readonly theme = computed(() => {
     try {
-      return deriveTheme(this.baseColor(), this.accentColor(), this.themeMode(), this.statusColors());
+      return deriveTheme(this.baseColor(), this.accentColor(), this.themeMode(), this.statusColors(), this.accentInk());
     } catch {
       return deriveTheme(FALLBACK_BASE, FALLBACK_ACCENT, this.themeMode(), this.statusColors());
     }
@@ -228,6 +230,12 @@ export class CalMonthView<TMeta = unknown> {
       background: bg,
       color: fg,
     };
+  }
+
+  /** `top` for the "+N more" pill: the row immediately below the day's last visible chip. */
+  protected moreTop(day: MonthDay<TMeta>): string {
+    const lastLane = day.events.reduce((max, chip) => Math.max(max, chip.lane), -1);
+    return `calc(var(--cal-day-head) + ${lastLane + 1} * var(--cal-chip-row))`;
   }
 
   /** Lane rows to reserve in a week (max visible lane + an overflow row if any). */

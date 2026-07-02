@@ -104,6 +104,8 @@ export class CalTimeGridView<TMeta = unknown> {
   readonly accentColor = input<string>(FALLBACK_ACCENT);
   readonly themeMode = input<CalThemeMode>('light');
   readonly statusColors = input<Record<string, string>>({});
+  /** Optional hex override for on-accent text (`--cal-accent-ink`); null = auto. */
+  readonly accentInk = input<string | null>(null);
 
   /** Whether events can be dragged / resized. */
   readonly editable = input<boolean>(true);
@@ -200,7 +202,7 @@ export class CalTimeGridView<TMeta = unknown> {
 
   private readonly theme = computed(() => {
     try {
-      return deriveTheme(this.baseColor(), this.accentColor(), this.themeMode(), this.statusColors());
+      return deriveTheme(this.baseColor(), this.accentColor(), this.themeMode(), this.statusColors(), this.accentInk());
     } catch {
       return deriveTheme(FALLBACK_BASE, FALLBACK_ACCENT, this.themeMode(), this.statusColors());
     }

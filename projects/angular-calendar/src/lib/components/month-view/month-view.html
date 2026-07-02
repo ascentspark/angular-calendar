@@ -70,6 +70,7 @@
                 <button
                   type="button"
                   class="cal-day__more"
+                  [style.top]="moreTop(day)"
                   [attr.aria-label]="moreLabel(day.overflowCount)"
                   [attr.aria-expanded]="isMoreOpen(day)"
                   (click)="openMore(day, $event)"

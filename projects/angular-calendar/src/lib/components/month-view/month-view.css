@@ -7,7 +7,7 @@
   font-family: inherit;
 
   /* Internal layout knobs (overridable by the host). */
-  --cal-day-head: 1.6rem;
+  --cal-day-head: 1.9rem;
   --cal-chip-row: 1.35rem;
 }
 
@@ -87,9 +87,9 @@
 .cal-day__head {
   block-size: var(--cal-day-head);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-end;
-  padding-inline: 0.35rem;
+  padding: 0.3rem 0.4rem 0;
 }
 
 .cal-day__num {
@@ -147,7 +147,8 @@
 .cal-day__more {
   position: absolute;
   inset-inline-start: 0.35rem;
-  inset-block-end: 0.2rem;
+  /* Sits directly under the day's last visible chip (top bound in the template),
+     not pinned to the cell floor — so it stays noticeable in tall fill-viewport cells. */
   z-index: 2;
   border: 1px solid var(--cal-line);
   background: var(--cal-surface-2);
