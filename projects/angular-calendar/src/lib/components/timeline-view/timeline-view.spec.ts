@@ -5,6 +5,7 @@ import { provideDateFnsAdapter } from '@ascentsparksoftware/angular-calendar/dat
 import type {
   CalendarEvent,
   CalendarResource,
+  EventChange,
   ZonedDateTime,
 } from '@ascentsparksoftware/angular-calendar';
 import { CalTimelineView } from './timeline-view';
@@ -257,5 +258,65 @@ describe('CalTimelineView — external drop', () => {
     fire('pointermove', 102); // 2px < threshold
     fire('pointerup', 102);
     expect(moved).toBe(false);
+  });
+});
+
+describe('CalTimelineView — keyboard', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  const job: CalendarEvent = {
+    id: 'e',
+    title: 'Install',
+    start: at('2026-06-15T13:00:00Z'),
+    end: at('2026-06-15T14:00:00Z'),
+    resourceIds: ['t1'],
+  };
+  const base = {
+    events: [job],
+    resources,
+    viewDate: at('2026-06-15T12:00:00Z'),
+    days: 1,
+    dayStartMinutes: 480,
+    dayEndMinutes: 1080,
+    timezone: zone,
+  };
+  const press = (el: HTMLElement, key: string, shift = false): void => {
+    el.querySelector<HTMLButtonElement>('.cal-tl__event')!.dispatchEvent(
+      new KeyboardEvent('keydown', { key, shiftKey: shift, bubbles: true }),
+    );
+  };
+
+  it('grab → move → drop emits a later start and announces to the live region', async () => {
+    const { el, cmp } = await render(base);
+    let change: EventChange | null = null;
+    cmp.eventChanged.subscribe((c) => (change = c));
+    press(el, 'Enter');
+    press(el, 'ArrowRight');
+    press(el, 'ArrowRight');
+    press(el, 'Enter');
+    const captured = change as EventChange | null;
+    expect(captured).not.toBeNull();
+    expect(captured!.kind).toBe('move');
+    expect(captured!.start!.epochMs).toBeGreaterThan(Date.parse('2026-06-15T13:00:00Z'));
+  });
+
+  it('validateChange vetoes a keyboard move', async () => {
+    const { el, cmp } = await render({ ...base, validateChange: () => false });
+    let emitted = false;
+    cmp.eventChanged.subscribe(() => (emitted = true));
+    press(el, 'Enter');
+    press(el, 'ArrowRight');
+    press(el, 'Enter');
+    expect(emitted).toBe(false);
+  });
+
+  it('ArrowDown reassigns the block to the next resource lane', async () => {
+    const { el, cmp } = await render(base);
+    let change: EventChange | null = null;
+    cmp.eventChanged.subscribe((c) => (change = c));
+    press(el, 'Enter');
+    press(el, 'ArrowDown');
+    press(el, 'Enter');
+    expect((change as EventChange | null)?.resourceId).toBe('t2');
   });
 });

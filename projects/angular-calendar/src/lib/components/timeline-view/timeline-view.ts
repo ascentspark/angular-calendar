@@ -40,17 +40,23 @@ const FALLBACK_ACCENT = '#3b82f6';
 /** Movement past this many px before a press is treated as a drag (not a click). */
 const DRAG_THRESHOLD_PX = 4;
 
-/** In-flight pointer gesture moving a timeline block along time / across lanes. */
+/** In-flight gesture moving/resizing a timeline block along time / across lanes. */
 interface TimelineDrag {
   readonly eventId: string;
+  readonly kind: 'move' | 'resize-end';
   readonly originStartMs: number;
   readonly originEndMs: number;
   readonly originResourceId: string;
+  /** Resource lane the block will land in (keyboard lane moves change this). */
+  readonly targetResourceId: string;
   readonly pointerId: number;
   readonly startClientX: number;
   readonly deltaMinutes: number;
   readonly active: boolean;
 }
+
+/** Sentinel pointerId marking a keyboard-driven grab (vs a real pointer). */
+const KEYBOARD_POINTER = -1;
 
 /** Absolute epoch ms of a `Date | ZonedDateTime`. */
 function epochOf(value: Date | ZonedDateTime): number {
@@ -111,6 +117,8 @@ export class CalTimelineView<TMeta = unknown> {
   readonly editable = input<boolean>(true);
   /** Drag quantisation in minutes; defaults to the config snap. */
   readonly snapMinutes = input<number | null>(null);
+  /** Live veto: return false to reject an in-flight change (the block snaps back). */
+  readonly validateChange = input<((change: EventChange<TMeta>) => boolean) | null>(null);
 
   readonly eventClicked = output<{ event: CalendarEvent<TMeta> }>();
   readonly viewPeriodChanged = output<{ start: ZonedDateTime; end: ZonedDateTime; zone: string }>();
@@ -350,6 +358,10 @@ export class CalTimelineView<TMeta = unknown> {
   protected readonly drag = signal<TimelineDrag | null>(null);
   /** Set briefly after an active drag so the trailing click doesn't also fire. */
   private suppressClick = false;
+  /** Live-region text announced during keyboard move/resize. */
+  protected readonly announcement = signal('');
+  /** Lane order (resource ids top→bottom) for keyboard lane navigation. */
+  private readonly laneOrder = computed(() => this.viewModel().resourceRows.map((r) => r.resource.id));
 
   protected onEventClick(event: CalendarEvent<TMeta>, dom: Event): void {
     dom.stopPropagation();
@@ -372,9 +384,11 @@ export class CalTimelineView<TMeta = unknown> {
     const endMs = ev.event.end !== undefined ? epochOf(ev.event.end) : startMs + 3_600_000;
     this.drag.set({
       eventId: ev.event.id,
+      kind: 'move',
       originStartMs: startMs,
       originEndMs: endMs,
       originResourceId: row.resource.id,
+      targetResourceId: row.resource.id,
       pointerId: dom.pointerId,
       startClientX: dom.clientX,
       deltaMinutes: 0,
@@ -414,19 +428,33 @@ export class CalTimelineView<TMeta = unknown> {
       return; // a plain click; let (click) handle selection
     }
     this.suppressClick = true;
+    const targetResource = this.resourceAtPoint(dom.clientX, dom.clientY) ?? d.originResourceId;
+    this.commitDrag(ev.event, { ...d, targetResourceId: targetResource });
+  }
+
+  /** Build the change for a gesture, run it past `validateChange`, and emit if allowed. */
+  private commitDrag(event: CalendarEvent<TMeta>, d: TimelineDrag): void {
     const zone = this.resolvedZone();
     const deltaMs = d.deltaMinutes * 60_000;
-    const targetResource = this.resourceAtPoint(dom.clientX, dom.clientY) ?? d.originResourceId;
-    if (deltaMs === 0 && targetResource === d.originResourceId) {
+    if (deltaMs === 0 && d.targetResourceId === d.originResourceId) {
       return; // no net change
     }
+    const start =
+      d.kind === 'resize-end'
+        ? this.adapter.toZoned(new Date(d.originStartMs), zone)
+        : this.adapter.toZoned(new Date(d.originStartMs + deltaMs), zone);
+    const end = this.adapter.toZoned(new Date(d.originEndMs + deltaMs), zone);
     const change: EventChange<TMeta> = {
-      kind: 'move',
-      event: ev.event,
-      start: this.adapter.toZoned(new Date(d.originStartMs + deltaMs), zone),
-      end: this.adapter.toZoned(new Date(d.originEndMs + deltaMs), zone),
-      resourceId: targetResource,
+      kind: d.kind === 'resize-end' ? 'resize' : 'move',
+      event,
+      start,
+      end,
+      resourceId: d.targetResourceId,
     };
+    const validate = this.validateChange();
+    if (validate !== null && !validate(change)) {
+      return; // vetoed — preview already cleared, so the block snaps back
+    }
     this.eventChanged.emit(change);
   }
 
@@ -435,6 +463,106 @@ export class CalTimelineView<TMeta = unknown> {
     if (d !== null && d.pointerId === dom.pointerId) {
       this.drag.set(null);
     }
+  }
+
+  /**
+   * Keyboard move/resize on a focused block (a11y). Enter/Space grabs; Left/Right move
+   * by one snap step (Shift = resize the end); Up/Down move across resource lanes; Enter
+   * drops (→ `validateChange` → `eventChanged`), Escape cancels.
+   */
+  protected onEventKeydown(
+    ev: PositionedEvent<TMeta>,
+    row: ResourceRow<TMeta>,
+    dom: KeyboardEvent,
+  ): void {
+    if (!this.editable() || ev.event.isReadonly === true) {
+      return;
+    }
+    const d = this.drag();
+    const grabbing = d !== null && d.pointerId === KEYBOARD_POINTER && d.eventId === ev.event.id;
+    const snap = this.snapMinutes() ?? this.config.snapMinutes;
+
+    if (!grabbing) {
+      if (dom.key === 'Enter' || dom.key === ' ') {
+        dom.preventDefault();
+        const startMs = epochOf(ev.event.start);
+        const endMs = ev.event.end !== undefined ? epochOf(ev.event.end) : startMs + 3_600_000;
+        this.drag.set({
+          eventId: ev.event.id,
+          kind: 'move',
+          originStartMs: startMs,
+          originEndMs: endMs,
+          originResourceId: row.resource.id,
+          targetResourceId: row.resource.id,
+          pointerId: KEYBOARD_POINTER,
+          startClientX: 0,
+          deltaMinutes: 0,
+          active: true,
+        });
+        this.announcement.set(this.a11y.grabbedLabel(ev.event));
+      }
+      return;
+    }
+
+    switch (dom.key) {
+      case 'ArrowLeft':
+        dom.preventDefault();
+        this.nudge(d, dom.shiftKey ? 'resize-end' : 'move', -snap);
+        break;
+      case 'ArrowRight':
+        dom.preventDefault();
+        this.nudge(d, dom.shiftKey ? 'resize-end' : 'move', snap);
+        break;
+      case 'ArrowUp':
+        dom.preventDefault();
+        this.moveLane(d, -1);
+        break;
+      case 'ArrowDown':
+        dom.preventDefault();
+        this.moveLane(d, 1);
+        break;
+      case 'Enter':
+      case ' ':
+        dom.preventDefault();
+        this.drag.set(null);
+        this.announcement.set(
+          this.a11y.droppedLabel(ev.event, this.zonedFromMs(d.originStartMs + d.deltaMinutes * 60_000)),
+        );
+        this.commitDrag(ev.event, d);
+        break;
+      case 'Escape':
+        dom.preventDefault();
+        this.drag.set(null);
+        this.announcement.set(this.a11y.moveCancelledLabel(ev.event));
+        break;
+      default:
+        break;
+    }
+  }
+
+  private nudge(d: TimelineDrag, kind: 'move' | 'resize-end', step: number): void {
+    const deltaMinutes = d.deltaMinutes + step;
+    this.drag.set({ ...d, kind, deltaMinutes });
+    if (kind === 'resize-end') {
+      this.announcement.set(this.a11y.resizedLabel(this.zonedFromMs(d.originEndMs + deltaMinutes * 60_000)));
+    } else {
+      this.announcement.set(this.a11y.movedLabel(this.zonedFromMs(d.originStartMs + deltaMinutes * 60_000)));
+    }
+  }
+
+  private moveLane(d: TimelineDrag, dir: number): void {
+    const order = this.laneOrder();
+    const idx = order.indexOf(d.targetResourceId);
+    const next = order[Math.min(order.length - 1, Math.max(0, idx + dir))];
+    if (next !== undefined && next !== d.targetResourceId) {
+      this.drag.set({ ...d, targetResourceId: next });
+      const name = this.resources().find((r) => r.id === next)?.name ?? next;
+      this.announcement.set(`Moved to lane ${name}`);
+    }
+  }
+
+  private zonedFromMs(epochMs: number): ZonedDateTime {
+    return this.adapter.toZoned(new Date(epochMs), this.resolvedZone());
   }
 
   protected isDragging(ev: PositionedEvent<TMeta>): boolean {

@@ -107,6 +107,7 @@
             (pointerup)="onEventPointerUp(ev, $event)"
             (pointercancel)="onEventPointerCancel($event)"
             (click)="onEventClick(ev.event, $event)"
+            (keydown)="onEventKeydown(ev, row, $event)"
           >
             @if (eventTemplate(); as tpl) {
               <ng-container
@@ -129,4 +130,7 @@
       <div class="cal-tl__spacer" [style.block-size.px]="rowWindow().padBottom" aria-hidden="true"></div>
     }
   </div>
+
+  <!-- Screen-reader announcements for keyboard move/resize (grab, step, lane, drop, cancel). -->
+  <div class="cal-tl__sr" role="status" aria-live="polite">{{ announcement() }}</div>
 </div>
