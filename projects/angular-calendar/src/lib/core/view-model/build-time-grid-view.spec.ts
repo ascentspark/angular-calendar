@@ -154,6 +154,7 @@ describe('buildTimeGridView — now indicator & ticks', () => {
       events: [],
       days: 1,
       anchorToWeek: false,
+      hour12: false, // 24-hour labels regardless of locale
     });
     expect(vm.ticks.map((t) => t.label)).toEqual(['08:00', '09:00', '10:00']);
     expect(vm.ticks[0]!.offset).toBe(0);
@@ -207,5 +208,28 @@ describe('buildTimeGridView — DST', () => {
     });
     // 13:30 wall clock → 810/1440, not 750/1440 (absolute, one hour short)
     expect(vm.columns[0]!.nowOffset).toBeCloseTo(810 / 1440, 3);
+  });
+});
+
+describe('buildTimeGridView — hour12', () => {
+  const base = {
+    ...baseArgs,
+    viewDate: at('2026-06-15T12:00:00Z'),
+    events: [],
+    days: 1,
+    anchorToWeek: false,
+    slotMinutes: 60,
+  };
+  const tickLabel = (vm: ReturnType<typeof buildTimeGridView>, min: number): string | undefined =>
+    vm.ticks.find((t) => t.minutes === min)?.label;
+
+  it('renders 24-hour tick labels when hour12 is false', () => {
+    const vm = buildTimeGridView(adapter, { ...base, hour12: false });
+    expect(tickLabel(vm, 780)).toBe('13:00'); // 1pm
+  });
+
+  it('renders 12-hour tick labels when hour12 is true', () => {
+    const vm = buildTimeGridView(adapter, { ...base, hour12: true });
+    expect(tickLabel(vm, 780)).toMatch(/1:00\s?PM/i);
   });
 });

@@ -9,7 +9,7 @@ import {
 import { NgTemplateOutlet } from '@angular/common';
 import { CalFocusTrap } from '../../a11y/cal-focus-trap';
 import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
-import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
+import { CALENDAR_CONFIG, resolveTimeFormat } from '../../core/config/calendar-config';
 import { CalCalendarIntl } from '../../i18n/cal-calendar-intl';
 import type { CalendarEvent } from '../../core/model/calendar-event';
 import type { CalendarResource } from '../../core/model/calendar-resource';
@@ -83,11 +83,11 @@ export class CalEventDialog<TMeta = unknown> {
     }
     const zone = this.zone();
     const locale = this.resolvedLocale();
-    const start = this.adapter.format(this.adapter.toZoned(ev.start, zone), 'h:mm a', locale);
+    const start = this.adapter.format(this.adapter.toZoned(ev.start, zone), resolveTimeFormat(this.config.hour12), locale);
     if (ev.end === undefined) {
       return start;
     }
-    const end = this.adapter.format(this.adapter.toZoned(ev.end, zone), 'h:mm a', locale);
+    const end = this.adapter.format(this.adapter.toZoned(ev.end, zone), resolveTimeFormat(this.config.hour12), locale);
     return `${start} – ${end}`;
   }
 

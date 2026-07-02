@@ -48,3 +48,19 @@ export const CALENDAR_CONFIG = new InjectionToken<CalendarConfig>('cal.CalendarC
   providedIn: 'root',
   factory: () => DEFAULT_CALENDAR_CONFIG,
 });
+
+/**
+ * The adapter format token for a time-of-day label, honouring the `hour12` config:
+ * `true` → 12-hour (`1:30 PM`), `false` → 24-hour (`13:30`), `null` → the locale's
+ * default. Every view resolves its time labels through this so a single config drives
+ * them all (no more mixed 12/24-hour output on one event).
+ */
+export function resolveTimeFormat(hour12: boolean | null): string {
+  if (hour12 === true) {
+    return 'h:mm a';
+  }
+  if (hour12 === false) {
+    return 'HH:mm';
+  }
+  return 'time';
+}

@@ -4,6 +4,7 @@ import type { CalendarEvent } from '../model/calendar-event';
 import { packColumns } from '../layout/pack-columns';
 import type { Interval } from '../layout/interval';
 import { offsetFraction, type ProjectionRange } from '../layout/projection';
+import { resolveTimeFormat } from '../config/calendar-config';
 import { flattenResources } from './flatten-resources';
 import type { PositionedEvent, ShadeBand } from './positioned-event';
 import type {
@@ -163,10 +164,14 @@ function buildHeaderCells<TMeta>(
     const cellEndMs = Math.min(next.epochMs, rangeEnd.epochMs);
     const sMin = (cellStartMs - rangeStart.epochMs) / 60000;
     const eMin = (cellEndMs - rangeStart.epochMs) / 60000;
+    const pattern =
+      unit === 'hour' || unit === 'minute'
+        ? resolveTimeFormat(args.hour12 ?? null)
+        : LABEL_PATTERN[unit];
     cells.push({
       offset: offsetFraction(sMin, range),
       span: (eMin - sMin) / range.total,
-      label: adapter.format(cursor, LABEL_PATTERN[unit], args.locale),
+      label: adapter.format(cursor, pattern, args.locale),
       isNow: nowMin !== null && nowMin >= sMin && nowMin < eMin,
     });
     cursor = next;

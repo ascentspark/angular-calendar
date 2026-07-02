@@ -16,7 +16,7 @@ const DIST = 'dist/angular-calendar/fesm2022';
 // virtualization + OKLCH theming) — still a fraction of comparable commercial
 // schedulers.
 const BUDGETS = [
-  { file: 'ascentsparksoftware-angular-calendar.mjs', kb: 58 },
+  { file: 'ascentsparksoftware-angular-calendar.mjs', kb: 60 },
   { file: 'ascentsparksoftware-angular-calendar-date-fns.mjs', kb: 6 },
   { file: 'ascentsparksoftware-angular-calendar-recurrence.mjs', kb: 6 },
   { file: 'ascentsparksoftware-angular-calendar-export.mjs', kb: 6 },

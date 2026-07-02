@@ -67,5 +67,7 @@ export interface TimelineViewArgs<TMeta = unknown> {
   readonly orientation: TimeAxisOrientation;
   readonly weekStartsOn: number;
   readonly locale: string;
+  /** Force 12/24-hour hour/minute header labels, or `null`/omitted for locale default. */
+  readonly hour12?: boolean | null;
   readonly now?: ZonedDateTime;
 }

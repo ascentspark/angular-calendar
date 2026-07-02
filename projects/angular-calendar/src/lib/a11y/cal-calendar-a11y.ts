@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { CALENDAR_CONFIG } from '../core/config/calendar-config';
+import { CALENDAR_CONFIG, resolveTimeFormat } from '../core/config/calendar-config';
 import { DATE_ADAPTER } from '../core/date-adapter/date-adapter';
 import type { ZonedDateTime } from '../core/date-adapter/zoned-date-time';
 import type { CalendarEvent } from '../core/model/calendar-event';
@@ -51,7 +51,7 @@ export class CalCalendarA11y {
     if (this.adapter === null) {
       return '';
     }
-    return this.adapter.format(instant, 'h:mm a', this.config.locale, this.config.calendarSystem);
+    return this.adapter.format(instant, resolveTimeFormat(this.config.hour12), this.config.locale, this.config.calendarSystem);
   }
 
   /** Announced when a keyboard drag grab begins. */

@@ -61,6 +61,8 @@ export interface TimeGridViewArgs<TMeta = unknown> {
   readonly weekendDays?: readonly number[];
   /** Locale for tick labels. */
   readonly locale: string;
+  /** Force 12/24-hour tick labels, or `null`/omitted for the locale default. */
+  readonly hour12?: boolean | null;
   /** Whether to anchor the window to the week start (week) or the viewDate (day). */
   readonly anchorToWeek: boolean;
 }

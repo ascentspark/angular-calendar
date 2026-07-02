@@ -5,6 +5,7 @@ import { packColumns } from '../layout/pack-columns';
 import { packRows } from '../layout/pack-rows';
 import type { Interval } from '../layout/interval';
 import { offsetFraction, sizeFraction, type ProjectionRange } from '../layout/projection';
+import { resolveTimeFormat } from '../config/calendar-config';
 import type { PositionedChip } from './positioned-chip';
 import type { PositionedEvent } from './positioned-event';
 import type {
@@ -217,7 +218,7 @@ export function buildTimeGridView<TMeta = unknown>(
     ticks.push({
       offset: offsetFraction(m, range),
       minutes: m,
-      label: adapter.format(instant, 'HH:mm', args.locale),
+      label: adapter.format(instant, resolveTimeFormat(args.hour12 ?? null), args.locale),
     });
   }
 

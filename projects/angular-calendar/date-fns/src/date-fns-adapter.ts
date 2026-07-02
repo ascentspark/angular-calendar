@@ -40,6 +40,9 @@ const PRESETS: Readonly<Record<string, Intl.DateTimeFormatOptions>> = {
   'HH:mm': { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' },
   'h a': { hour: 'numeric', hour12: true },
   'h:mm a': { hour: 'numeric', minute: '2-digit', hour12: true },
+  // Locale-default time: Intl picks 12- or 24-hour by the locale (e.g. en-US → 1:30 PM,
+  // de-DE → 13:30). Used when the calendar's `hour12` config is left unset (null).
+  time: { hour: 'numeric', minute: '2-digit' },
   'full-date': { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
 };
 

@@ -14,7 +14,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
-import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
+import { CALENDAR_CONFIG, resolveTimeFormat } from '../../core/config/calendar-config';
 import type { EventChange } from '../../interactions/event-change';
 import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
 import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zoned-date-time';
@@ -160,6 +160,7 @@ export class CalTimelineView<TMeta = unknown> {
       orientation: 'horizontal' as const,
       weekStartsOn: this.weekStartsOn() ?? this.config.weekStartsOn,
       locale: this.resolvedLocale(),
+      hour12: this.config.hour12,
       ...(nowValue !== null ? { now: this.adapter.toZoned(nowValue, zone) } : {}),
       ...(todayValue !== null ? { today: this.adapter.toZoned(todayValue, zone) } : {}),
     };
@@ -261,11 +262,11 @@ export class CalTimelineView<TMeta = unknown> {
     const title = event.title ?? '';
     const zone = this.resolvedZone();
     const locale = this.resolvedLocale();
-    const start = this.adapter.format(this.adapter.toZoned(event.start, zone), 'h:mm a', locale);
+    const start = this.adapter.format(this.adapter.toZoned(event.start, zone), resolveTimeFormat(this.config.hour12), locale);
     if (event.end === undefined) {
       return `${title} · ${start}`.trim();
     }
-    const end = this.adapter.format(this.adapter.toZoned(event.end, zone), 'h:mm a', locale);
+    const end = this.adapter.format(this.adapter.toZoned(event.end, zone), resolveTimeFormat(this.config.hour12), locale);
     return `${title} · ${start}–${end}`.trim();
   }
 

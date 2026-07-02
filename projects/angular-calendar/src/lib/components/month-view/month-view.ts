@@ -12,7 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
+import { CALENDAR_CONFIG, resolveTimeFormat } from '../../core/config/calendar-config';
 import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
 import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zoned-date-time';
 import type { CalendarEvent } from '../../core/model/calendar-event';
@@ -404,7 +404,7 @@ export class CalMonthView<TMeta = unknown> {
       return this.intl.allDay;
     }
     const zone = this.resolvedZone();
-    return this.adapter.format(this.adapter.toZoned(event.start, zone), 'h:mm a', this.resolvedLocale());
+    return this.adapter.format(this.adapter.toZoned(event.start, zone), resolveTimeFormat(this.config.hour12), this.resolvedLocale());
   }
 
   /** Header date for the popover, e.g. "Wed 17". */

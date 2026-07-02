@@ -8,7 +8,7 @@ import {
   input,
   output,
 } from '@angular/core';
-import { CALENDAR_CONFIG } from '../../core/config/calendar-config';
+import { CALENDAR_CONFIG, resolveTimeFormat } from '../../core/config/calendar-config';
 import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
 import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zoned-date-time';
 import type { CalendarEvent } from '../../core/model/calendar-event';
@@ -129,12 +129,12 @@ export class CalAgendaView<TMeta = unknown> {
     }
     const zone = this.resolvedZone();
     const start = this.adapter.toZoned(event.start, zone);
-    const startLabel = this.adapter.format(start, 'h:mm a', this.resolvedLocale());
+    const startLabel = this.adapter.format(start, resolveTimeFormat(this.config.hour12), this.resolvedLocale());
     if (event.end === undefined) {
       return startLabel;
     }
     const end = this.adapter.toZoned(event.end, zone);
-    return `${startLabel} – ${this.adapter.format(end, 'h:mm a', this.resolvedLocale())}`;
+    return `${startLabel} – ${this.adapter.format(end, resolveTimeFormat(this.config.hour12), this.resolvedLocale())}`;
   }
 
   protected eventLabel(event: CalendarEvent<TMeta>): string {
