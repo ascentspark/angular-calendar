@@ -54,7 +54,9 @@ export interface ExampleSource {
               {{ copied() ? 'Copied' : 'Copy' }}
             </button>
           </div>
-          <pre class="ex__pre"><code [attr.data-lang]="current().lang">{{ current().code }}</code></pre>
+          <pre
+            class="ex__pre"
+          ><code [attr.data-lang]="current().lang">{{ current().code }}</code></pre>
         </div>
       }
     </section>

@@ -4,7 +4,13 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
-import { FaqItem, faqPageLd, SITE_ORIGIN, softwareApplicationLd, webPageLd } from './structured-data';
+import {
+  FaqItem,
+  faqPageLd,
+  SITE_ORIGIN,
+  softwareApplicationLd,
+  webPageLd,
+} from './structured-data';
 
 const DEFAULT_DESCRIPTION =
   'A themeable, signals-first Angular 22 calendar and resource scheduler: month, week, day, ' +

@@ -9,7 +9,13 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   selector: 'cal-asc-glyph',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <svg viewBox="0 0 16 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img">
+    <svg
+      viewBox="0 0 16 28"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      role="img"
+    >
       <path
         fill-rule="evenodd"
         clip-rule="evenodd"

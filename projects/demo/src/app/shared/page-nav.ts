@@ -16,7 +16,9 @@ export interface PageSection {
         <span class="onthispage__label">On this page</span>
         <ul>
           @for (s of sections(); track s.id) {
-            <li><a [href]="'#' + s.id">{{ s.label }}</a></li>
+            <li>
+              <a [href]="'#' + s.id">{{ s.label }}</a>
+            </li>
           }
         </ul>
       </nav>

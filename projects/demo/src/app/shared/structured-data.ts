@@ -26,7 +26,11 @@ export function softwareApplicationLd(): Record<string, unknown> {
   };
 }
 
-export function webPageLd(name: string, description: string, path: string): Record<string, unknown> {
+export function webPageLd(
+  name: string,
+  description: string,
+  path: string,
+): Record<string, unknown> {
   const trimmed = path.replace(/^\//, '');
   return {
     '@context': 'https://schema.org',

@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  PLATFORM_ID,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NAV } from './nav';
