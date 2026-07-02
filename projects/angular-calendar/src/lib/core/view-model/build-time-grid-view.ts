@@ -28,6 +28,17 @@ interface DayRange<TMeta> {
 }
 
 /**
+ * Minimum on-screen duration a horizontal (week-as-rows) event occupies for
+ * lane-packing. A short chip is given a word-wide minimum width in CSS
+ * (`--cal-tg` horizontal `.cal-tg__event` min-inline-size: 4.75rem ≈ 0.95h at the
+ * 5rem/hour floor), so it can visually spill past its true end. Packing each event
+ * as if it were at least this long forces two events that start within this window
+ * onto separate lanes — so their widened chips stack vertically instead of
+ * overlapping. Kept in sync with that CSS min-width; a no-op for vertical layout.
+ */
+const HORIZONTAL_MIN_VISUAL_MINUTES = 57;
+
+/**
  * Build the week / work-week / day time-grid view-model.
  *
  * Timed events are clipped to the visible day window and packed side-by-side via
@@ -116,9 +127,14 @@ export function buildTimeGridView<TMeta = unknown>(
       }
       const cs = Math.max(evStartMin, args.dayStartMinutes);
       const ce = Math.min(Math.max(evEndMin, cs), args.dayEndMinutes);
+      // Horizontal chips have a word-wide minimum width and can spill past their true
+      // end; pack them as at least that wide so near-adjacent events stack onto
+      // separate lanes rather than overlapping. Rendering still uses the real cs/ce.
+      const packEnd =
+        args.orientation === 'horizontal' ? Math.max(ce, cs + HORIZONTAL_MIN_VISUAL_MINUTES) : ce;
       timed.push({
         start: cs,
-        end: ce,
+        end: packEnd,
         data: {
           entry,
           cs,
@@ -209,16 +225,22 @@ export function buildTimeGridView<TMeta = unknown>(
     isEnd: item.data.isEnd,
   }));
 
-  // ── time-axis ticks (hourly labels within the window) ───────────────────
-  const tickStep = Math.max(60, args.slotMinutes);
+  // ── time-axis ticks ──────────────────────────────────────────────────────
+  // Gridlines are drawn at the `slotMinutes` interval (min 5 as a sanity floor);
+  // labels are attached only to the on-the-hour "major" ticks so a fine slot (15/30
+  // min) subdivides the grid without crowding the axis with labels.
+  const tickStep = Math.max(5, args.slotMinutes);
   const ticks: TimeTick[] = [];
   const tickAnchor = columnDays[0] ?? base;
+  const timeFormat = resolveTimeFormat(args.hour12 ?? null);
   for (let m = args.dayStartMinutes; m <= args.dayEndMinutes; m += tickStep) {
+    const major = m % 60 === 0;
     const instant = adapter.addMinutes(tickAnchor, m);
     ticks.push({
       offset: offsetFraction(m, range),
       minutes: m,
-      label: adapter.format(instant, resolveTimeFormat(args.hour12 ?? null), args.locale),
+      label: major ? adapter.format(instant, timeFormat, args.locale) : '',
+      major,
     });
   }
 

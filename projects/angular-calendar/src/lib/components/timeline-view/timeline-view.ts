@@ -43,7 +43,7 @@ const DRAG_THRESHOLD_PX = 4;
 /** In-flight gesture moving/resizing a timeline block along time / across lanes. */
 interface TimelineDrag {
   readonly eventId: string;
-  readonly kind: 'move' | 'resize-end';
+  readonly kind: 'move' | 'resize-start' | 'resize-end';
   readonly originStartMs: number;
   readonly originEndMs: number;
   readonly originResourceId: string;
@@ -312,9 +312,10 @@ export class CalTimelineView<TMeta = unknown> {
     const key = ev.event.status !== undefined ? sanitizeStatusKey(ev.event.status) : '';
     const bg = key !== '' ? `var(--cal-event-${key}, var(--cal-accent))` : 'var(--cal-accent)';
     const fg = key !== '' ? `var(--cal-event-${key}-ink, var(--cal-accent-ink))` : 'var(--cal-accent-ink)';
+    const geo = this.previewGeo(ev);
     return {
-      'inset-inline-start': `${ev.startOffset * 100}%`,
-      'inline-size': `calc(${ev.span * 100}% - 2px)`,
+      'inset-inline-start': `${geo.startOffset * 100}%`,
+      'inline-size': `calc(${geo.span * 100}% - 2px)`,
       'inset-block-start': `${ev.lane * this.laneHeight()}px`,
       'block-size': `${this.laneHeight() - 3}px`,
       background: bg,
@@ -362,6 +363,15 @@ export class CalTimelineView<TMeta = unknown> {
   protected readonly announcement = signal('');
   /** Lane order (resource ids top→bottom) for keyboard lane navigation. */
   private readonly laneOrder = computed(() => this.viewModel().resourceRows.map((r) => r.resource.id));
+  /** In-flight drag-to-create gesture on an empty lane, or null. */
+  protected readonly createDrag = signal<{
+    resourceId: string;
+    anchorMin: number;
+    deltaMin: number;
+    pointerId: number;
+    startClientX: number;
+    active: boolean;
+  } | null>(null);
 
   protected onEventClick(event: CalendarEvent<TMeta>, dom: Event): void {
     dom.stopPropagation();
@@ -375,16 +385,21 @@ export class CalTimelineView<TMeta = unknown> {
   protected onEventPointerDown(
     ev: PositionedEvent<TMeta>,
     row: ResourceRow<TMeta>,
+    kind: 'move' | 'resize-start' | 'resize-end',
     dom: PointerEvent,
   ): void {
     if (!this.editable() || ev.event.isReadonly === true || dom.button !== 0) {
       return;
     }
+    if (kind === 'move' && ev.event.draggable === false) {
+      return;
+    }
+    dom.stopPropagation();
     const startMs = epochOf(ev.event.start);
     const endMs = ev.event.end !== undefined ? epochOf(ev.event.end) : startMs + 3_600_000;
     this.drag.set({
       eventId: ev.event.id,
-      kind: 'move',
+      kind,
       originStartMs: startMs,
       originEndMs: endMs,
       originResourceId: row.resource.id,
@@ -428,7 +443,11 @@ export class CalTimelineView<TMeta = unknown> {
       return; // a plain click; let (click) handle selection
     }
     this.suppressClick = true;
-    const targetResource = this.resourceAtPoint(dom.clientX, dom.clientY) ?? d.originResourceId;
+    // Only a move can change lanes; a resize stays on its own lane.
+    const targetResource =
+      d.kind === 'move'
+        ? (this.resourceAtPoint(dom.clientX, dom.clientY) ?? d.originResourceId)
+        : d.originResourceId;
     this.commitDrag(ev.event, { ...d, targetResourceId: targetResource });
   }
 
@@ -439,16 +458,21 @@ export class CalTimelineView<TMeta = unknown> {
     if (deltaMs === 0 && d.targetResourceId === d.originResourceId) {
       return; // no net change
     }
-    const start =
-      d.kind === 'resize-end'
-        ? this.adapter.toZoned(new Date(d.originStartMs), zone)
-        : this.adapter.toZoned(new Date(d.originStartMs + deltaMs), zone);
-    const end = this.adapter.toZoned(new Date(d.originEndMs + deltaMs), zone);
+    let startMs = d.originStartMs;
+    let endMs = d.originEndMs;
+    if (d.kind === 'move') {
+      startMs += deltaMs;
+      endMs += deltaMs;
+    } else if (d.kind === 'resize-end') {
+      endMs = Math.max(startMs + 60_000, endMs + deltaMs);
+    } else {
+      startMs = Math.min(endMs - 60_000, startMs + deltaMs); // resize-start
+    }
     const change: EventChange<TMeta> = {
-      kind: d.kind === 'resize-end' ? 'resize' : 'move',
+      kind: d.kind === 'move' ? 'move' : 'resize',
       event,
-      start,
-      end,
+      start: this.adapter.toZoned(new Date(startMs), zone),
+      end: this.adapter.toZoned(new Date(endMs), zone),
       resourceId: d.targetResourceId,
     };
     const validate = this.validateChange();
@@ -462,6 +486,10 @@ export class CalTimelineView<TMeta = unknown> {
     const d = this.drag();
     if (d !== null && d.pointerId === dom.pointerId) {
       this.drag.set(null);
+    }
+    const c = this.createDrag();
+    if (c !== null && c.pointerId === dom.pointerId) {
+      this.createDrag.set(null);
     }
   }
 
@@ -571,13 +599,22 @@ export class CalTimelineView<TMeta = unknown> {
   }
 
   /** Live horizontal offset (px) for the block being dragged, else null. */
-  protected dragTransform(ev: PositionedEvent<TMeta>): string | null {
+  /** Live geometry for a block: shifts/resizes the dragged block's start/span in place. */
+  private previewGeo(ev: PositionedEvent<TMeta>): { startOffset: number; span: number } {
     const d = this.drag();
     if (d === null || !d.active || d.eventId !== ev.event.id) {
-      return null;
+      return { startOffset: ev.startOffset, span: ev.span };
     }
-    const px = d.deltaMinutes * (this.hourWidth() / 60);
-    return `translateX(${this.isRtl() ? -px : px}px)`;
+    const totalMin = Math.max(1, this.totalHours() * 60);
+    const minSpan = 1 / totalMin;
+    const df = d.deltaMinutes / totalMin;
+    if (d.kind === 'resize-end') {
+      return { startOffset: ev.startOffset, span: Math.max(minSpan, ev.span + df) };
+    }
+    if (d.kind === 'resize-start') {
+      return { startOffset: ev.startOffset + df, span: Math.max(minSpan, ev.span - df) };
+    }
+    return { startOffset: ev.startOffset + df, span: ev.span }; // move
   }
 
   /** Resolve the resource lane under a viewport point (for cross-lane reassignment). */
@@ -600,6 +637,10 @@ export class CalTimelineView<TMeta = unknown> {
   }
 
   protected onRowClick(row: ResourceRow<TMeta>, dom: MouseEvent): void {
+    if (this.suppressClick) {
+      this.suppressClick = false;
+      return; // trailing click after a drag-create
+    }
     const vm = this.viewModel();
     const total = this.adapter.differenceInMinutes(vm.period.end, vm.period.start);
     const target = dom.currentTarget as HTMLElement;
@@ -609,6 +650,96 @@ export class CalTimelineView<TMeta = unknown> {
     const frac = Math.max(0, Math.min(1, x / Math.max(1, rect.width)));
     const date = this.adapter.addMinutes(vm.period.start, Math.round(frac * total));
     this.slotSelected.emit({ date, resourceId: row.resource.id });
+  }
+
+  // ── drag-to-create on an empty lane ──────────────────────────────────────────
+  private laneMinutes(target: HTMLElement, clientX: number, snap: number): number {
+    const vm = this.viewModel();
+    const total = this.adapter.differenceInMinutes(vm.period.end, vm.period.start);
+    const rect = target.getBoundingClientRect();
+    const rtl = getComputedStyleSafe(target) === 'rtl';
+    const x = rtl ? rect.right - clientX : clientX - rect.left;
+    const raw = Math.max(0, Math.min(total, (x / Math.max(1, rect.width)) * total));
+    return Math.round(raw / snap) * snap;
+  }
+
+  protected onLanePointerDown(row: ResourceRow<TMeta>, dom: PointerEvent): void {
+    if (!this.editable() || dom.button !== 0) {
+      return;
+    }
+    const target = dom.currentTarget as HTMLElement;
+    const snap = this.snapMinutes() ?? this.config.snapMinutes;
+    this.createDrag.set({
+      resourceId: row.resource.id,
+      anchorMin: this.laneMinutes(target, dom.clientX, snap),
+      deltaMin: 0,
+      pointerId: dom.pointerId,
+      startClientX: dom.clientX,
+      active: false,
+    });
+    if (typeof target.setPointerCapture === 'function') {
+      try {
+        target.setPointerCapture(dom.pointerId);
+      } catch {
+        /* best-effort */
+      }
+    }
+  }
+
+  protected onLanePointerMove(dom: PointerEvent): void {
+    const c = this.createDrag();
+    if (c === null || c.pointerId !== dom.pointerId) {
+      return;
+    }
+    const dx = dom.clientX - c.startClientX;
+    const eff = this.isRtl() ? -dx : dx;
+    const snap = this.snapMinutes() ?? this.config.snapMinutes;
+    const deltaMin = Math.round(eff / (this.hourWidth() / 60) / snap) * snap;
+    this.createDrag.set({ ...c, deltaMin, active: c.active || Math.abs(dx) > DRAG_THRESHOLD_PX });
+  }
+
+  protected onLanePointerUp(dom: PointerEvent): void {
+    const c = this.createDrag();
+    if (c === null || c.pointerId !== dom.pointerId) {
+      return;
+    }
+    this.createDrag.set(null);
+    if (!c.active) {
+      return; // a plain click → onRowClick emits slotSelected
+    }
+    this.suppressClick = true;
+    const vm = this.viewModel();
+    const snap = this.snapMinutes() ?? this.config.snapMinutes;
+    const startMin = Math.min(c.anchorMin, c.anchorMin + c.deltaMin);
+    const dur = Math.max(snap, Math.abs(c.deltaMin));
+    const change: EventChange<TMeta> = {
+      kind: 'create',
+      event: null,
+      start: this.adapter.addMinutes(vm.period.start, startMin),
+      end: this.adapter.addMinutes(vm.period.start, startMin + dur),
+      resourceId: c.resourceId,
+    };
+    const validate = this.validateChange();
+    if (validate !== null && !validate(change)) {
+      return;
+    }
+    this.eventChanged.emit(change);
+  }
+
+  /** Geometry for the create-ghost while dragging on a lane, or null. */
+  protected createGhostStyle(row: ResourceRow<TMeta>): Record<string, string> | null {
+    const c = this.createDrag();
+    if (c === null || !c.active || c.resourceId !== row.resource.id) {
+      return null;
+    }
+    const vm = this.viewModel();
+    const total = Math.max(1, this.adapter.differenceInMinutes(vm.period.end, vm.period.start));
+    const startMin = Math.min(c.anchorMin, c.anchorMin + c.deltaMin);
+    const dur = Math.max(this.snapMinutes() ?? this.config.snapMinutes, Math.abs(c.deltaMin));
+    return {
+      'inset-inline-start': `${(startMin / total) * 100}%`,
+      'inline-size': `${(dur / total) * 100}%`,
+    };
   }
 
   /** Map a clientX on a lane back to a drop time (RTL-aware). */

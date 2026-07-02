@@ -77,6 +77,10 @@
         [style.block-size.px]="rowHeightPx(row)"
         [attr.aria-label]="row.resource.name"
         (click)="onRowClick(row, $event)"
+        (pointerdown)="onLanePointerDown(row, $event)"
+        (pointermove)="onLanePointerMove($event)"
+        (pointerup)="onLanePointerUp($event)"
+        (pointercancel)="onEventPointerCancel($event)"
         (dragover)="onLaneDragOver($event)"
         (drop)="onExternalDrop(row, $event)"
       >
@@ -90,6 +94,10 @@
           ></div>
         }
 
+        @if (createGhostStyle(row); as ghost) {
+          <div class="cal-tl__create-ghost" [style]="ghost" aria-hidden="true"></div>
+        }
+
         @for (ev of visibleEvents(row); track trackEvent($index, ev)) {
           <button
             type="button"
@@ -99,10 +107,9 @@
             [class.cal-tl__event--dragging]="isDragging(ev)"
             [class]="ev.event.cssClass ?? ''"
             [style]="eventStyle(ev)"
-            [style.transform]="dragTransform(ev)"
             [attr.aria-label]="eventLabel(ev.event)"
             [attr.title]="tooltip(ev.event)"
-            (pointerdown)="onEventPointerDown(ev, row, $event)"
+            (pointerdown)="onEventPointerDown(ev, row, 'move', $event)"
             (pointermove)="onEventPointerMove($event)"
             (pointerup)="onEventPointerUp(ev, $event)"
             (pointercancel)="onEventPointerCancel($event)"
@@ -116,6 +123,25 @@
               />
             } @else {
               <span class="cal-tl__event-title">{{ ev.event.title }}</span>
+            }
+
+            @if (editable() && ev.event.isReadonly !== true) {
+              <span
+                class="cal-tl__resize cal-tl__resize--start"
+                aria-hidden="true"
+                (pointerdown)="onEventPointerDown(ev, row, 'resize-start', $event)"
+                (pointermove)="onEventPointerMove($event)"
+                (pointerup)="onEventPointerUp(ev, $event)"
+                (pointercancel)="onEventPointerCancel($event)"
+              ></span>
+              <span
+                class="cal-tl__resize cal-tl__resize--end"
+                aria-hidden="true"
+                (pointerdown)="onEventPointerDown(ev, row, 'resize-end', $event)"
+                (pointermove)="onEventPointerMove($event)"
+                (pointerup)="onEventPointerUp(ev, $event)"
+                (pointercancel)="onEventPointerCancel($event)"
+              ></span>
             }
           </button>
         }

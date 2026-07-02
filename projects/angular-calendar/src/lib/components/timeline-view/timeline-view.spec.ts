@@ -23,7 +23,9 @@ async function render(inputs: Record<string, unknown>) {
     providers: [provideCalendar(withDateAdapter(provideDateFnsAdapter()))],
   });
   const fixture = TestBed.createComponent(CalTimelineView);
-  for (const [k, v] of Object.entries(inputs)) {
+  // Pin the timezone to the test data's zone so day-window projection is deterministic
+  // regardless of the host machine's zone (the view falls back to the host zone otherwise).
+  for (const [k, v] of Object.entries({ timezone: zone, ...inputs })) {
     fixture.componentRef.setInput(k, v);
   }
   await fixture.whenStable();
@@ -318,5 +320,62 @@ describe('CalTimelineView — keyboard', () => {
     press(el, 'ArrowDown');
     press(el, 'Enter');
     expect((change as EventChange | null)?.resourceId).toBe('t2');
+  });
+});
+
+describe('CalTimelineView — pointer resize & create', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  const base = {
+    resources,
+    viewDate: at('2026-06-15T12:00:00Z'),
+    days: 1,
+    dayStartMinutes: 480,
+    dayEndMinutes: 1080,
+    timezone: zone,
+  };
+  const fireOn = (target: Element, type: string, clientX: number): void => {
+    const e = new Event(type, { bubbles: true });
+    Object.defineProperty(e, 'button', { value: 0 });
+    Object.defineProperty(e, 'pointerId', { value: 1 });
+    Object.defineProperty(e, 'clientX', { value: clientX });
+    Object.defineProperty(e, 'clientY', { value: 0 });
+    target.dispatchEvent(e);
+  };
+
+  it('dragging the end handle emits a resize with a later end', async () => {
+    const job: CalendarEvent = {
+      id: 'j',
+      resourceIds: ['t1'],
+      title: 'Install',
+      start: at('2026-06-15T13:00:00Z'),
+      end: at('2026-06-15T14:00:00Z'),
+    };
+    const { el, cmp } = await render({ ...base, events: [job] });
+    let change: EventChange | null = null;
+    cmp.eventChanged.subscribe((c) => (change = c));
+    const handle = el.querySelector('.cal-tl__resize--end')!;
+    fireOn(handle, 'pointerdown', 100);
+    fireOn(handle, 'pointermove', 160); // +60px → +60min at 60px/hr
+    fireOn(handle, 'pointerup', 160);
+    const c = change as EventChange | null;
+    expect(c?.kind).toBe('resize');
+    expect(c!.start!.epochMs).toBe(Date.parse('2026-06-15T13:00:00Z')); // start unchanged
+    expect(c!.end!.epochMs).toBe(Date.parse('2026-06-15T15:00:00Z')); // +1h
+  });
+
+  it('dragging on an empty lane emits a create with a duration', async () => {
+    const { el, cmp } = await render({ ...base, events: [] });
+    let change: EventChange | null = null;
+    cmp.eventChanged.subscribe((c) => (change = c));
+    const lane = el.querySelector('.cal-tl__row')!; // first lane = t1
+    fireOn(lane, 'pointerdown', 100);
+    fireOn(lane, 'pointermove', 220); // +120px → +120min duration
+    fireOn(lane, 'pointerup', 220);
+    const c = change as EventChange | null;
+    expect(c?.kind).toBe('create');
+    expect(c?.event).toBeNull();
+    expect(c?.resourceId).toBe('t1');
+    expect((c!.end!.epochMs - c!.start!.epochMs) / 60_000).toBe(120);
   });
 });

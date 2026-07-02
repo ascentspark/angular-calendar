@@ -5,6 +5,14 @@ Angular major. This project adheres to [Keep a Changelog](https://keepachangelog
 
 ## [Unreleased]
 
+## [20.0.2] - 2026-07-02
+
+Angular 20 build of the 22.0.2 changes. Feature-parity with 22.0.2: timeline pointer
+edge-resize + drag-to-create, sub-hour (`slotMinutes`) gridlines with hourly labels,
+readable two-line week-as-rows event titles, near-adjacent short events stacked to avoid
+chip overlap, and the timeline short-event status-tag fix.
+
+
 ## [20.0.1] - 2026-07-02
 
 Angular 20 build of the 22.0.1 adoption-audit fixes. Feature-parity with 22.0.1.

@@ -100,6 +100,32 @@ describe('buildTimeGridView — timed placement', () => {
     expect(evs.every((e) => e.laneCount === 2)).toBe(true);
     expect(new Set(evs.map((e) => e.lane))).toEqual(new Set([0, 1]));
   });
+
+  it('horizontal stacks near-adjacent short events onto separate lanes (min visual width)', () => {
+    // Two back-to-back 30-min events do not overlap in time, but a horizontal chip's
+    // word-wide min-width would make them spill and collide — so they must lane apart.
+    const events = [
+      { id: 'a', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T13:30:00Z') },
+      { id: 'b', start: at('2026-06-15T13:30:00Z'), end: at('2026-06-15T14:00:00Z') },
+    ];
+    const shared = {
+      ...baseArgs,
+      viewDate: at('2026-06-15T12:00:00Z'),
+      events,
+      days: 1,
+      anchorToWeek: false,
+    };
+
+    // Vertical: true time-width, no spill → they share a single lane.
+    const vertical = buildTimeGridView(adapter, shared);
+    expect(vertical.columns[0]!.events.every((e) => e.laneCount === 1)).toBe(true);
+
+    // Horizontal: packed as ≥57 min each → stacked onto two lanes, no overlap.
+    const horizontal = buildTimeGridView(adapter, { ...shared, orientation: 'horizontal' });
+    const hevs = horizontal.columns[0]!.events;
+    expect(hevs.every((e) => e.laneCount === 2)).toBe(true);
+    expect(new Set(hevs.map((e) => e.lane))).toEqual(new Set([0, 1]));
+  });
 });
 
 describe('buildTimeGridView — all-day band', () => {
