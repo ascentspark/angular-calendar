@@ -170,11 +170,7 @@ export { CalRecurrenceEditor } from './lib/components/recurrence-editor/recurren
 export { CalTimezonePicker } from './lib/components/timezone-picker/timezone-picker';
 
 // ── Interactions ────────────────────────────────────────────────────────────
-export {
-  type EventChange,
-  type EventChangeKind,
-  type EventChangeRequest,
-} from './lib/interactions/event-change';
+export { type EventChange, type EventChangeKind } from './lib/interactions/event-change';
 export {
   computeDragTimes,
   type DragKind,
