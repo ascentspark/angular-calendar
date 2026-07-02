@@ -9,9 +9,14 @@
   overflow: auto;
 
   --cal-tg-hour: 3rem; /* min height of one hour row (grows to fill) */
-  --cal-tg-hour-w: 4rem; /* min width of one hour column in horizontal orientation */
   --cal-tg-gutter-w: 3.5rem;
   --cal-tg-allday-row: 1.4rem;
+
+  /* Horizontal orientation (week-as-rows) knobs. */
+  --cal-tg-hour-w: 5rem; /* width of one hour along the time axis */
+  --cal-tg-day-w: 4.75rem; /* width of the left day-label column */
+  --cal-tg-time-head: 1.75rem; /* height of the top time-axis strip */
+  --cal-tg-row-h: 4.75rem; /* height of one day-row */
 }
 
 .cal-tg {
@@ -339,8 +344,11 @@
    Transpose of the vertical layout. The component emits axis-neutral --ev-*,
    --tick-pos and --now-pos fractions, so only their axis mapping changes here. */
 :host(.cal-tg--horizontal) .cal-tg {
-  grid-template-columns: var(--cal-tg-gutter-w) 1fr;
-  grid-template-rows: auto 1fr;
+  /* Content-sized rows (don't stretch to fill the host) so day-rows stay compact and
+     events aren't rendered as tall slivers; scroll horizontally for the full day. */
+  flex: 0 0 auto;
+  grid-template-columns: var(--cal-tg-day-w) 1fr;
+  grid-template-rows: var(--cal-tg-time-head) 1fr;
   grid-template-areas:
     'corner gutter'
     'headers cols';
@@ -353,16 +361,20 @@
 /* Day headers: a vertical stack on the left, one label per day-row. */
 :host(.cal-tg--horizontal) .cal-tg__headers {
   grid-template-columns: none;
-  grid-auto-rows: 1fr;
+  grid-auto-rows: var(--cal-tg-row-h);
 }
 :host(.cal-tg--horizontal) .cal-tg__colhead {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.3rem;
+  gap: 0.1rem;
+  padding: 0.2rem;
+  border-inline-end: 1px solid var(--cal-grid-line);
   border-block-end: 1px solid var(--cal-grid-line);
 }
-/* Time gutter: a horizontal strip on top; ticks positioned by inline offset. */
+/* Time strip on top; ticks positioned by inline offset, left-aligned so the first
+   label never clips at the edge. */
 :host(.cal-tg--horizontal) .cal-tg__gutter {
   min-block-size: 0;
   min-inline-size: calc(var(--cal-tg-hours) * var(--cal-tg-hour-w));
@@ -375,19 +387,18 @@
   inset-inline-start: var(--tick-pos);
   text-align: start;
   padding: 0;
-  transform: translateX(-50%);
+  transform: none;
   display: flex;
   align-items: center;
   white-space: nowrap;
 }
 :host(.cal-tg--horizontal) .cal-tg__tick-label {
-  background: var(--cal-surface-2);
-  padding-inline: 0.25rem;
+  padding-inline: 0.15rem 0.3rem;
 }
-/* Day rows: stacked vertically; each row spans the full time width. */
+/* Day rows: stacked vertically at a fixed height; each spans the full time width. */
 :host(.cal-tg--horizontal) .cal-tg__cols {
   grid-template-columns: none;
-  grid-auto-rows: 1fr;
+  grid-auto-rows: var(--cal-tg-row-h);
   min-block-size: 0;
   min-inline-size: calc(var(--cal-tg-hours) * var(--cal-tg-hour-w));
 }
@@ -408,6 +419,11 @@
   inline-size: var(--ev-size);
   inset-block-start: calc(var(--ev-cross-start) + 1px);
   block-size: calc(var(--ev-cross-size) - 2px);
+  min-block-size: 0;
+  min-inline-size: 2.75rem; /* keep short events readable */
+}
+:host(.cal-tg--horizontal) .cal-tg__event-title {
+  -webkit-line-clamp: 3;
 }
 /* Now-indicator runs vertically. */
 :host(.cal-tg--horizontal) .cal-tg__now {

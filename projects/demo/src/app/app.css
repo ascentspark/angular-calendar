@@ -341,11 +341,14 @@
   color: #fff;
 }
 .job__title {
+  flex: 1 1 auto;
+  min-inline-size: 0; /* allow the title to shrink + ellipsis so the badge stays visible */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .job__badge {
+  flex: 0 0 auto;
   margin-inline-start: auto;
   font-size: 0.58rem;
   font-weight: 650;
