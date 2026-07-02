@@ -5,6 +5,19 @@ Angular major. This project adheres to [Keep a Changelog](https://keepachangelog
 
 ## [Unreleased]
 
+## [22.0.2] - 2026-07-02
+
+### Added
+
+- **Timeline pointer resize + drag-to-create**: grab a block's start/end edge to resize its
+  duration (live preview), and drag on an empty lane to create an event (create-ghost + `eventChanged`
+  `kind: 'create'`). Both honour `validateChange`. Completes the timeline interaction parity with the
+  time-grid (keyboard resize/move already shipped in 22.0.1).
+
+### Fixed
+
+- Horizontal week-as-rows polish and the demo timeline job-card badge overflow (also in 22.0.1).
+
 ## [22.0.1] - 2026-07-02
 
 Adoption-audit fixes (see the integration review). No breaking API changes.

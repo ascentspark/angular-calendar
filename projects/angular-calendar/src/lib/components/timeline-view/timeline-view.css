@@ -221,6 +221,34 @@
   text-overflow: ellipsis;
 }
 
+/* Edge resize handles (grab the block's start/end to change its duration). */
+.cal-tl__resize {
+  position: absolute;
+  inset-block: 0;
+  inline-size: 7px;
+  cursor: ew-resize;
+  touch-action: none;
+  z-index: 3;
+}
+.cal-tl__resize--start {
+  inset-inline-start: -1px;
+}
+.cal-tl__resize--end {
+  inset-inline-end: -1px;
+}
+
+/* Ghost shown while dragging on an empty lane to create an event. */
+.cal-tl__create-ghost {
+  position: absolute;
+  inset-block: 3px;
+  background: var(--cal-accent-soft);
+  border: 1px dashed var(--cal-accent);
+  border-radius: var(--cal-radius-sm);
+  opacity: 0.85;
+  z-index: 2;
+  pointer-events: none;
+}
+
 .cal-tl__event--continues-before {
   border-start-start-radius: 0;
   border-end-start-radius: 0;

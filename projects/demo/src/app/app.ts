@@ -548,13 +548,28 @@ export class App {
 
   /** A timeline block was dragged: reschedule (and possibly reassign) the job. */
   protected onJobChanged(change: EventChange): void {
-    if (change.event === null || change.start === undefined || change.end === undefined) {
+    if (change.start === undefined || change.end === undefined) {
       return;
     }
-    const id = change.event.id;
     const start = change.start;
     const end = change.end;
     const resourceIds = change.resourceId !== undefined ? [change.resourceId] : undefined;
+    if (change.kind === 'create' || change.event === null) {
+      // Drag-create on an empty lane → add a new job.
+      this.jobs.update((list) => [
+        ...list,
+        {
+          id: `job-new-${start.epochMs}`,
+          title: 'New job',
+          start,
+          end,
+          status: 'scheduled',
+          ...(resourceIds ? { resourceIds } : {}),
+        },
+      ]);
+      return;
+    }
+    const id = change.event.id;
     this.jobs.update((list) =>
       list.map((j) =>
         j.id === id ? { ...j, start, end, ...(resourceIds ? { resourceIds } : {}) } : j,
