@@ -215,32 +215,25 @@
         </cal-timeline-view>
       }
       @case ('weekrows') {
-        <!-- Week-as-rows preset: timeline with one lane per weekday (public API only). -->
-        <cal-timeline-view
-          [events]="weekRowEvents()"
-          [resources]="weekdayResources"
-          [viewDate]="weekRowAnchor()"
-          [days]="1"
-          [dayStartMinutes]="480"
-          [dayEndMinutes]="1140"
-          [headerGroupings]="['hour']"
-          [hourWidth]="80"
-          [laneHeight]="40"
+        <!-- Week-as-rows: a horizontal time-grid — time flows left→right, days stack as
+             rows. Uses the real `orientation` input (no fake resource lanes). -->
+        <cal-time-grid
+          [events]="filteredEvents()"
+          [viewDate]="viewDate"
+          [today]="today"
+          [now]="now"
+          [days]="7"
+          [anchorToWeek]="true"
+          orientation="horizontal"
+          [dayStartMinutes]="360"
+          [dayEndMinutes]="1320"
           [themeMode]="mode()"
           [baseColor]="base()"
           [accentColor]="accent()"
           [statusColors]="statusColors"
+          (eventChanged)="onEventChanged($event)"
           (eventClicked)="openDetail($event.event)"
-        >
-          <ng-template calEventTemplate let-ev>
-            <div class="job">
-              <span class="job__title">{{ ev.title }}</span>
-              @if (ev.status) {
-                <span class="job__badge">{{ ev.status }}</span>
-              }
-            </div>
-          </ng-template>
-        </cal-timeline-view>
+        />
       }
       @case ('agenda') {
         <cal-agenda-view

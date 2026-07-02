@@ -15,6 +15,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { CALENDAR_CONFIG, resolveTimeFormat } from '../../core/config/calendar-config';
 import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
 import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zoned-date-time';
+import type { TimeAxisOrientation } from '../../core/model/view';
 import type { CalendarEvent } from '../../core/model/calendar-event';
 import { buildTimeGridView } from '../../core/view-model/build-time-grid-view';
 import { RECURRENCE_ADAPTER } from '../../core/recurrence/recurrence-adapter';
@@ -71,6 +72,7 @@ const FALLBACK_ACCENT = '#3b82f6';
   styleUrl: './time-grid-view.css',
   host: {
     '[class.cal-tg--compact]': "density() === 'compact'",
+    '[class.cal-tg--horizontal]': "orientation() === 'horizontal'",
   },
 })
 export class CalTimeGridView<TMeta = unknown> {
@@ -85,6 +87,11 @@ export class CalTimeGridView<TMeta = unknown> {
   readonly events = input.required<readonly CalendarEvent<TMeta>[]>();
   readonly viewDate = input.required<Date | ZonedDateTime>();
   readonly days = input<number>(7);
+  /**
+   * Time-axis direction. `'vertical'` (default) stacks hours top→bottom with days as
+   * columns; `'horizontal'` runs time left→right with days as stacked rows (week-as-rows).
+   */
+  readonly orientation = input<TimeAxisOrientation>('vertical');
   /**
    * Anchor the columns to the start of `viewDate`'s week. `null` (default) is smart:
    * a week/work-week (`days > 1`) anchors, a single-day view (`days === 1`) does not,
@@ -150,7 +157,7 @@ export class CalTimeGridView<TMeta = unknown> {
       viewDate: this.adapter.toZoned(this.viewDate(), zone),
       days: this.days(),
       weekStartsOn: this.weekStartsOn() ?? this.config.weekStartsOn,
-      orientation: 'vertical' as const,
+      orientation: this.orientation(),
       slotMinutes: this.slotMinutes() ?? this.config.slotMinutes,
       dayStartMinutes: this.dayStartMinutes() ?? this.config.dayStartMinutes,
       dayEndMinutes: this.dayEndMinutes() ?? this.config.dayEndMinutes,
@@ -322,7 +329,7 @@ export class CalTimeGridView<TMeta = unknown> {
     }
     const vm = this.viewModel();
     const total = vm.dayEndMinutes - vm.dayStartMinutes;
-    const pxPerMinute = colEl.getBoundingClientRect().height / Math.max(1, total);
+    const pxPerMinute = this.axisSize(colEl.getBoundingClientRect()) / Math.max(1, total);
     const zone = this.resolvedZone();
     const start = this.adapter.toZoned(ev.event.start, zone);
     const end = ev.event.end === undefined ? start : this.adapter.toZoned(ev.event.end, zone);
@@ -341,11 +348,24 @@ export class CalTimeGridView<TMeta = unknown> {
       originStartMs: start.epochMs,
       originEndMs: end.epochMs,
       pointerId: dom.pointerId,
-      startClientY: dom.clientY,
+      startClientY: this.axisClient(dom),
       pxPerMinute,
       deltaMinutes: 0,
       active: false,
     });
+  }
+
+  /** Pointer coordinate along the time axis (Y for vertical, X for horizontal). */
+  private axisClient(dom: { clientX: number; clientY: number }): number {
+    return this.orientation() === 'horizontal' ? dom.clientX : dom.clientY;
+  }
+  /** Element size along the time axis. */
+  private axisSize(rect: { width: number; height: number }): number {
+    return this.orientation() === 'horizontal' ? rect.width : rect.height;
+  }
+  /** Element start edge along the time axis (left for horizontal, top for vertical). */
+  private axisStart(rect: { left: number; top: number }): number {
+    return this.orientation() === 'horizontal' ? rect.left : rect.top;
   }
 
   protected onEventPointerMove(dom: PointerEvent): void {
@@ -353,7 +373,7 @@ export class CalTimeGridView<TMeta = unknown> {
     if (drag === null || drag.pointerId !== dom.pointerId) {
       return;
     }
-    const dyPx = dom.clientY - drag.startClientY;
+    const dyPx = this.axisClient(dom) - drag.startClientY;
     const active = drag.active || Math.abs(dyPx) > DRAG_THRESHOLD_PX;
     this.dragState.set({ ...drag, deltaMinutes: dyPx / drag.pxPerMinute, active });
   }
@@ -568,8 +588,8 @@ export class CalTimeGridView<TMeta = unknown> {
     const vm = this.viewModel();
     const total = vm.dayEndMinutes - vm.dayStartMinutes;
     const rect = colEl.getBoundingClientRect();
-    const pxPerMinute = rect.height / Math.max(1, total);
-    const frac = (dom.clientY - rect.top) / Math.max(1, rect.height);
+    const pxPerMinute = this.axisSize(rect) / Math.max(1, total);
+    const frac = (this.axisClient(dom) - this.axisStart(rect)) / Math.max(1, this.axisSize(rect));
     const minutes = vm.dayStartMinutes + Math.max(0, Math.min(1, frac)) * total;
     const anchorMs = this.adapter.addMinutes(column.date, Math.round(minutes)).epochMs;
     if (typeof colEl.setPointerCapture === 'function') {
@@ -585,7 +605,7 @@ export class CalTimeGridView<TMeta = unknown> {
       originStartMs: anchorMs,
       originEndMs: anchorMs,
       pointerId: dom.pointerId,
-      startClientY: dom.clientY,
+      startClientY: this.axisClient(dom),
       pxPerMinute,
       deltaMinutes: 0,
       active: false,
@@ -598,7 +618,7 @@ export class CalTimeGridView<TMeta = unknown> {
     if (drag === null || drag.kind !== 'create' || drag.pointerId !== dom.pointerId) {
       return;
     }
-    const dyPx = dom.clientY - drag.startClientY;
+    const dyPx = this.axisClient(dom) - drag.startClientY;
     const active = drag.active || Math.abs(dyPx) > DRAG_THRESHOLD_PX;
     this.dragState.set({ ...drag, deltaMinutes: dyPx / drag.pxPerMinute, active });
   }
