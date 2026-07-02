@@ -15,6 +15,8 @@ import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zone
 import type { CalendarEvent } from '../../core/model/calendar-event';
 import { buildYearView } from '../../core/view-model/build-year-view';
 import type { YearDay } from '../../core/view-model/year-view-model';
+import { RECURRENCE_ADAPTER } from '../../core/recurrence/recurrence-adapter';
+import { expandRecurringEvents } from '../../core/recurrence/expand-recurring-events';
 import { applyTheme } from '../../theme/apply-theme';
 import { CAL_TOKEN_BRIDGE } from '../../core/config/provide-calendar';
 import { deriveTheme, type CalThemeMode } from '../../theme/derive-theme';
@@ -40,6 +42,7 @@ export class CalYearView<TMeta = unknown> {
   private readonly adapter = inject(DATE_ADAPTER);
   private readonly config = inject(CALENDAR_CONFIG);
   private readonly tokenBridge = inject(CAL_TOKEN_BRIDGE, { optional: true });
+  private readonly recurrence = inject(RECURRENCE_ADAPTER, { optional: true });
   readonly a11y = inject(CalCalendarA11y);
 
   readonly events = input.required<readonly CalendarEvent<TMeta>[]>();
@@ -73,15 +76,47 @@ export class CalYearView<TMeta = unknown> {
   protected readonly viewModel = computed(() => {
     const zone = this.resolvedZone();
     const todayValue = this.today();
+    const viewDate = this.adapter.toZoned(this.viewDate(), zone);
+    const weekStartsOn = this.weekStartsOn() ?? this.config.weekStartsOn;
     return buildYearView<TMeta>(this.adapter, {
-      viewDate: this.adapter.toZoned(this.viewDate(), zone),
-      events: this.events(),
-      weekStartsOn: this.weekStartsOn() ?? this.config.weekStartsOn,
+      viewDate,
+      events: this.expandedEvents(zone, viewDate, weekStartsOn),
+      weekStartsOn,
       locale: this.resolvedLocale(),
       calendarSystem: this.resolvedSystem(),
       ...(todayValue !== null ? { today: this.adapter.toZoned(todayValue, zone) } : {}),
     });
   });
+
+  /** Expand recurring events across the visible year when a recurrence adapter is present. */
+  private expandedEvents(
+    zone: string,
+    viewDate: ZonedDateTime,
+    weekStartsOn: number,
+  ): readonly CalendarEvent<TMeta>[] {
+    const raw = this.events();
+    if (this.recurrence === null || !raw.some((e) => e.recurrenceRule !== undefined)) {
+      return raw;
+    }
+    const probe = buildYearView<TMeta>(this.adapter, {
+      viewDate,
+      events: [],
+      weekStartsOn,
+      locale: this.resolvedLocale(),
+      calendarSystem: this.resolvedSystem(),
+    });
+    const months = probe.months;
+    const firstDay = months[0]?.days[0]?.date ?? viewDate;
+    const lastDays = months[months.length - 1]?.days ?? [];
+    const lastDay = lastDays[lastDays.length - 1]?.date ?? viewDate;
+    return expandRecurringEvents<TMeta>(raw, {
+      recurrence: this.recurrence,
+      dates: this.adapter,
+      windowStart: firstDay,
+      windowEnd: this.adapter.addDays(lastDay, 1),
+      zone,
+    });
+  }
 
   /** Weekday initials for the mini-month header row. */
   protected readonly weekdayInitials = computed(() => {
