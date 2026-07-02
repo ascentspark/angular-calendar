@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://angular-calendar.ascentspark.com/sitemap.xml
