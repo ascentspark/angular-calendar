@@ -25,8 +25,13 @@ export interface TimeTick {
   readonly offset: number;
   /** Minutes from midnight this tick represents. */
   readonly minutes: number;
-  /** Pre-formatted label (e.g. "09:00"). */
+  /** Pre-formatted label (e.g. "09:00"); empty on minor (unlabelled) gridlines. */
   readonly label: string;
+  /**
+   * A major tick sits on an hour boundary and carries a label; minor ticks are the
+   * finer `slotMinutes` gridlines between labels (drawn lighter, no label).
+   */
+  readonly major: boolean;
 }
 
 /** Week / work-week / day time-grid view-model. */

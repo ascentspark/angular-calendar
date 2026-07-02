@@ -13,12 +13,18 @@ Angular major. This project adheres to [Keep a Changelog](https://keepachangelog
   duration (live preview), and drag on an empty lane to create an event (create-ghost + `eventChanged`
   `kind: 'create'`). Both honour `validateChange`. Completes the timeline interaction parity with the
   time-grid (keyboard resize/move already shipped in 22.0.1).
+- **Sub-hour gridlines**: `slotMinutes` now drives the time-grid gridline density (default 30 → a
+  faint half-hour line between each hour; set `[slotMinutes]="15"` for quarter-hour lines). Axis
+  labels stay on the hour so a fine slot subdivides the grid without crowding the axis. Applies to
+  the vertical Week/Day grid and the horizontal week-as-rows layout. Short day windows stretch to
+  fill the viewport width (the per-hour width is a minimum, not a fixed size); long windows scroll.
 
 ### Fixed
 
 - **Horizontal week-as-rows** events now render as fixed-height chips centred in each day-row
   (stacked by overlap lane) instead of full-height slivers that clipped their titles; rows share
-  the available height evenly with no dead space below.
+  the available height evenly with no dead space below. Titles wrap to two whole-word lines
+  (a short event reads "Design" / "review", never a mid-word clip like "Des gn revi…").
 - Timeline event chips shed the status tag (then the avatar) on short durations via a container
   query, instead of clipping the label mid-word.
 

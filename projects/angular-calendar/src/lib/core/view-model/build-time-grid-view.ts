@@ -209,16 +209,22 @@ export function buildTimeGridView<TMeta = unknown>(
     isEnd: item.data.isEnd,
   }));
 
-  // ── time-axis ticks (hourly labels within the window) ───────────────────
-  const tickStep = Math.max(60, args.slotMinutes);
+  // ── time-axis ticks ──────────────────────────────────────────────────────
+  // Gridlines are drawn at the `slotMinutes` interval (min 5 as a sanity floor);
+  // labels are attached only to the on-the-hour "major" ticks so a fine slot (15/30
+  // min) subdivides the grid without crowding the axis with labels.
+  const tickStep = Math.max(5, args.slotMinutes);
   const ticks: TimeTick[] = [];
   const tickAnchor = columnDays[0] ?? base;
+  const timeFormat = resolveTimeFormat(args.hour12 ?? null);
   for (let m = args.dayStartMinutes; m <= args.dayEndMinutes; m += tickStep) {
+    const major = m % 60 === 0;
     const instant = adapter.addMinutes(tickAnchor, m);
     ticks.push({
       offset: offsetFraction(m, range),
       minutes: m,
-      label: adapter.format(instant, resolveTimeFormat(args.hour12 ?? null), args.locale),
+      label: major ? adapter.format(instant, timeFormat, args.locale) : '',
+      major,
     });
   }
 
