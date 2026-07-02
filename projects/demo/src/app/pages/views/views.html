@@ -1,0 +1,148 @@
+<article class="page">
+  <h1>Views</h1>
+  <p class="lead">
+    Seven interchangeable views over the same event data — month, week, day, a resource-lane
+    timeline scheduler, week-as-rows, agenda and year. Every view takes the same
+    <code>[events]</code>, <code>[viewDate]</code> and theming inputs, so switching view is a
+    one-line change. All are standalone, zoneless, OnPush and SSR-safe.
+  </p>
+
+  <cal-page-nav [sections]="sections" />
+
+  <cal-doc-example
+    anchor="month"
+    title="Month"
+    description="A month grid with lane-packed events, an all-day band, and a “+N more” overflow. maxLanes caps the visible rows per day."
+    [sources]="monthSrc"
+  >
+    <div class="demo-frame">
+      @defer (on viewport) {
+        <cal-month-view
+          [events]="events"
+          [viewDate]="viewDate"
+          [today]="today"
+          [statusColors]="statusColors"
+          [maxLanes]="3"
+        />
+      } @placeholder {
+        <div class="demo-skeleton">Loading month view…</div>
+      }
+    </div>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="week"
+    title="Week & day"
+    description="A time-grid with an all-day band and a “now” line. Set [days] to 7 for a week or 1 for a single day; bound the visible hours with dayStartMinutes / dayEndMinutes."
+    [sources]="weekSrc"
+  >
+    <div class="demo-frame">
+      @defer (on viewport) {
+        <cal-time-grid
+          [events]="events"
+          [viewDate]="viewDate"
+          [today]="today"
+          [now]="now"
+          [days]="7"
+          [anchorToWeek]="true"
+          [dayStartMinutes]="360"
+          [dayEndMinutes]="1320"
+          [statusColors]="statusColors"
+        />
+      } @placeholder {
+        <div class="demo-skeleton">Loading week view…</div>
+      }
+    </div>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="timeline"
+    title="Timeline (resource scheduler)"
+    description="A dispatch board: resources as lanes (flat or a collapsible tree), time across the top. Drag blocks to reschedule or reassign; drop unassigned work onto a lane."
+    [sources]="timelineSrc"
+  >
+    <div class="demo-frame demo-frame--tall">
+      @defer (on viewport) {
+        <cal-timeline-view
+          [events]="jobs"
+          [resources]="resources"
+          [viewDate]="viewDate"
+          [now]="now"
+          [dayStartMinutes]="420"
+          [dayEndMinutes]="1140"
+          [headerGroupings]="['day', 'hour']"
+          [statusColors]="statusColors"
+        />
+      } @placeholder {
+        <div class="demo-skeleton">Loading timeline…</div>
+      }
+    </div>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="week-rows"
+    title="Week as rows"
+    description="The time-grid transposed with orientation=&quot;horizontal&quot;: time flows left→right and days stack as rows. slotMinutes subdivides the grid; a short day window fills the width, a long one scrolls."
+    [sources]="weekRowsSrc"
+  >
+    <div class="demo-frame">
+      @defer (on viewport) {
+        <cal-time-grid
+          orientation="horizontal"
+          [events]="events"
+          [viewDate]="viewDate"
+          [days]="7"
+          [anchorToWeek]="true"
+          [dayStartMinutes]="480"
+          [dayEndMinutes]="1080"
+          [slotMinutes]="30"
+          [statusColors]="statusColors"
+        />
+      } @placeholder {
+        <div class="demo-skeleton">Loading week-rows…</div>
+      }
+    </div>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="agenda"
+    title="Agenda"
+    description="A compact chronological list grouped by day — ideal for narrow screens. hideEmptyDays drops days with no events."
+    [sources]="agendaSrc"
+  >
+    <div class="demo-frame">
+      @defer (on viewport) {
+        <cal-agenda-view
+          [events]="events"
+          [viewDate]="viewDate"
+          [today]="today"
+          [days]="30"
+          [hideEmptyDays]="true"
+          [statusColors]="statusColors"
+        />
+      } @placeholder {
+        <div class="demo-skeleton">Loading agenda…</div>
+      }
+    </div>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="year"
+    title="Year"
+    description="Twelve mini-months with per-day event heat, for a whole-year overview. Emits daySelected / monthSelected for drill-down."
+    [sources]="yearSrc"
+  >
+    <div class="demo-frame demo-frame--tall">
+      @defer (on viewport) {
+        <cal-year-view
+          [events]="events"
+          [viewDate]="viewDate"
+          [today]="today"
+          [statusColors]="statusColors"
+        />
+      } @placeholder {
+        <div class="demo-skeleton">Loading year view…</div>
+      }
+    </div>
+  </cal-doc-example>
+</article>

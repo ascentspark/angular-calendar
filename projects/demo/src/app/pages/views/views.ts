@@ -1,16 +1,173 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+  CalAgendaView,
+  CalMonthView,
+  CalTimeGridView,
+  CalTimelineView,
+  CalYearView,
+} from '@ascentsparksoftware/angular-calendar';
+import { DocExample, ExampleSource } from '../../shared/doc-example';
+import { PageNav, PageSection } from '../../shared/page-nav';
+import {
+  NOW,
+  SAMPLE_EVENTS,
+  SAMPLE_JOBS,
+  SAMPLE_RESOURCES,
+  STATUS_COLORS,
+  TODAY,
+  VIEW_DATE,
+} from '../../shared/sample-data';
 
-// STUB — scaffolding only. Replaced with the real page + live examples in a later task.
 @Component({
   selector: 'cal-views',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <article class="page" data-stub="views">
-      <h1>Views</h1>
-      <p class="lead">Month, week, day, timeline scheduler, week-as-rows, agenda and year.</p>
-      <p class="stub-note">Documentation in progress.</p>
-    </article>
-  `,
+  imports: [
+    DocExample,
+    PageNav,
+    CalMonthView,
+    CalTimeGridView,
+    CalTimelineView,
+    CalAgendaView,
+    CalYearView,
+  ],
+  templateUrl: './views.html',
 })
-export class ViewsPage {}
+export class ViewsPage {
+  protected readonly viewDate = VIEW_DATE;
+  protected readonly today = TODAY;
+  protected readonly now = NOW;
+  protected readonly events = SAMPLE_EVENTS;
+  protected readonly resources = SAMPLE_RESOURCES;
+  protected readonly jobs = SAMPLE_JOBS;
+  protected readonly statusColors = STATUS_COLORS;
+
+  protected readonly sections: PageSection[] = [
+    { id: 'month', label: 'Month' },
+    { id: 'week', label: 'Week & day' },
+    { id: 'timeline', label: 'Timeline (scheduler)' },
+    { id: 'week-rows', label: 'Week as rows' },
+    { id: 'agenda', label: 'Agenda' },
+    { id: 'year', label: 'Year' },
+  ];
+
+  protected readonly monthSrc: ExampleSource[] = [
+    {
+      label: 'template.html',
+      lang: 'html',
+      code: `<cal-month-view
+  [events]="events"
+  [viewDate]="viewDate"
+  [today]="today"
+  [statusColors]="statusColors"
+  [maxLanes]="3"
+  (eventClicked)="onEvent($event.event)"
+/>`,
+    },
+  ];
+
+  protected readonly weekSrc: ExampleSource[] = [
+    {
+      label: 'template.html',
+      lang: 'html',
+      code: `<!-- Week grid: 7 days, 6am-10pm window -->
+<cal-time-grid
+  [events]="events"
+  [viewDate]="viewDate"
+  [today]="today"
+  [now]="now"
+  [days]="7"
+  [anchorToWeek]="true"
+  [dayStartMinutes]="360"
+  [dayEndMinutes]="1320"
+  [statusColors]="statusColors"
+  (eventChanged)="onChange($event)"
+/>
+
+<!-- Single day: [days]="1" -->
+<cal-time-grid [events]="events" [viewDate]="viewDate" [days]="1" />`,
+    },
+  ];
+
+  protected readonly timelineSrc: ExampleSource[] = [
+    {
+      label: 'template.html',
+      lang: 'html',
+      code: `<cal-timeline-view
+  [events]="jobs"
+  [resources]="resources"
+  [viewDate]="viewDate"
+  [now]="now"
+  [dayStartMinutes]="420"
+  [dayEndMinutes]="1140"
+  [headerGroupings]="['day', 'hour']"
+  [statusColors]="statusColors"
+  (eventChanged)="onChange($event)"
+/>`,
+    },
+    {
+      label: 'resources.ts',
+      lang: 'ts',
+      code: `// Resources are a flat list or a tree (parentId + expanded).
+resources: CalendarResource[] = [
+  { id: 'east', name: 'East region', expanded: true },
+  { id: 'alice', name: 'Alice Ng', parentId: 'east' },
+  { id: 'bob', name: 'Bob Reyes', parentId: 'east' },
+];
+// Events carry resourceIds to place them on a lane.
+jobs: CalendarEvent[] = [
+  { id: 'j1', title: 'AC install', resourceIds: ['alice'],
+    start: ..., end: ..., status: 'scheduled' },
+];`,
+    },
+  ];
+
+  protected readonly weekRowsSrc: ExampleSource[] = [
+    {
+      label: 'template.html',
+      lang: 'html',
+      code: `<!-- Same time-grid, transposed: time flows left->right, days stack as rows.
+     slotMinutes drives the gridline density (labels stay hourly). -->
+<cal-time-grid
+  orientation="horizontal"
+  [events]="events"
+  [viewDate]="viewDate"
+  [days]="7"
+  [anchorToWeek]="true"
+  [dayStartMinutes]="480"
+  [dayEndMinutes]="1080"
+  [slotMinutes]="30"
+  [statusColors]="statusColors"
+/>`,
+    },
+  ];
+
+  protected readonly agendaSrc: ExampleSource[] = [
+    {
+      label: 'template.html',
+      lang: 'html',
+      code: `<cal-agenda-view
+  [events]="events"
+  [viewDate]="viewDate"
+  [today]="today"
+  [days]="30"
+  [hideEmptyDays]="true"
+  [statusColors]="statusColors"
+/>`,
+    },
+  ];
+
+  protected readonly yearSrc: ExampleSource[] = [
+    {
+      label: 'template.html',
+      lang: 'html',
+      code: `<cal-year-view
+  [events]="events"
+  [viewDate]="viewDate"
+  [today]="today"
+  [statusColors]="statusColors"
+  (monthSelected)="onMonth($event.date)"
+/>`,
+    },
+  ];
+}

@@ -1,1 +1,78 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global styles for the docs/demo site. */
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+/* Shared page-content typography (used by every doc route). */
+.page {
+  max-inline-size: 52rem;
+}
+.page h1 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.page .lead {
+  margin: 0 0 1.5rem;
+  color: var(--site-ink-soft, #5b606b);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+.page h2 {
+  scroll-margin-top: 4.5rem;
+}
+.page p {
+  line-height: 1.65;
+}
+.page a {
+  color: var(--site-accent, #4f46e5);
+}
+.page code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.88em;
+  background: color-mix(in srgb, var(--site-accent, #4f46e5) 10%, transparent);
+  padding: 0.1em 0.35em;
+  border-radius: 0.3rem;
+}
+.page .ex code {
+  background: none;
+  padding: 0;
+}
+
+/* Deferred-example placeholder while the live calendar hydrates on scroll. */
+.demo-skeleton {
+  display: grid;
+  place-items: center;
+  min-block-size: 16rem;
+  border-radius: 0.5rem;
+  background: var(--site-accent-soft, #eef0fe);
+  color: var(--site-ink-soft, #5b606b);
+  font-size: 0.9rem;
+}
+
+/* Fixed-height frame the live example view fills (time-grid/timeline need a height). */
+.demo-frame {
+  display: flex;
+  flex-direction: column;
+  block-size: 26rem;
+  border: 1px solid var(--site-line, #e4e6eb);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.demo-frame--tall {
+  block-size: 34rem;
+}
+.demo-frame > * {
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
