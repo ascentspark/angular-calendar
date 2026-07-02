@@ -64,6 +64,7 @@ export class CalAgendaView<TMeta = unknown> {
   readonly accentInk = input<string | null>(null);
 
   readonly eventClicked = output<{ event: CalendarEvent<TMeta> }>();
+  readonly viewPeriodChanged = output<{ start: ZonedDateTime; end: ZonedDateTime; zone: string }>();
 
   private readonly resolvedLocale = computed(() => this.locale() ?? this.config.locale);
   private readonly resolvedSystem = computed(
@@ -117,6 +118,7 @@ export class CalAgendaView<TMeta = unknown> {
 
   constructor() {
     effect(() => applyTheme(this.host.nativeElement, this.theme(), this.tokenBridge));
+    effect(() => this.viewPeriodChanged.emit(this.viewModel().period));
   }
 
   protected dayHeading(day: AgendaDay<TMeta>): string {

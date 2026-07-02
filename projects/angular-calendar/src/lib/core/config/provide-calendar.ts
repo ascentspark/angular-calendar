@@ -12,14 +12,7 @@ import {
 import type { CalTokenBridge } from '../../theme/apply-theme';
 
 /** Discriminates the optional building blocks passed to {@link provideCalendar}. */
-export type CalendarFeatureKind =
-  | 'defaults'
-  | 'date-adapter'
-  | 'recurrence'
-  | 'locale'
-  | 'virtualization'
-  | 'print'
-  | 'token-bridge';
+export type CalendarFeatureKind = 'defaults' | 'date-adapter' | 'token-bridge';
 
 /**
  * Optional bridge mapping `--cal-*` tokens to the host's own design-system CSS

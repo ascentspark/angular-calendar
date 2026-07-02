@@ -113,6 +113,7 @@ export class CalTimelineView<TMeta = unknown> {
   readonly snapMinutes = input<number | null>(null);
 
   readonly eventClicked = output<{ event: CalendarEvent<TMeta> }>();
+  readonly viewPeriodChanged = output<{ start: ZonedDateTime; end: ZonedDateTime; zone: string }>();
   /** Fired when a block is dragged to a new time and/or resource lane. */
   readonly eventChanged = output<EventChange<TMeta>>();
   readonly slotSelected = output<{ date: ZonedDateTime; resourceId: string }>();
@@ -239,6 +240,7 @@ export class CalTimelineView<TMeta = unknown> {
 
   constructor() {
     effect(() => applyTheme(this.host.nativeElement, this.theme(), this.tokenBridge));
+    effect(() => this.viewPeriodChanged.emit(this.viewModel().period));
 
     // Track the scroll viewport's height (browser-only) so windowing knows how much to render.
     afterNextRender(() => {

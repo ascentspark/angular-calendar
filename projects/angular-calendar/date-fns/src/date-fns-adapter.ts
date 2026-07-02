@@ -135,16 +135,21 @@ export class DateFnsDateAdapter implements DateAdapter {
     return eraName ? { ...fields, eraName } : fields;
   }
 
+  private readonly formatCache = new Map<string, Intl.DateTimeFormat>();
+
   format(d: ZonedDateTime, pattern: string, locale: string, system: CalendarSystem = 'gregory'): string {
     const opts = PRESETS[pattern];
     if (opts === undefined) {
       throw new Error(`Unsupported format pattern: "${pattern}"`);
     }
-    const dtf = new Intl.DateTimeFormat(locale, {
-      timeZone: d.zone,
-      calendar: system,
-      ...opts,
-    });
+    // Cache the (locale, zone, calendar, pattern) formatter — Intl.DateTimeFormat
+    // construction is costly and `format` is called once per label during layout.
+    const key = `${locale}|${d.zone}|${system}|${pattern}`;
+    let dtf = this.formatCache.get(key);
+    if (dtf === undefined) {
+      dtf = new Intl.DateTimeFormat(locale, { timeZone: d.zone, calendar: system, ...opts });
+      this.formatCache.set(key, dtf);
+    }
     return dtf.format(new Date(d.epochMs));
   }
 

@@ -33,7 +33,7 @@ for (const mode of MODES) {
       // calendar — the entire rendered surface must clear the gate.
       const results = await new AxeBuilder({ page })
         .include('main.app')
-        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
         .analyze();
 
       expect(
@@ -53,7 +53,7 @@ test('event-detail dialog has no axe violations', async ({ page }) => {
 
   const results = await new AxeBuilder({ page })
     .include('main.app')
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze();
 
   expect(
@@ -72,7 +72,7 @@ test('month "+N more" overflow popover has no axe violations', async ({ page }) 
 
   const results = await new AxeBuilder({ page })
     .include('main.app')
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze();
 
   expect(

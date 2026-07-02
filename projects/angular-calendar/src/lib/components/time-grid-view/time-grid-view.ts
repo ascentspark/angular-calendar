@@ -85,7 +85,12 @@ export class CalTimeGridView<TMeta = unknown> {
   readonly events = input.required<readonly CalendarEvent<TMeta>[]>();
   readonly viewDate = input.required<Date | ZonedDateTime>();
   readonly days = input<number>(7);
-  readonly anchorToWeek = input<boolean>(true);
+  /**
+   * Anchor the columns to the start of `viewDate`'s week. `null` (default) is smart:
+   * a week/work-week (`days > 1`) anchors, a single-day view (`days === 1`) does not,
+   * so `[days]="1"` shows `viewDate` itself. Set `true`/`false` to force it.
+   */
+  readonly anchorToWeek = input<boolean | null>(null);
   /** Vertical density: `'compact'` shrinks hour rows and type for dense schedules. */
   readonly density = input<'comfortable' | 'compact'>('comfortable');
   readonly today = input<Date | ZonedDateTime | null>(null);
@@ -115,6 +120,7 @@ export class CalTimeGridView<TMeta = unknown> {
   readonly validateChange = input<((change: EventChange<TMeta>) => boolean) | null>(null);
 
   readonly eventClicked = output<{ event: CalendarEvent<TMeta> }>();
+  readonly viewPeriodChanged = output<{ start: ZonedDateTime; end: ZonedDateTime; zone: string }>();
   readonly slotSelected = output<{ date: ZonedDateTime; minutes: number }>();
   readonly eventChanged = output<EventChange<TMeta>>();
 
@@ -150,7 +156,7 @@ export class CalTimeGridView<TMeta = unknown> {
       dayEndMinutes: this.dayEndMinutes() ?? this.config.dayEndMinutes,
       locale: this.resolvedLocale(),
       hour12: this.config.hour12,
-      anchorToWeek: this.anchorToWeek(),
+      anchorToWeek: this.anchorToWeek() ?? this.days() !== 1,
       ...(todayValue !== null ? { today: this.adapter.toZoned(todayValue, zone) } : {}),
       ...(nowValue !== null ? { now: this.adapter.toZoned(nowValue, zone) } : {}),
       ...(exclude !== null ? { excludeDays: exclude } : {}),
@@ -213,6 +219,7 @@ export class CalTimeGridView<TMeta = unknown> {
 
   constructor() {
     effect(() => applyTheme(this.host.nativeElement, this.theme(), this.tokenBridge));
+    effect(() => this.viewPeriodChanged.emit(this.viewModel().period));
     effect(() => {
       if (this.editingId() !== null) {
         const el = this.inlineInput()?.nativeElement;

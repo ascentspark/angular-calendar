@@ -62,6 +62,7 @@ export class CalYearView<TMeta = unknown> {
 
   readonly daySelected = output<{ date: ZonedDateTime }>();
   readonly monthSelected = output<{ date: ZonedDateTime }>();
+  readonly viewPeriodChanged = output<{ start: ZonedDateTime; end: ZonedDateTime; zone: string }>();
 
   readonly focusedEpoch = signal<number | null>(null);
 
@@ -154,6 +155,16 @@ export class CalYearView<TMeta = unknown> {
 
   constructor() {
     effect(() => applyTheme(this.host.nativeElement, this.theme(), this.tokenBridge));
+    // Emit the visible year span so hosts can load events per view (VM has no period).
+    effect(() => {
+      const months = this.viewModel().months;
+      const start = months[0]?.days[0]?.date;
+      const lastDays = months[months.length - 1]?.days ?? [];
+      const last = lastDays[lastDays.length - 1]?.date;
+      if (start !== undefined && last !== undefined) {
+        this.viewPeriodChanged.emit({ start, end: this.adapter.addDays(last, 1), zone: start.zone });
+      }
+    });
   }
 
   protected dayNumber(day: YearDay): string {

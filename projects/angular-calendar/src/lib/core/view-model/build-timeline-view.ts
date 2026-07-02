@@ -67,11 +67,22 @@ export function buildTimelineView<TMeta = unknown>(
   }
 
   // ── resource rows ─────────────────────────────────────────────────────────
+  // Bucket events by resource id once (O(events)) instead of filtering the full
+  // event list per resource (O(resources × events)).
+  const eventsByResource = new Map<string, CalendarEvent<TMeta>[]>();
+  for (const event of args.events) {
+    for (const rid of event.resourceIds ?? []) {
+      const bucket = eventsByResource.get(rid);
+      if (bucket === undefined) {
+        eventsByResource.set(rid, [event]);
+      } else {
+        bucket.push(event);
+      }
+    }
+  }
   const flat = flattenResources(args.resources);
   const resourceRows: ResourceRow<TMeta>[] = flat.map(({ resource, depth, hasChildren }) => {
-    const mine = args.events.filter(
-      (e) => e.resourceIds !== undefined && e.resourceIds.includes(resource.id),
-    );
+    const mine = eventsByResource.get(resource.id) ?? [];
 
     const intervals: Interval<{
       event: CalendarEvent<TMeta>;
