@@ -219,6 +219,13 @@ export class App {
       status: 'scheduled',
     },
     {
+      id: '1b',
+      title: 'Client call',
+      start: z('2026-06-15T13:30:00Z'),
+      end: z('2026-06-15T14:00:00Z'),
+      status: 'active',
+    },
+    {
       id: '2',
       title: 'Design review',
       start: z('2026-06-15T18:00:00Z'),

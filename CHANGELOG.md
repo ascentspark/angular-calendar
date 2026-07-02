@@ -24,7 +24,9 @@ Angular major. This project adheres to [Keep a Changelog](https://keepachangelog
 - **Horizontal week-as-rows** events now render as fixed-height chips centred in each day-row
   (stacked by overlap lane) instead of full-height slivers that clipped their titles; rows share
   the available height evenly with no dead space below. Titles wrap to two whole-word lines
-  (a short event reads "Design" / "review", never a mid-word clip like "Des gn revi…").
+  (a short event reads "Design" / "review", never a mid-word clip like "Des gn revi…"). Short
+  chips have a word-wide minimum width and can spill past their true end, so near-adjacent short
+  events are packed onto separate lanes (stacked) rather than overlapping.
 - Timeline event chips shed the status tag (then the avatar) on short durations via a container
   query, instead of clipping the label mid-word.
 
