@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   eventsToCsv,
   eventsToIcs,
@@ -52,6 +53,7 @@ const z = (iso: string) => ({ epochMs: Date.parse(iso), zone: Z });
     CalYearView,
     CalEventTemplate,
     CalEventDialog,
+    RouterLink,
   ],
   templateUrl: './playground.html',
   styleUrl: './playground.css',
