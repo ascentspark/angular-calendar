@@ -1,0 +1,485 @@
+<article class="page">
+  <h1>Integration &amp; API</h1>
+  <p class="lead">
+    The whole surface in one place: the inputs and outputs every view shares, the
+    <code>CalendarEvent</code> model you feed in, the pure headless engine behind the
+    components, the timezone-correct date adapter, and the accessibility and security
+    guarantees. All views are standalone, zoneless, OnPush and SSR-safe, and speak the same
+    contract — the host owns the data, the library renders it.
+  </p>
+
+  <cal-page-nav [sections]="sections" />
+
+  <div class="demo-frame">
+    @defer (on viewport) {
+      <cal-month-view
+        [events]="events"
+        [viewDate]="viewDate"
+        [today]="today"
+        [statusColors]="statusColors"
+        [maxLanes]="3"
+      />
+    } @placeholder {
+      <div class="demo-skeleton">Loading…</div>
+    }
+  </div>
+
+  <section id="inputs">
+    <h2>Inputs</h2>
+    <p>
+      These inputs are shared across the views. <code>[events]</code> and
+      <code>[viewDate]</code> are required everywhere; the rest are optional and fall back to
+      sensible defaults (or the app-wide values you set via <code>withDefaults()</code>). The
+      colour inputs mirror the theming contract, so a view drops onto any colour scheme
+      without touching its CSS.
+    </p>
+    <table class="ref-table">
+      <thead>
+        <tr>
+          <th>Input</th>
+          <th>Type</th>
+          <th>Default</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>events</code></td>
+          <td><code>CalendarEvent[]</code></td>
+          <td>—</td>
+          <td>Required. The immutable event array to render. Replace it (don't mutate) to update.</td>
+        </tr>
+        <tr>
+          <td><code>viewDate</code></td>
+          <td><code>ZonedDateTime</code></td>
+          <td>—</td>
+          <td>Required. The instant the view is anchored around (which month / week / day).</td>
+        </tr>
+        <tr>
+          <td><code>today</code></td>
+          <td><code>ZonedDateTime</code></td>
+          <td>host now</td>
+          <td>Which day is marked "today". Pass it explicitly for deterministic SSR / tests.</td>
+        </tr>
+        <tr>
+          <td><code>now</code></td>
+          <td><code>ZonedDateTime</code></td>
+          <td>host now</td>
+          <td>Drives the "now" line on time-grid / timeline.</td>
+        </tr>
+        <tr>
+          <td><code>themeMode</code></td>
+          <td><code>'light' | 'dark'</code></td>
+          <td><code>'light'</code></td>
+          <td>Selects the light or dark token set; contrast is guaranteed in both.</td>
+        </tr>
+        <tr>
+          <td><code>baseColor</code></td>
+          <td><code>string</code> (hex)</td>
+          <td>neutral</td>
+          <td>Neutral anchor colour; the whole neutral ramp derives from it.</td>
+        </tr>
+        <tr>
+          <td><code>accentColor</code></td>
+          <td><code>string</code> (hex)</td>
+          <td>—</td>
+          <td>Interactive / selection colour.</td>
+        </tr>
+        <tr>
+          <td><code>accentInk</code></td>
+          <td><code>string</code> (hex)</td>
+          <td>auto</td>
+          <td>Explicit ink colour on accent surfaces when you need to override the derived one.</td>
+        </tr>
+        <tr>
+          <td><code>statusColors</code></td>
+          <td><code>Record&lt;string, string&gt;</code></td>
+          <td><code>{{ payloads.emptyObject }}</code></td>
+          <td>Maps an event <code>status</code> key to a colour; each emits a <code>--cal-event-&lt;key&gt;</code> triplet.</td>
+        </tr>
+        <tr>
+          <td><code>locale</code></td>
+          <td><code>string</code></td>
+          <td><code>'en-US'</code></td>
+          <td>BCP-47 locale for date / number formatting.</td>
+        </tr>
+        <tr>
+          <td><code>timezone</code></td>
+          <td><code>string</code> (IANA)</td>
+          <td>event zone</td>
+          <td>Wall-clock zone the view renders in; DST-correct.</td>
+        </tr>
+        <tr>
+          <td><code>weekStartsOn</code></td>
+          <td><code>0–6</code></td>
+          <td><code>0</code></td>
+          <td>First day of the week (0 = Sunday).</td>
+        </tr>
+        <tr>
+          <td><code>calendarSystem</code></td>
+          <td><code>CalendarSystem</code></td>
+          <td><code>'iso8601'</code></td>
+          <td>Calendar system for date math (pluggable via the adapter).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Time-grid &amp; timeline additions</h3>
+    <p>
+      The time-based views (<code>cal-time-grid</code>, <code>cal-timeline-view</code>) add
+      inputs for the visible window, snapping and interactive editing.
+    </p>
+    <table class="ref-table">
+      <thead>
+        <tr>
+          <th>Input</th>
+          <th>Type</th>
+          <th>Default</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>days</code></td>
+          <td><code>number</code></td>
+          <td><code>7</code></td>
+          <td>How many day columns to show (1 = single day, 7 = week).</td>
+        </tr>
+        <tr>
+          <td><code>dayStartMinutes</code> / <code>dayEndMinutes</code></td>
+          <td><code>number</code></td>
+          <td><code>0</code> / <code>1440</code></td>
+          <td>Visible time window, in minutes from midnight (e.g. 360 = 6am).</td>
+        </tr>
+        <tr>
+          <td><code>slotMinutes</code></td>
+          <td><code>number</code></td>
+          <td><code>60</code></td>
+          <td>Gridline density; labels stay hourly.</td>
+        </tr>
+        <tr>
+          <td><code>snapMinutes</code></td>
+          <td><code>number</code></td>
+          <td><code>15</code></td>
+          <td>Drag / resize snap granularity.</td>
+        </tr>
+        <tr>
+          <td><code>orientation</code></td>
+          <td><code>'vertical' | 'horizontal'</code></td>
+          <td><code>'vertical'</code></td>
+          <td>Horizontal transposes time left→right, days as rows.</td>
+        </tr>
+        <tr>
+          <td><code>editable</code></td>
+          <td><code>boolean</code></td>
+          <td><code>false</code></td>
+          <td>Enables drag / resize / create interactions.</td>
+        </tr>
+        <tr>
+          <td><code>inlineEdit</code></td>
+          <td><code>boolean</code></td>
+          <td><code>false</code></td>
+          <td>Enables in-place title editing on an event.</td>
+        </tr>
+        <tr>
+          <td><code>validateChange</code></td>
+          <td><code>(change: EventChange) =&gt; boolean</code></td>
+          <td>—</td>
+          <td>Veto a pending move / resize before it commits (e.g. keep within working hours).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Timeline &amp; month additions</h3>
+    <table class="ref-table">
+      <thead>
+        <tr>
+          <th>Input</th>
+          <th>Type</th>
+          <th>Default</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>resources</code></td>
+          <td><code>CalendarResource[]</code></td>
+          <td>—</td>
+          <td>Timeline only, required. Flat list or tree (<code>parentId</code> + <code>expanded</code>) of lanes.</td>
+        </tr>
+        <tr>
+          <td><code>headerGroupings</code></td>
+          <td><code>TimeHeaderUnit[]</code></td>
+          <td><code>['day', 'hour']</code></td>
+          <td>Timeline. Stacked header rows across the top.</td>
+        </tr>
+        <tr>
+          <td><code>hourWidth</code></td>
+          <td><code>number</code></td>
+          <td>auto</td>
+          <td>Timeline. Pixels per hour along the axis.</td>
+        </tr>
+        <tr>
+          <td><code>laneHeight</code></td>
+          <td><code>number</code></td>
+          <td>auto</td>
+          <td>Timeline. Pixel height of each resource lane.</td>
+        </tr>
+        <tr>
+          <td><code>maxLanes</code></td>
+          <td><code>number</code></td>
+          <td>—</td>
+          <td>Month. Caps visible event rows per day; the rest collapse into "+N more".</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="outputs">
+    <h2>Outputs</h2>
+    <p>
+      Views are strictly one-way: they never mutate <code>[events]</code>. Every interaction
+      surfaces as an output carrying a plain payload; you apply it to your own store and feed a
+      new immutable array back in.
+    </p>
+    <table class="ref-table">
+      <thead>
+        <tr>
+          <th>Output</th>
+          <th>Payload</th>
+          <th>When</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>eventClicked</code></td>
+          <td><code>{{ payloads.eventClicked }}</code></td>
+          <td>An event chip / block is activated (click or keyboard).</td>
+        </tr>
+        <tr>
+          <td><code>eventChanged</code></td>
+          <td><code>EventChange</code></td>
+          <td>A drag, resize, create or inline-edit commits.</td>
+        </tr>
+        <tr>
+          <td><code>daySelected</code></td>
+          <td><code>{{ payloads.daySelected }}</code></td>
+          <td>A day cell is selected (month / year / agenda).</td>
+        </tr>
+        <tr>
+          <td><code>monthSelected</code></td>
+          <td><code>{{ payloads.monthSelected }}</code></td>
+          <td>A month is selected in the year view.</td>
+        </tr>
+        <tr>
+          <td><code>slotSelected</code></td>
+          <td><code>{{ payloads.slotSelected }}</code></td>
+          <td>An empty time slot is clicked / dragged (time-grid / timeline).</td>
+        </tr>
+        <tr>
+          <td><code>viewPeriodChanged</code></td>
+          <td><code>{{ payloads.viewPeriodChanged }}</code></td>
+          <td>The visible period changes — hook to fetch that range's events.</td>
+        </tr>
+        <tr>
+          <td><code>resourceToggled</code></td>
+          <td><code>{{ payloads.resourceToggled }}</code></td>
+          <td>A timeline resource group is expanded / collapsed.</td>
+        </tr>
+        <tr>
+          <td><code>externalDrop</code></td>
+          <td><code>{{ payloads.externalDrop }}</code></td>
+          <td>An item from outside the calendar is dropped onto a lane / slot.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <cal-doc-example
+    anchor="events"
+    title="Event model"
+    description="CalendarEvent is the single shape you feed to every view. Only id and start are required; the optional flags gate per-event interactivity and styling."
+    [sources]="eventSrc"
+    [hasProjected]="false"
+  >
+    <table class="ref-table">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Type</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>id</code></td>
+          <td><code>string</code></td>
+          <td>Required. Stable identity used for tracking and change matching.</td>
+        </tr>
+        <tr>
+          <td><code>start</code></td>
+          <td><code>Date | ZonedDateTime</code></td>
+          <td>Required. The event's start instant.</td>
+        </tr>
+        <tr>
+          <td><code>end</code></td>
+          <td><code>Date | ZonedDateTime</code></td>
+          <td>Optional. Omit for a point / zero-duration event.</td>
+        </tr>
+        <tr>
+          <td><code>allDay</code></td>
+          <td><code>boolean</code></td>
+          <td>Renders in the all-day band rather than the timed grid.</td>
+        </tr>
+        <tr>
+          <td><code>title</code></td>
+          <td><code>string</code></td>
+          <td>Default label (override rendering with <code>*calEvent</code>).</td>
+        </tr>
+        <tr>
+          <td><code>status</code></td>
+          <td><code>string</code></td>
+          <td>Keyed into <code>statusColors</code> / <code>--cal-event-&lt;key&gt;</code> for colour.</td>
+        </tr>
+        <tr>
+          <td><code>resourceIds</code></td>
+          <td><code>string[]</code></td>
+          <td>Which timeline lane(s) the event sits on.</td>
+        </tr>
+        <tr>
+          <td><code>recurrenceRule</code></td>
+          <td><code>string</code> (RRULE)</td>
+          <td>RFC 5545 rule expanded into occurrences.</td>
+        </tr>
+        <tr>
+          <td><code>recurrenceExceptions</code></td>
+          <td><code>(Date | ZonedDateTime)[]</code></td>
+          <td>Occurrences to skip (EXDATE-style).</td>
+        </tr>
+        <tr>
+          <td><code>recurrenceId</code></td>
+          <td><code>string</code></td>
+          <td>Marks a detached / overridden occurrence of a series.</td>
+        </tr>
+        <tr>
+          <td><code>editable</code></td>
+          <td><code>boolean</code></td>
+          <td>Per-event master switch for interactivity.</td>
+        </tr>
+        <tr>
+          <td><code>draggable</code></td>
+          <td><code>boolean</code></td>
+          <td>Allow moving this event.</td>
+        </tr>
+        <tr>
+          <td><code>resizable</code></td>
+          <td><code>{{ payloads.resizable }}</code></td>
+          <td>Allow resizing from either edge.</td>
+        </tr>
+        <tr>
+          <td><code>isBlock</code></td>
+          <td><code>boolean</code></td>
+          <td>A background / blocking span (e.g. unavailable time).</td>
+        </tr>
+        <tr>
+          <td><code>isReadonly</code></td>
+          <td><code>boolean</code></td>
+          <td>Rendered but never interactive.</td>
+        </tr>
+        <tr>
+          <td><code>cssClass</code></td>
+          <td><code>string</code></td>
+          <td>Extra class on the event element for targeted styling.</td>
+        </tr>
+        <tr>
+          <td><code>meta</code></td>
+          <td><code>unknown</code></td>
+          <td>Opaque passenger data echoed back to you in outputs / templates.</td>
+        </tr>
+      </tbody>
+    </table>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="engine"
+    title="Headless engine"
+    description="The components are a thin shell over pure, DOM-free functions: view-model builders, overlap layout, recurrence expansion and event queries. Everything the views use is exported, so you can drive your own surfaces or unit-test the math in isolation."
+    [sources]="engineSrc"
+    [hasProjected]="false"
+  >
+    <p>
+      Each <code>build*View(adapter, args)</code> function (<code>buildMonthView</code>,
+      <code>buildTimeGridView</code>, <code>buildTimelineView</code>,
+      <code>buildAgendaView</code>, <code>buildYearView</code>) takes the date adapter plus a
+      plain args object and returns an immutable view-model — weeks, days, columns, lane
+      placements, ticks — with <strong>no DOM and no Angular dependency</strong>. The layout
+      helpers (<code>packColumns</code>, <code>packRows</code>, <code>offsetFraction</code>,
+      <code>sizeFraction</code>, <code>computeRowWindow</code>), recurrence
+      (<code>expandRecurringEvents</code>) and queries (<code>filterByStatus</code>,
+      <code>detectConflicts</code>) are exported the same way. Because they are pure functions,
+      every one is directly unit-testable and reusable outside the components.
+    </p>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="adapter"
+    title="Date adapter"
+    description="Timezone-correct from day one. Every instant is an explicit IANA zone, never a host-local Date, so wall-clock positioning stays right across DST. Wire the adapter once at the app root."
+    [sources]="adapterSrc"
+    [hasProjected]="false"
+  >
+    <p>
+      The library never relies on the browser's local timezone. Instants are modelled as a
+      <code>ZonedDateTime</code> — <code>{{ payloads.zonedDateTime }}</code> — and all date
+      math goes through a pluggable adapter behind the <code>DATE_ADAPTER</code> token. The
+      default <code>DateFnsDateAdapter</code> (date-fns + date-fns-tz) is supplied via
+      <code>provideDateFnsAdapter()</code> from the <code>/date-fns</code> secondary entry point;
+      a Temporal-based adapter can drop in later without touching your views. Register it once
+      with <code>provideCalendar(withDateAdapter(...))</code>.
+    </p>
+  </cal-doc-example>
+
+  <section id="accessibility">
+    <h2>Accessibility</h2>
+    <p>
+      Accessibility is a hard requirement, not an afterthought — the library targets
+      <strong>WCAG 2.2 AA</strong> and passes axe with zero violations.
+    </p>
+    <ul>
+      <li>Correct ARIA <code>grid</code> / <code>listbox</code> / <code>application</code> patterns per view.</li>
+      <li>Every interaction is keyboard-operable — navigation, selection, drag, resize and create.</li>
+      <li><code>CalFocusTrap</code> guards the event dialog: Tab / Shift+Tab wrap within it and focus is restored on close.</li>
+      <li>Colour tokens run through <code>ensureContrastAA</code>, so status and accent surfaces stay legible in light and dark.</li>
+      <li><code>prefers-reduced-motion</code> is honoured — transitions and animations back off.</li>
+    </ul>
+  </section>
+
+  <section id="security">
+    <h2>Security</h2>
+    <p>
+      Caller content is treated as untrusted throughout. The rendering path is Trusted-Types /
+      strict-CSP clean, and <code>npm audit</code> stays clean because runtime dependencies ship
+      as peers.
+    </p>
+    <ul>
+      <li>Caller event content is <strong>never</strong> set via <code>innerHTML</code>; rendering is sanitized.</li>
+      <li>Trusted-Types and strict-CSP compatible; no inline-script or unsafe-eval requirements.</li>
+      <li>No <code>eval</code> / <code>Function</code> anywhere in the codebase.</li>
+      <li>Runtime dependencies (date-fns, date-fns-tz, rrule) are declared as peers so you control and audit their versions.</li>
+    </ul>
+  </section>
+
+  <cal-doc-example
+    anchor="faq"
+    title="FAQ"
+    description="Developer questions about the headless engine, the state contract, theming, security and SSR."
+    [hasProjected]="true"
+  >
+    <div class="faq">
+      @for (item of faq; track item.q) {
+        <h3 class="faq__q">{{ item.q }}</h3>
+        <p class="faq__a">{{ item.a }}</p>
+      }
+    </div>
+  </cal-doc-example>
+</article>

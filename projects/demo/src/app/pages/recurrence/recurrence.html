@@ -1,0 +1,65 @@
+<article class="page">
+  <h1>Recurrence</h1>
+  <p class="lead">
+    RFC 5545 RRULE recurrence via a pluggable adapter (<code>rrule</code> by default): a
+    standalone editor, automatic expansion in every view, exceptions, and
+    this&nbsp;/&nbsp;this-and-following&nbsp;/&nbsp;all edit semantics.
+  </p>
+
+  <cal-page-nav [sections]="sections" />
+
+  <cal-doc-example
+    anchor="editor"
+    title="Recurrence editor"
+    description="A standalone control that reads and writes an RRULE string through a two-way rule model. Edit the recurrence below and watch the serialized rule update live."
+    [sources]="editorSrc"
+  >
+    <div class="demo-frame">
+      @defer (on viewport) {
+        <cal-recurrence-editor [(rule)]="rule" />
+        <p style="margin-top: 1rem">
+          Current rule: <code>{{ rule() }}</code>
+        </p>
+      } @placeholder {
+        <div class="demo-skeleton">Loading editor…</div>
+      }
+    </div>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="expand"
+    title="Automatic expansion"
+    description="An event carrying a recurrenceRule field is expanded by the views automatically across the visible range — there is no manual occurrence generation. Because the rule above is bound to the same signal, editing it re-expands this month live."
+    [sources]="expandSrc"
+  >
+    <div class="demo-frame">
+      @defer (on viewport) {
+        <cal-month-view
+          [events]="recurringEvents()"
+          [viewDate]="viewDate"
+          [today]="today"
+          [statusColors]="statusColors"
+          [maxLanes]="3"
+        />
+      } @placeholder {
+        <div class="demo-skeleton">Loading month view…</div>
+      }
+    </div>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="edit-scope"
+    title="This / this-and-following / all"
+    description="Editing one occurrence of a series has three scopes. THIS occurrence adds the occurrence date to recurrenceExceptions (via addRecurrenceException) and creates a standalone override linked back with recurrenceId. THIS AND FOLLOWING splits the series in two (splitSeriesAt terminates the master with an RRULE UNTIL and returns the rule + start for a new tail series). ALL simply edits the master's recurrenceRule so every occurrence follows. All three are pure functions over your event data."
+    [sources]="editScopeSrc"
+    [hasProjected]="false"
+  />
+
+  <cal-doc-example
+    anchor="ics"
+    title="ICS export"
+    description="The /export entry point serializes events to iCalendar text. A recurring event's RRULE is written straight onto its VEVENT, so importing calendars re-expand the series natively."
+    [sources]="icsSrc"
+    [hasProjected]="false"
+  />
+</article>

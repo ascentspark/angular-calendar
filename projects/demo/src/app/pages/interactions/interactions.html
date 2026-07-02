@@ -1,0 +1,103 @@
+<article class="page">
+  <h1>Interactions</h1>
+  <p class="lead">
+    Move, resize and create events by pointer or keyboard — drag the body to reschedule, drag an
+    edge to resize, drag empty space to create. Every gesture is touch-friendly (long-press to
+    grab) and fully keyboard-operable, with external drag-in and double-click inline editing on
+    top. All of it is opt-out-able per view: <code>[editable]</code>, <code>[inlineEdit]</code>,
+    <code>[snapMinutes]</code> and <code>[validateChange]</code> let you dial the interaction
+    surface down to read-only or up to a full dispatch board.
+  </p>
+
+  <cal-page-nav [sections]="sections" />
+
+  <cal-doc-example
+    anchor="drag-resize-create"
+    title="Drag, resize & create"
+    description="A live, editable time-grid. Drag an event's body to move it, drag its top or bottom edge to resize, or drag on empty space to create. The host owns the data — each edit produces a new immutable events array that the grid re-renders from, so your changes persist."
+    [sources]="dragSrc"
+  >
+    <div class="demo-frame demo-frame--tall">
+      @defer (on viewport) {
+        <cal-time-grid
+          [events]="events()"
+          [viewDate]="viewDate"
+          [today]="today"
+          [now]="now"
+          [days]="3"
+          [dayStartMinutes]="480"
+          [dayEndMinutes]="1080"
+          [statusColors]="statusColors"
+          (eventChanged)="onChange($event)"
+        />
+      } @placeholder {
+        <div class="demo-skeleton">Loading…</div>
+      }
+    </div>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="keyboard"
+    title="Keyboard"
+    description="Nothing here needs a mouse. Tab to focus an event, Enter to grab it, then arrow keys nudge it through time (and, on the timeline, across resource lanes). Every step is mirrored to an ARIA live region so screen-reader users hear the new time as it changes."
+    [hasProjected]="false"
+  >
+    <table class="keys">
+      <thead>
+        <tr>
+          <th scope="col">Key</th>
+          <th scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd></td>
+          <td>Move focus between events</td>
+        </tr>
+        <tr>
+          <td><kbd>Enter</kbd></td>
+          <td>Grab the focused event (and, later, drop it)</td>
+        </tr>
+        <tr>
+          <td><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>&rarr;</kbd></td>
+          <td>Move the grabbed event in time (and across lanes on the timeline)</td>
+        </tr>
+        <tr>
+          <td><kbd>Shift</kbd>+<kbd>&uarr;</kbd> / <kbd>Shift</kbd>+<kbd>&darr;</kbd></td>
+          <td>Resize the grabbed event (extend or shorten)</td>
+        </tr>
+        <tr>
+          <td><kbd>Enter</kbd></td>
+          <td>Drop and commit the move/resize</td>
+        </tr>
+        <tr>
+          <td><kbd>Esc</kbd></td>
+          <td>Cancel — snap back to where it started</td>
+        </tr>
+      </tbody>
+    </table>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="snap-validate"
+    title="Snap & validate"
+    description="snapMinutes quantises every drag to a grid — set it to 15 and events snap to quarter-hours (pass null for free, sub-pixel movement). validateChange is a predicate run on the proposed change before it commits: return false and the drag snaps back, never reaching your handler. Together they keep edits both tidy and within your business rules."
+    [sources]="snapSrc"
+    [hasProjected]="false"
+  />
+
+  <cal-doc-example
+    anchor="external-drag-in"
+    title="External drag-in"
+    description="Drop work that lives outside the calendar — an unassigned-jobs strip, a search result, any draggable element — straight onto a timeline lane. The timeline's externalDrop output resolves the drop into the time under the pointer, the target lane's resourceId, and whatever payload you attached, so you can turn a loose item into a scheduled, assigned event in one gesture."
+    [sources]="externalSrc"
+    [hasProjected]="false"
+  />
+
+  <cal-doc-example
+    anchor="inline-edit"
+    title="Inline edit"
+    description="Double-click an event to edit its title in place; commit (blur or Enter) emits an EventChange with kind 'inline-edit' carrying the new title, which you fold back into your event array exactly like a move or resize. Set [inlineEdit]=&quot;false&quot; to turn it off while keeping drag and resize."
+    [hasProjected]="false"
+  />
+</article>

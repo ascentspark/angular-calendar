@@ -1,0 +1,113 @@
+<article class="page">
+  <h1>Theming</h1>
+  <p class="lead">
+    Theme-agnostic by design: drop the calendar onto any colour scheme with just two colours.
+    Every colour, size and radius is a scoped <code>--cal-*</code> custom property set on the host
+    element only — no global leakage. The palette is OKLCH-derived and AA-contrast-safe in both
+    light and dark, with zero hard-coded brand colours.
+  </p>
+
+  <cal-page-nav [sections]="sections" />
+
+  <cal-doc-example
+    anchor="two-colors"
+    title="Two colours"
+    description="baseColor (a neutral anchor) and accentColor (the interactive colour) derive the whole palette; themeMode flips the surface between light and dark. Pick two colours below and watch the calendar re-theme live."
+    [sources]="twoColorsSrc"
+  >
+    <div class="theme-controls">
+      <label class="theme-controls__field">
+        <span>Base</span>
+        <input
+          type="color"
+          [value]="base()"
+          (input)="base.set($any($event.target).value)"
+          aria-label="Base colour"
+        />
+      </label>
+      <label class="theme-controls__field">
+        <span>Accent</span>
+        <input
+          type="color"
+          [value]="accent()"
+          (input)="accent.set($any($event.target).value)"
+          aria-label="Accent colour"
+        />
+      </label>
+      <button type="button" class="theme-controls__toggle" (click)="toggleMode()">
+        Mode: {{ mode() }}
+      </button>
+    </div>
+
+    <div class="demo-frame">
+      @defer (on viewport) {
+        <cal-month-view
+          [events]="events"
+          [viewDate]="viewDate"
+          [today]="today"
+          [baseColor]="base()"
+          [accentColor]="accent()"
+          [themeMode]="mode()"
+        />
+      } @placeholder {
+        <div class="demo-skeleton">Loading…</div>
+      }
+    </div>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="status-colors"
+    title="Status colours"
+    description="Pass a statusColors map (status key → hex) and the library derives an event / -ink / -soft triplet per status. Events render in their status colour, kept legible against the surface in both modes."
+    [sources]="statusColorsSrc"
+  >
+    <div class="demo-frame">
+      @defer (on viewport) {
+        <cal-month-view
+          [events]="events"
+          [viewDate]="viewDate"
+          [today]="today"
+          [statusColors]="statusColors"
+        />
+      } @placeholder {
+        <div class="demo-skeleton">Loading…</div>
+      }
+    </div>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="tokens"
+    title="CSS tokens"
+    description="Component CSS reads only var(--cal-*) and hard-codes no colours. The high-level inputs cover ~90% of theming; for the long tail, override any single token on the host element."
+    [sources]="tokenOverrideSrc"
+  >
+    <table class="token-table">
+      <thead>
+        <tr>
+          <th>Token</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>--cal-bg</code></td><td>Surface background</td></tr>
+        <tr><td><code>--cal-ink</code></td><td>Primary text</td></tr>
+        <tr><td><code>--cal-surface</code></td><td>Raised surface</td></tr>
+        <tr><td><code>--cal-grid-line</code></td><td>Grid borders</td></tr>
+        <tr><td><code>--cal-accent</code></td><td>Interactive accent</td></tr>
+        <tr>
+          <td><code>--cal-event-&lt;key&gt;</code> / <code>-ink</code> / <code>-soft</code></td>
+          <td>Per-status event colours (fill, text, soft background)</td>
+        </tr>
+        <tr><td><code>--cal-radius-sm</code></td><td>Corner radius</td></tr>
+      </tbody>
+    </table>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="headless"
+    title="Headless theming"
+    description="deriveTheme and applyTheme let consumers derive and apply the same tokens themselves — pure, SSR-safe and OKLCH-based, guaranteeing AA contrast in both modes. Useful for theming outside a component, or precomputing tokens on the server."
+    [sources]="headlessSrc"
+    [hasProjected]="false"
+  />
+</article>

@@ -1,0 +1,103 @@
+<article class="page">
+  <h1>Getting started</h1>
+  <p class="lead">
+    Install <code>&#64;ascentsparksoftware/angular-calendar</code>, wire the date adapter once, and
+    render your first view in a few lines. The library is standalone, signals-first, zoneless and
+    SSR-safe — you bring your own event data and templates, and it drops onto any color scheme.
+  </p>
+
+  <cal-page-nav [sections]="sections" />
+
+  <cal-doc-example
+    anchor="install"
+    title="Install"
+    description="Add the package plus its runtime dependencies. The heavy, optional features live behind secondary entry points so they only ship if you import them."
+    [sources]="installSrc"
+    [hasProjected]="false"
+  >
+    <p>
+      Install the package alongside its runtime peers <code>date-fns</code>,
+      <code>date-fns-tz</code> and <code>rrule</code>. The Angular peer dependencies —
+      <code>&#64;angular/core</code>, <code>&#64;angular/common</code> and
+      <code>&#64;angular/platform-browser</code> — must match your Angular major
+      (<code>^22</code>, <code>^21</code> or <code>^20</code>).
+    </p>
+    <p>Optional secondary entry points keep the core lean; import them only when you need them:</p>
+    <ul>
+      <li><code>&#64;ascentsparksoftware/angular-calendar/date-fns</code> — the date adapter.</li>
+      <li><code>&#64;ascentsparksoftware/angular-calendar/recurrence</code> — RRULE recurrence.</li>
+      <li>
+        <code>&#64;ascentsparksoftware/angular-calendar/export</code> — CSV / ICS / Excel / print.
+      </li>
+    </ul>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="quick-start"
+    title="Quick start"
+    description="Provide the date adapter once in your ApplicationConfig, then import a view component and pass it your events, a viewDate and today. That's a working month calendar."
+    [sources]="quickStartSrc"
+  >
+    <div class="demo-frame">
+      @defer (on viewport) {
+        <cal-month-view
+          [events]="events"
+          [viewDate]="viewDate"
+          [today]="today"
+          [statusColors]="statusColors"
+          [maxLanes]="3"
+        />
+      } @placeholder {
+        <div class="demo-skeleton">Loading…</div>
+      }
+    </div>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="versions"
+    title="Angular versions"
+    description="One release line per supported Angular major. The package major always tracks the Angular major, so you install the matching line via its npm dist-tag."
+    [sources]="versionsSrc"
+  >
+    <table class="version-table">
+      <thead>
+        <tr>
+          <th>Angular</th>
+          <th>Package major</th>
+          <th>npm dist-tag</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>22</td>
+          <td>22.x</td>
+          <td><code>&#64;latest</code></td>
+        </tr>
+        <tr>
+          <td>21</td>
+          <td>21.x</td>
+          <td><code>&#64;ng21</code></td>
+        </tr>
+        <tr>
+          <td>20</td>
+          <td>20.x</td>
+          <td><code>&#64;ng20</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </cal-doc-example>
+
+  <cal-doc-example
+    anchor="faq"
+    title="FAQ"
+    description="Common questions about licensing, hosting, version support and correctness."
+    [hasProjected]="true"
+  >
+    <div class="faq">
+      @for (item of faq; track item.q) {
+        <h3 class="faq__q">{{ item.q }}</h3>
+        <p class="faq__a">{{ item.a }}</p>
+      }
+    </div>
+  </cal-doc-example>
+</article>
