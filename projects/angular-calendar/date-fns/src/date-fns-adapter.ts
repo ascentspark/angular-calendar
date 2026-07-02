@@ -107,7 +107,11 @@ export class DateFnsDateAdapter implements DateAdapter {
   }
 
   getMinutesIntoDay(d: ZonedDateTime): number {
-    return (d.epochMs - this.startOfDay(d).epochMs) / MS_PER_MINUTE;
+    // Wall-clock minutes into the local day, read from the zone's clock so a DST
+    // transition never shifts it: 09:00 is always 540, even on a day whose
+    // midnight→09:00 span is only 8 real hours (spring forward) or 10 (fall back).
+    const local = toZonedTime(d.epochMs, d.zone);
+    return local.getHours() * 60 + local.getMinutes() + local.getSeconds() / 60;
   }
 
   getEra(d: ZonedDateTime, system: CalendarSystem): EraFields {
