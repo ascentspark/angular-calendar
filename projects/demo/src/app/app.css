@@ -327,6 +327,22 @@
   gap: 0.4rem;
   inline-size: 100%;
   overflow: hidden;
+  /* Measure the chip's own width so short events can shed the status pill / avatar
+     instead of clipping them mid-word ("CANC", "ACTI"). */
+  container-type: inline-size;
+  container-name: job;
+}
+/* Not enough room for a readable status tag → drop it (colour already encodes status). */
+@container job (max-width: 150px) {
+  .job__badge {
+    display: none;
+  }
+}
+/* Very short events → keep only the title. */
+@container job (max-width: 84px) {
+  .job__avatar {
+    display: none;
+  }
 }
 .job__avatar {
   flex: 0 0 auto;

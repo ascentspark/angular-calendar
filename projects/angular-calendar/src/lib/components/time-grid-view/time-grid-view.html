@@ -8,6 +8,7 @@
   [style.--cal-tg-cols]="vm.columns.length"
   [style.--cal-tg-hours]="(vm.dayEndMinutes - vm.dayStartMinutes) / 60"
   [style.--cal-tg-allday-lanes]="allDayLanes()"
+  [style.--cal-tg-max-lanes]="maxColumnLanes()"
 >
   <!-- Header: corner + column day headers -->
   <div class="cal-tg__corner" aria-hidden="true"></div>

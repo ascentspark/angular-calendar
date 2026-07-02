@@ -16,7 +16,9 @@
   --cal-tg-hour-w: 5rem; /* width of one hour along the time axis */
   --cal-tg-day-w: 4.75rem; /* width of the left day-label column */
   --cal-tg-time-head: 1.75rem; /* height of the top time-axis strip */
-  --cal-tg-row-h: 4.75rem; /* height of one day-row */
+  --cal-tg-lane-h: 1.9rem; /* height of one event chip / sub-lane */
+  /* A day-row is tall enough for its busiest stack of overlapping events. */
+  --cal-tg-row-h: calc(var(--cal-tg-max-lanes, 1) * var(--cal-tg-lane-h) + 0.6rem);
 }
 
 .cal-tg {
@@ -344,9 +346,10 @@
    Transpose of the vertical layout. The component emits axis-neutral --ev-*,
    --tick-pos and --now-pos fractions, so only their axis mapping changes here. */
 :host(.cal-tg--horizontal) .cal-tg {
-  /* Content-sized rows (don't stretch to fill the host) so day-rows stay compact and
-     events aren't rendered as tall slivers; scroll horizontally for the full day. */
-  flex: 0 0 auto;
+  /* Fill the host: day-rows stretch (minmax row-h → 1fr) to divide the height evenly,
+     while events stay fixed-height centered chips (never tall slivers). Scroll
+     horizontally for the full day. */
+  flex: 1 1 auto;
   grid-template-columns: var(--cal-tg-day-w) 1fr;
   grid-template-rows: var(--cal-tg-time-head) 1fr;
   grid-template-areas:
@@ -361,7 +364,7 @@
 /* Day headers: a vertical stack on the left, one label per day-row. */
 :host(.cal-tg--horizontal) .cal-tg__headers {
   grid-template-columns: none;
-  grid-auto-rows: var(--cal-tg-row-h);
+  grid-auto-rows: minmax(var(--cal-tg-row-h), 1fr);
 }
 :host(.cal-tg--horizontal) .cal-tg__colhead {
   display: flex;
@@ -398,7 +401,7 @@
 /* Day rows: stacked vertically at a fixed height; each spans the full time width. */
 :host(.cal-tg--horizontal) .cal-tg__cols {
   grid-template-columns: none;
-  grid-auto-rows: var(--cal-tg-row-h);
+  grid-auto-rows: minmax(var(--cal-tg-row-h), 1fr);
   min-block-size: 0;
   min-inline-size: calc(var(--cal-tg-hours) * var(--cal-tg-hour-w));
 }
@@ -413,17 +416,25 @@
   border-block-start: 0;
   border-inline-start: 1px solid var(--cal-grid-line);
 }
-/* Events: time on the inline axis, lane on the block axis. */
+/* Events: time on the inline axis; fixed-height chips stacked by lane and centered
+   in the row (short horizontal bars, not full-height slivers). */
 :host(.cal-tg--horizontal) .cal-tg__event {
   inset-inline-start: var(--ev-start);
   inline-size: var(--ev-size);
-  inset-block-start: calc(var(--ev-cross-start) + 1px);
-  block-size: calc(var(--ev-cross-size) - 2px);
+  block-size: calc(var(--cal-tg-lane-h) - 0.3rem);
+  inset-block-start: calc(
+    (100% - var(--cal-tg-max-lanes, 1) * var(--cal-tg-lane-h)) / 2 + var(--ev-lane, 0) *
+      var(--cal-tg-lane-h) + 0.15rem
+  );
   min-block-size: 0;
   min-inline-size: 2.75rem; /* keep short events readable */
+  align-items: center;
+  padding-block: 0;
 }
 :host(.cal-tg--horizontal) .cal-tg__event-title {
-  -webkit-line-clamp: 3;
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 /* Now-indicator runs vertically. */
 :host(.cal-tg--horizontal) .cal-tg__now {

@@ -271,10 +271,25 @@ export class CalTimeGridView<TMeta = unknown> {
       '--ev-size': `${geo.span * 100}%`,
       '--ev-cross-start': `${leftPct}%`,
       '--ev-cross-size': `${widthPct}%`,
+      // Lane index — horizontal orientation stacks overlapping events by fixed lane height.
+      '--ev-lane': `${ev.lane}`,
       background: bg,
       color: fg,
     };
   }
+
+  /** Max overlapping lanes across all day-columns (sizes the horizontal day-rows). */
+  protected readonly maxColumnLanes = computed(() => {
+    let max = 1;
+    for (const col of this.viewModel().columns) {
+      for (const ev of col.events) {
+        if (ev.laneCount > max) {
+          max = ev.laneCount;
+        }
+      }
+    }
+    return max;
+  });
 
   /** Whether this event is the one currently being dragged/resized. */
   protected isDragging(ev: PositionedEvent<TMeta>): boolean {

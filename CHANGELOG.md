@@ -16,7 +16,11 @@ Angular major. This project adheres to [Keep a Changelog](https://keepachangelog
 
 ### Fixed
 
-- Horizontal week-as-rows polish and the demo timeline job-card badge overflow (also in 22.0.1).
+- **Horizontal week-as-rows** events now render as fixed-height chips centred in each day-row
+  (stacked by overlap lane) instead of full-height slivers that clipped their titles; rows share
+  the available height evenly with no dead space below.
+- Timeline event chips shed the status tag (then the avatar) on short durations via a container
+  query, instead of clipping the label mid-word.
 
 ## [22.0.1] - 2026-07-02
 

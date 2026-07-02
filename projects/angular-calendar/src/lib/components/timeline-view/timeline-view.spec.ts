@@ -23,7 +23,9 @@ async function render(inputs: Record<string, unknown>) {
     providers: [provideCalendar(withDateAdapter(provideDateFnsAdapter()))],
   });
   const fixture = TestBed.createComponent(CalTimelineView);
-  for (const [k, v] of Object.entries(inputs)) {
+  // Pin the timezone to the test data's zone so day-window projection is deterministic
+  // regardless of the host machine's zone (the view falls back to the host zone otherwise).
+  for (const [k, v] of Object.entries({ timezone: zone, ...inputs })) {
     fixture.componentRef.setInput(k, v);
   }
   await fixture.whenStable();
