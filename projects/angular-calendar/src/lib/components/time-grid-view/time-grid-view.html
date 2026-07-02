@@ -8,6 +8,7 @@
   [style.--cal-tg-cols]="vm.columns.length"
   [style.--cal-tg-hours]="(vm.dayEndMinutes - vm.dayStartMinutes) / 60"
   [style.--cal-tg-allday-lanes]="allDayLanes()"
+  [style.--cal-tg-max-lanes]="maxColumnLanes()"
 >
   <!-- Header: corner + column day headers -->
   <div class="cal-tg__corner" aria-hidden="true"></div>
@@ -50,9 +51,11 @@
   <!-- Time gutter -->
   <div class="cal-tg__gutter" aria-hidden="true">
     @for (tick of vm.ticks; track tick.minutes) {
-      <div class="cal-tg__tick" [style.--tick-pos]="tick.offset * 100 + '%'">
-        <span class="cal-tg__tick-label">{{ tick.label }}</span>
-      </div>
+      @if (tick.major) {
+        <div class="cal-tg__tick" [style.--tick-pos]="tick.offset * 100 + '%'">
+          <span class="cal-tg__tick-label">{{ tick.label }}</span>
+        </div>
+      }
     }
   </div>
 
@@ -71,7 +74,12 @@
         (pointercancel)="onEventPointerCancel($event)"
       >
         @for (tick of vm.ticks; track tick.minutes) {
-          <div class="cal-tg__line" [style.--tick-pos]="tick.offset * 100 + '%'" aria-hidden="true"></div>
+          <div
+            class="cal-tg__line"
+            [class.cal-tg__line--minor]="!tick.major"
+            [style.--tick-pos]="tick.offset * 100 + '%'"
+            aria-hidden="true"
+          ></div>
         }
 
         @if (createGhostStyle(column); as ghost) {
