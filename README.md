@@ -156,7 +156,7 @@ the ones you use.
 | --- | --- | --- |
 | `CalMonthView` | `cal-month-view` | Month grid with lane-packed multi-day events and a "+N more" overflow popover. |
 | `CalTimeGridView` | `cal-time-grid` | Week / work-week / day time-grid (`[days]` + `[excludeDays]`), all-day band, now-line, drag/create/resize. |
-| `CalTimelineView` | `cal-timeline-view` | Horizontal resource schedule / dispatch board: hierarchical lanes, configurable time axis, external drag-in. |
+| `CalTimelineView` | `cal-timeline-view` | Resource schedule / dispatch board: hierarchical lanes, configurable time axis, external drag-in. `[orientation]` is `'horizontal'` (resources as rows, time on X — default) or `'vertical'` (resources as columns, time down Y). |
 | `CalYearView` | `cal-year-view` | 12 mini-months with per-day density; drill into a day or month. |
 | `CalAgendaView` | `cal-agenda-view` | Chronological list over N days (`[hideEmptyDays]`). |
 | `CalRecurrenceEditor` | `cal-recurrence-editor` | Standalone RRULE builder (`[(rule)]`). |
@@ -342,7 +342,11 @@ validateChange = input<((c: EventChange) => boolean) | null>(null);
 
 // cal-timeline-view (resource schedule)
 resources = input.required(); days = input(1); headerGroupings = input(['day','hour']);
+orientation = input<'horizontal'|'vertical'>('horizontal'); // resources as rows | columns
 hourWidth = input(60); laneHeight = input(34); editable = input(true);
+// hourWidth = px per hour along the time axis; laneHeight = px per overlap sub-lane.
+// In orientation="vertical" these transpose: hourWidth is the hour height (Y), laneHeight
+// the sub-lane width (X, per overlapping card). Same eventChanged payload in both.
 // → eventClicked, eventChanged, slotSelected, resourceToggled, externalDrop
 
 // cal-month-view    → eventClicked, daySelected, viewPeriodChanged
