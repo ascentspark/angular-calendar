@@ -5,6 +5,18 @@ Angular major. This project adheres to [Keep a Changelog](https://keepachangelog
 
 ## [Unreleased]
 
+## [21.1.0] - 2026-07-05
+
+Angular 21 build of the 22.1.0 feature. Feature-parity with 22.1.0.
+
+### Added
+
+- **`orientation` input on `CalTimelineView`** (`'horizontal'` | `'vertical'`, default `'horizontal'`).
+  Vertical renders the resource scheduler transposed: resources as columns across the top, time down
+  the Y axis, side-by-side overlap packing, a horizontal now-line, and axis-swapped drag/keyboard
+  (Y = time, X = resource). Additive and non-breaking; horizontal output is unchanged.
+
+
 ## [21.0.2] - 2026-07-02
 
 Angular 21 build of the 22.0.2 changes. Feature-parity with 22.0.2: timeline pointer

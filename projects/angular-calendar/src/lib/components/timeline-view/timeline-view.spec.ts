@@ -379,3 +379,104 @@ describe('CalTimelineView — pointer resize & create', () => {
     expect((c!.end!.epochMs - c!.start!.epochMs) / 60_000).toBe(120);
   });
 });
+
+describe('CalTimelineView — vertical orientation', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  const hostBase = {
+    events: [] as CalendarEvent[],
+    resources,
+    viewDate: at('2026-06-15T12:00:00Z'),
+    days: 1,
+    headerGroupings: ['hour'] as const,
+  };
+
+  it('does not add the cal-tl--vertical host class by default (horizontal)', async () => {
+    const { el } = await render(hostBase);
+    expect((el as HTMLElement).classList.contains('cal-tl--vertical')).toBe(false);
+  });
+
+  it('adds the cal-tl--vertical host class in vertical mode', async () => {
+    const { el } = await render({ ...hostBase, orientation: 'vertical' });
+    expect((el as HTMLElement).classList.contains('cal-tl--vertical')).toBe(true);
+  });
+
+  it('renders the same event set in vertical mode, placed in the owning resource', async () => {
+    const events: CalendarEvent[] = [
+      { id: 'job1', resourceIds: ['t1'], title: 'Install', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T14:00:00Z'), status: 'scheduled' },
+    ];
+    const { el } = await render({
+      events,
+      resources,
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      dayStartMinutes: 480,
+      dayEndMinutes: 1080,
+      headerGroupings: ['hour'],
+      orientation: 'vertical',
+    });
+    const rows = el.querySelectorAll('.cal-tl__row');
+    expect(rows[0]!.querySelector('.cal-tl__event')?.textContent).toContain('Install');
+    expect(rows[1]!.querySelector('.cal-tl__event')).toBeNull();
+  });
+
+  it('packs three overlapping events into three sub-lanes (--ev-lane steps by laneHeight)', async () => {
+    const events: CalendarEvent[] = [
+      { id: 'a', resourceIds: ['t1'], title: 'A', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T15:00:00Z') },
+      { id: 'b', resourceIds: ['t1'], title: 'B', start: at('2026-06-15T13:30:00Z'), end: at('2026-06-15T15:00:00Z') },
+      { id: 'c', resourceIds: ['t1'], title: 'C', start: at('2026-06-15T14:00:00Z'), end: at('2026-06-15T15:00:00Z') },
+    ];
+    const { el } = await render({
+      events,
+      resources,
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      dayStartMinutes: 480,
+      dayEndMinutes: 1080,
+      headerGroupings: ['hour'],
+      orientation: 'vertical',
+      laneHeight: 40,
+    });
+    const lanes = Array.from(el.querySelectorAll<HTMLElement>('.cal-tl__row')[0]!.querySelectorAll<HTMLElement>('.cal-tl__event'))
+      .map((b) => b.style.getPropertyValue('--ev-lane').trim());
+    expect(lanes.length).toBe(3);
+    expect(new Set(lanes)).toEqual(new Set(['0px', '40px', '80px']));
+  });
+
+  it('drags a block along the vertical (Y) time axis and emits a move', async () => {
+    const events: CalendarEvent[] = [
+      { id: 'job1', resourceIds: ['t1'], title: 'Install', start: at('2026-06-15T13:00:00Z'), end: at('2026-06-15T14:00:00Z'), status: 'scheduled' },
+    ];
+    const { el, cmp } = await render({
+      events,
+      resources,
+      viewDate: at('2026-06-15T12:00:00Z'),
+      days: 1,
+      dayStartMinutes: 480,
+      dayEndMinutes: 1080,
+      headerGroupings: ['hour'],
+      hourWidth: 60, // 1px == 1 minute (px-per-hour on Y in vertical)
+      orientation: 'vertical',
+    });
+    let change: EventChange | null = null;
+    cmp.eventChanged.subscribe((c) => (change = c));
+
+    const block = el.querySelector<HTMLElement>('.cal-tl__event')!;
+    const fire = (type: string, clientY: number): void => {
+      const e = new Event(type, { bubbles: true });
+      Object.defineProperty(e, 'button', { value: 0 });
+      Object.defineProperty(e, 'pointerId', { value: 1 });
+      Object.defineProperty(e, 'clientX', { value: 0 });
+      Object.defineProperty(e, 'clientY', { value: clientY });
+      block.dispatchEvent(e);
+    };
+    fire('pointerdown', 100);
+    fire('pointermove', 160); // +60px on Y → +60 min later
+    fire('pointerup', 160);
+
+    const c = change as EventChange | null;
+    expect(c?.kind).toBe('move');
+    expect(c?.start?.epochMs).toBe(Date.parse('2026-06-15T14:00:00Z'));
+    expect(c?.end?.epochMs).toBe(Date.parse('2026-06-15T15:00:00Z'));
+  });
+});

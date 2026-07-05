@@ -18,6 +18,7 @@ import { CALENDAR_CONFIG, resolveTimeFormat } from '../../core/config/calendar-c
 import type { EventChange } from '../../interactions/event-change';
 import { DATE_ADAPTER } from '../../core/date-adapter/date-adapter';
 import type { CalendarSystem, ZonedDateTime } from '../../core/date-adapter/zoned-date-time';
+import type { TimeAxisOrientation } from '../../core/model/view';
 import type { CalendarEvent } from '../../core/model/calendar-event';
 import type { CalendarResource } from '../../core/model/calendar-resource';
 import { buildTimelineView } from '../../core/view-model/build-timeline-view';
@@ -50,7 +51,8 @@ interface TimelineDrag {
   /** Resource lane the block will land in (keyboard lane moves change this). */
   readonly targetResourceId: string;
   readonly pointerId: number;
-  readonly startClientX: number;
+  /** Pointer coordinate along the time axis at grab (X horizontal, Y vertical). */
+  readonly startAxis: number;
   readonly deltaMinutes: number;
   readonly active: boolean;
 }
@@ -75,6 +77,9 @@ function epochOf(value: Date | ZonedDateTime): number {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgTemplateOutlet],
+  host: {
+    '[class.cal-tl--vertical]': "orientation() === 'vertical'",
+  },
   templateUrl: './timeline-view.html',
   styleUrl: './timeline-view.css',
 })
@@ -95,6 +100,12 @@ export class CalTimelineView<TMeta = unknown> {
   readonly dayStartMinutes = input<number | null>(null);
   readonly dayEndMinutes = input<number | null>(null);
   readonly headerGroupings = input<readonly TimeHeaderUnit[]>(['day', 'hour']);
+  /**
+   * Whether the time axis runs horizontally (time on X, resources as rows — the
+   * default and original behaviour) or vertically (time on Y, resources as columns
+   * across the top). Mirrors the same input on {@link CalTimeGridView}.
+   */
+  readonly orientation = input<TimeAxisOrientation>('horizontal');
   readonly today = input<Date | ZonedDateTime | null>(null);
   readonly now = input<Date | ZonedDateTime | null>(null);
   readonly weekStartsOn = input<number | null>(null);
@@ -166,7 +177,7 @@ export class CalTimelineView<TMeta = unknown> {
       dayStartMinutes: this.dayStartMinutes() ?? this.config.dayStartMinutes,
       dayEndMinutes: this.dayEndMinutes() ?? this.config.dayEndMinutes,
       headerGroupings: this.headerGroupings(),
-      orientation: 'horizontal' as const,
+      orientation: this.orientation(),
       weekStartsOn: this.weekStartsOn() ?? this.config.weekStartsOn,
       locale: this.resolvedLocale(),
       hour12: this.config.hour12,
@@ -196,11 +207,32 @@ export class CalTimelineView<TMeta = unknown> {
     });
   }
 
-  /** Total hours along the axis (for the time-area width). */
+  /** Total hours along the axis (for the time-area extent). */
   protected readonly totalHours = computed(() => {
     const p = this.viewModel().period;
     return this.adapter.differenceInMinutes(p.end, p.start) / 60;
   });
+
+  /** True when the time axis runs vertically (resources are columns). */
+  protected readonly vertical = computed(() => this.orientation() === 'vertical');
+
+  /** The pointer coordinate along the time axis (X for horizontal, Y for vertical). */
+  private axisClient(dom: { clientX: number; clientY: number }): number {
+    return this.vertical() ? dom.clientY : dom.clientX;
+  }
+
+  /** Fraction (0–1) along the time axis for a pointer over `target`. Time always
+   *  increases downward on Y (vertical); RTL only flips the horizontal X axis. */
+  private axisFraction(target: HTMLElement, client: number): number {
+    const rect = target.getBoundingClientRect();
+    if (this.vertical()) {
+      const y = client - rect.top;
+      return Math.max(0, Math.min(1, y / Math.max(1, rect.height)));
+    }
+    const rtl = getComputedStyleSafe(target) === 'rtl';
+    const x = rtl ? rect.right - client : client - rect.left;
+    return Math.max(0, Math.min(1, x / Math.max(1, rect.width)));
+  }
 
   private readonly theme = computed(() => {
     try {
@@ -223,8 +255,9 @@ export class CalTimelineView<TMeta = unknown> {
   protected readonly rowWindow = computed<VirtualWindow>(() => {
     const rows = this.viewModel().resourceRows;
     const vh = this.viewportHeight();
-    // Disabled, unmeasured, or a modest list ⇒ render everything (un-virtualized layout).
-    if (!this.virtual.enabled || rows.length <= this.virtual.rowThreshold || vh <= 0) {
+    // Row-windowing assumes resources stack vertically; in vertical orientation they
+    // are columns, so render them all. Also disabled/unmeasured/modest ⇒ render everything.
+    if (this.vertical() || !this.virtual.enabled || rows.length <= this.virtual.rowThreshold || vh <= 0) {
       return { start: 0, end: rows.length, padTop: 0, padBottom: 0 };
     }
     const laneH = this.laneHeight();
@@ -245,7 +278,8 @@ export class CalTimelineView<TMeta = unknown> {
    */
   protected visibleEvents(row: ResourceRow<TMeta>): readonly PositionedEvent<TMeta>[] {
     const vw = this.viewportWidth();
-    if (!this.virtual.enabled || vw <= 0) {
+    // Horizontal event-culling assumes time on X; skip it in vertical orientation.
+    if (this.vertical() || !this.virtual.enabled || vw <= 0) {
       return row.events;
     }
     const totalW = this.totalHours() * this.hourWidth();
@@ -313,11 +347,13 @@ export class CalTimelineView<TMeta = unknown> {
     const bg = key !== '' ? `var(--cal-event-${key}, var(--cal-accent))` : 'var(--cal-accent)';
     const fg = key !== '' ? `var(--cal-event-${key}-ink, var(--cal-accent-ink))` : 'var(--cal-accent-ink)';
     const geo = this.previewGeo(ev);
+    // Axis-neutral geometry; the CSS maps --ev-start/--ev-size to the time axis and
+    // --ev-lane/--ev-lane-size to the cross (sub-lane) axis per orientation.
     return {
-      'inset-inline-start': `${geo.startOffset * 100}%`,
-      'inline-size': `calc(${geo.span * 100}% - 2px)`,
-      'inset-block-start': `${ev.lane * this.laneHeight()}px`,
-      'block-size': `${this.laneHeight() - 3}px`,
+      '--ev-start': `${geo.startOffset * 100}%`,
+      '--ev-size': `calc(${geo.span * 100}% - 2px)`,
+      '--ev-lane': `${ev.lane * this.laneHeight()}px`,
+      '--ev-lane-size': `${this.laneHeight() - 3}px`,
       background: bg,
       color: fg,
     };
@@ -325,14 +361,14 @@ export class CalTimelineView<TMeta = unknown> {
 
   protected shadeStyle(band: ShadeBand): Record<string, string> {
     return {
-      'inset-inline-start': `${band.startOffset * 100}%`,
-      'inline-size': `${band.span * 100}%`,
+      '--band-start': `${band.startOffset * 100}%`,
+      '--band-size': `${band.span * 100}%`,
     };
   }
 
   protected nowStyle(): Record<string, string> {
     const off = this.viewModel().nowOffset ?? 0;
-    return { 'inset-inline-start': `${off * 100}%` };
+    return { '--now-pos': `${off * 100}%` };
   }
 
   protected toggle(row: ResourceRow<TMeta>): void {
@@ -369,7 +405,7 @@ export class CalTimelineView<TMeta = unknown> {
     anchorMin: number;
     deltaMin: number;
     pointerId: number;
-    startClientX: number;
+    startAxis: number;
     active: boolean;
   } | null>(null);
 
@@ -405,7 +441,7 @@ export class CalTimelineView<TMeta = unknown> {
       originResourceId: row.resource.id,
       targetResourceId: row.resource.id,
       pointerId: dom.pointerId,
-      startClientX: dom.clientX,
+      startAxis: this.axisClient(dom),
       deltaMinutes: 0,
       active: false,
     });
@@ -424,12 +460,13 @@ export class CalTimelineView<TMeta = unknown> {
     if (d === null || d.pointerId !== dom.pointerId) {
       return;
     }
-    const dx = dom.clientX - d.startClientX;
-    const eff = this.isRtl() ? -dx : dx;
+    const delta = this.axisClient(dom) - d.startAxis;
+    // Time increases downward on Y (vertical); RTL only flips the horizontal X axis.
+    const eff = this.vertical() ? delta : this.isRtl() ? -delta : delta;
     const pxPerMinute = this.hourWidth() / 60;
     const snap = this.snapMinutes() ?? this.config.snapMinutes;
     const minutes = Math.round(eff / pxPerMinute / snap) * snap;
-    const active = d.active || Math.abs(dx) > DRAG_THRESHOLD_PX;
+    const active = d.active || Math.abs(delta) > DRAG_THRESHOLD_PX;
     this.drag.set({ ...d, deltaMinutes: minutes, active });
   }
 
@@ -523,7 +560,7 @@ export class CalTimelineView<TMeta = unknown> {
           originResourceId: row.resource.id,
           targetResourceId: row.resource.id,
           pointerId: KEYBOARD_POINTER,
-          startClientX: 0,
+          startAxis: 0,
           deltaMinutes: 0,
           active: true,
         });
@@ -532,20 +569,27 @@ export class CalTimelineView<TMeta = unknown> {
       return;
     }
 
+    // Axis-aware arrows: the time axis is X (horizontal) or Y (vertical); the resource
+    // (lane) axis is the other one. Arrows follow the visual transposition.
+    const v = this.vertical();
+    const timeBack = v ? 'ArrowUp' : 'ArrowLeft';
+    const timeFwd = v ? 'ArrowDown' : 'ArrowRight';
+    const laneBack = v ? 'ArrowLeft' : 'ArrowUp';
+    const laneFwd = v ? 'ArrowRight' : 'ArrowDown';
     switch (dom.key) {
-      case 'ArrowLeft':
+      case timeBack:
         dom.preventDefault();
         this.nudge(d, dom.shiftKey ? 'resize-end' : 'move', -snap);
         break;
-      case 'ArrowRight':
+      case timeFwd:
         dom.preventDefault();
         this.nudge(d, dom.shiftKey ? 'resize-end' : 'move', snap);
         break;
-      case 'ArrowUp':
+      case laneBack:
         dom.preventDefault();
         this.moveLane(d, -1);
         break;
-      case 'ArrowDown':
+      case laneFwd:
         dom.preventDefault();
         this.moveLane(d, 1);
         break;
@@ -644,22 +688,16 @@ export class CalTimelineView<TMeta = unknown> {
     const vm = this.viewModel();
     const total = this.adapter.differenceInMinutes(vm.period.end, vm.period.start);
     const target = dom.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    const rtl = getComputedStyleSafe(target) === 'rtl';
-    const x = rtl ? rect.right - dom.clientX : dom.clientX - rect.left;
-    const frac = Math.max(0, Math.min(1, x / Math.max(1, rect.width)));
+    const frac = this.axisFraction(target, this.axisClient(dom));
     const date = this.adapter.addMinutes(vm.period.start, Math.round(frac * total));
     this.slotSelected.emit({ date, resourceId: row.resource.id });
   }
 
   // ── drag-to-create on an empty lane ──────────────────────────────────────────
-  private laneMinutes(target: HTMLElement, clientX: number, snap: number): number {
+  private laneMinutes(target: HTMLElement, client: number, snap: number): number {
     const vm = this.viewModel();
     const total = this.adapter.differenceInMinutes(vm.period.end, vm.period.start);
-    const rect = target.getBoundingClientRect();
-    const rtl = getComputedStyleSafe(target) === 'rtl';
-    const x = rtl ? rect.right - clientX : clientX - rect.left;
-    const raw = Math.max(0, Math.min(total, (x / Math.max(1, rect.width)) * total));
+    const raw = this.axisFraction(target, client) * total;
     return Math.round(raw / snap) * snap;
   }
 
@@ -671,10 +709,10 @@ export class CalTimelineView<TMeta = unknown> {
     const snap = this.snapMinutes() ?? this.config.snapMinutes;
     this.createDrag.set({
       resourceId: row.resource.id,
-      anchorMin: this.laneMinutes(target, dom.clientX, snap),
+      anchorMin: this.laneMinutes(target, this.axisClient(dom), snap),
       deltaMin: 0,
       pointerId: dom.pointerId,
-      startClientX: dom.clientX,
+      startAxis: this.axisClient(dom),
       active: false,
     });
     if (typeof target.setPointerCapture === 'function') {
@@ -691,11 +729,11 @@ export class CalTimelineView<TMeta = unknown> {
     if (c === null || c.pointerId !== dom.pointerId) {
       return;
     }
-    const dx = dom.clientX - c.startClientX;
-    const eff = this.isRtl() ? -dx : dx;
+    const delta = this.axisClient(dom) - c.startAxis;
+    const eff = this.vertical() ? delta : this.isRtl() ? -delta : delta;
     const snap = this.snapMinutes() ?? this.config.snapMinutes;
     const deltaMin = Math.round(eff / (this.hourWidth() / 60) / snap) * snap;
-    this.createDrag.set({ ...c, deltaMin, active: c.active || Math.abs(dx) > DRAG_THRESHOLD_PX });
+    this.createDrag.set({ ...c, deltaMin, active: c.active || Math.abs(delta) > DRAG_THRESHOLD_PX });
   }
 
   protected onLanePointerUp(dom: PointerEvent): void {
@@ -737,19 +775,16 @@ export class CalTimelineView<TMeta = unknown> {
     const startMin = Math.min(c.anchorMin, c.anchorMin + c.deltaMin);
     const dur = Math.max(this.snapMinutes() ?? this.config.snapMinutes, Math.abs(c.deltaMin));
     return {
-      'inset-inline-start': `${(startMin / total) * 100}%`,
-      'inline-size': `${(dur / total) * 100}%`,
+      '--ev-start': `${(startMin / total) * 100}%`,
+      '--ev-size': `${(dur / total) * 100}%`,
     };
   }
 
-  /** Map a clientX on a lane back to a drop time (RTL-aware). */
-  private dropTime(row: ResourceRow<TMeta>, target: HTMLElement, clientX: number): ZonedDateTime {
+  /** Map a pointer position on a lane back to a drop time (axis- and RTL-aware). */
+  private dropTime(target: HTMLElement, client: number): ZonedDateTime {
     const vm = this.viewModel();
     const total = this.adapter.differenceInMinutes(vm.period.end, vm.period.start);
-    const rect = target.getBoundingClientRect();
-    const rtl = getComputedStyleSafe(target) === 'rtl';
-    const x = rtl ? rect.right - clientX : clientX - rect.left;
-    const frac = Math.max(0, Math.min(1, x / Math.max(1, rect.width)));
+    const frac = this.axisFraction(target, client);
     return this.adapter.addMinutes(vm.period.start, Math.round(frac * total));
   }
 
@@ -765,7 +800,7 @@ export class CalTimelineView<TMeta = unknown> {
   protected onExternalDrop(row: ResourceRow<TMeta>, dom: DragEvent): void {
     dom.preventDefault();
     const target = dom.currentTarget as HTMLElement;
-    const date = this.dropTime(row, target, dom.clientX);
+    const date = this.dropTime(target, this.axisClient(dom));
     const data = dom.dataTransfer?.getData('text/plain') ?? '';
     this.externalDrop.emit({ date, resourceId: row.resource.id, data });
   }
