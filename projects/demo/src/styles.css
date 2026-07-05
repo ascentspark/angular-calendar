@@ -93,3 +93,30 @@ html.dark {
   flex: 1 1 auto;
   min-block-size: 0;
 }
+
+/* Timeline orientation toggle (Views page "Switch Layout" demo). */
+.tl-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-block-end: 0.7rem;
+  flex-wrap: wrap;
+}
+.tl-switch {
+  border: 1px solid var(--site-accent, #ff4806);
+  background: var(--site-accent, #ff4806);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tl-switch:hover {
+  filter: brightness(1.05);
+}
+.tl-orient {
+  font-size: 0.85rem;
+  color: var(--site-ink-soft, #555);
+}

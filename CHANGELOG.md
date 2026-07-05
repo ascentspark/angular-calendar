@@ -5,6 +5,21 @@ Angular major. This project adheres to [Keep a Changelog](https://keepachangelog
 
 ## [Unreleased]
 
+## [22.1.0] - 2026-07-05
+
+### Added
+
+- **`orientation` input on `CalTimelineView`** (`'horizontal'` | `'vertical'`, default `'horizontal'`).
+  Vertical renders the resource scheduler transposed: resources become **columns** across the top and
+  the time axis runs **down** the page, with overlapping events packed side-by-side within a column, a
+  horizontal now-line, horizontal off-hours shading, and axis-swapped drag/resize/create + keyboard
+  (Y = time, X = resource). Mirrors the `orientation` input on `CalTimeGridView`. `hourWidth` becomes
+  the per-hour height and `laneHeight` the per-overlap sub-lane **width** in vertical mode; the
+  `eventChanged` payload and every template context are unchanged. Fully additive and non-breaking —
+  existing consumers render identically without the input. Custom `*calEventTemplate` /
+  `*calResourceHeader` work in both orientations. Nested resource trees render as flat sibling columns
+  in vertical mode for this release.
+
 ## [22.0.2] - 2026-07-02
 
 ### Added

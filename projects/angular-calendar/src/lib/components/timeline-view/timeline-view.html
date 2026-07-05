@@ -2,7 +2,7 @@
 <div
   #scroller
   class="cal-tl"
-  [style.--cal-tl-time-width.px]="totalHours() * hourWidth()"
+  [style.--cal-tl-time-extent.px]="totalHours() * hourWidth()"
   [style.--cal-tl-hour-w.px]="hourWidth()"
   (scroll)="onScroll($event.target)"
 >
@@ -21,8 +21,8 @@
               class="cal-tl__hcell"
               role="columnheader"
               [class.cal-tl__hcell--now]="cell.isNow"
-              [style.inset-inline-start.%]="cell.offset * 100"
-              [style.inline-size.%]="cell.span * 100"
+              [style.--hc-start.%]="cell.offset * 100"
+              [style.--hc-size.%]="cell.span * 100"
             >
               <span class="cal-tl__hcell-label">{{ cell.label }}</span>
             </div>
@@ -43,7 +43,7 @@
       <div
         class="cal-tl__rhead"
         role="rowheader"
-        [style.block-size.px]="rowHeightPx(row)"
+        [style.--cal-tl-lane-extent.px]="rowHeightPx(row)"
         [style.--cal-tl-depth]="row.depth"
       >
         @if (resourceHeaderTemplate(); as tpl) {
@@ -74,7 +74,7 @@
         class="cal-tl__row"
         role="gridcell"
         [attr.data-resource-id]="row.resource.id"
-        [style.block-size.px]="rowHeightPx(row)"
+        [style.--cal-tl-lane-extent.px]="rowHeightPx(row)"
         [attr.aria-label]="row.resource.name"
         (click)="onRowClick(row, $event)"
         (pointerdown)="onLanePointerDown(row, $event)"

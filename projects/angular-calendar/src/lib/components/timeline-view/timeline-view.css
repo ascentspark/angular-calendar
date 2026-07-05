@@ -9,6 +9,9 @@
 
   --cal-tl-res-w: 12rem;
   --cal-tl-header-h: 2rem;
+  /* Vertical-orientation knobs (resources as columns). */
+  --cal-tl-rail-cell: 3.4rem; /* width of one time-rail level (left rail) */
+  --cal-tl-res-header-h: 2.75rem; /* height of the resource column-header row */
 }
 
 .cal-tl {
@@ -22,7 +25,7 @@
 
 .cal-tl__grid {
   display: grid;
-  grid-template-columns: var(--cal-tl-res-w) var(--cal-tl-time-width, 100%);
+  grid-template-columns: var(--cal-tl-res-w) var(--cal-tl-time-extent, 100%);
   inline-size: max-content;
 }
 
@@ -67,6 +70,8 @@
 .cal-tl__hcell {
   position: absolute;
   inset-block: 0;
+  inset-inline-start: var(--hc-start);
+  inline-size: var(--hc-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,6 +96,7 @@
   position: sticky;
   inset-inline-start: 0;
   z-index: 3;
+  block-size: var(--cal-tl-lane-extent);
   background: var(--cal-surface);
   border-inline-end: 1px solid var(--cal-line-strong);
   border-block-end: 1px solid var(--cal-grid-line);
@@ -151,6 +157,7 @@
 
 .cal-tl__row {
   position: relative;
+  block-size: var(--cal-tl-lane-extent);
   border-block-end: 1px solid var(--cal-grid-line);
   background:
     repeating-linear-gradient(
@@ -166,6 +173,8 @@
 .cal-tl__shade {
   position: absolute;
   inset-block: 0;
+  inset-inline-start: var(--band-start);
+  inline-size: var(--band-size);
   pointer-events: none;
 }
 
@@ -187,6 +196,12 @@
 
 .cal-tl__event {
   position: absolute;
+  /* Axis-neutral placement: time axis (--ev-start/--ev-size) → inline here, cross
+     (sub-lane) axis (--ev-lane/--ev-lane-size) → block. Vertical swaps them below. */
+  inset-inline-start: var(--ev-start);
+  inline-size: var(--ev-size);
+  inset-block-start: var(--ev-lane);
+  block-size: var(--ev-lane-size);
   display: flex;
   align-items: center;
   padding-inline: 0.4rem;
@@ -241,6 +256,8 @@
 .cal-tl__create-ghost {
   position: absolute;
   inset-block: 3px;
+  inset-inline-start: var(--ev-start);
+  inline-size: var(--ev-size);
   background: var(--cal-accent-soft);
   border: 1px dashed var(--cal-accent);
   border-radius: var(--cal-radius-sm);
@@ -261,9 +278,141 @@
 .cal-tl__now {
   position: absolute;
   inset-block: 0;
+  inset-inline-start: var(--now-pos);
   border-inline-start: 2px solid var(--cal-now-line);
   z-index: 3;
   pointer-events: none;
+}
+
+/* ── Vertical orientation (resources as columns; time runs down the Y axis) ────
+   A symmetric transpose of the horizontal board: the grid flows by column so each
+   resource's (header, lane) pair fills a column, while the corner + time rail fill
+   the first column. Event/shade/now geometry swap their time↔cross axes. */
+:host(.cal-tl--vertical) .cal-tl__grid {
+  grid-template-columns: none;
+  grid-template-rows: var(--cal-tl-res-header-h) var(--cal-tl-time-extent, 100%);
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  inline-size: auto;
+  block-size: max-content;
+}
+
+/* Time rail: multi-level headers become vertical rails down the frozen left column. */
+:host(.cal-tl--vertical) .cal-tl__timehead {
+  position: sticky;
+  inset-block-start: auto;
+  inset-inline-start: 0;
+  display: flex;
+  flex-direction: row;
+  border-block-end: 0;
+  border-inline-end: 1px solid var(--cal-line-strong);
+}
+:host(.cal-tl--vertical) .cal-tl__hrow {
+  block-size: auto;
+  inline-size: var(--cal-tl-rail-cell);
+  border-block-end: 0;
+  border-inline-end: 1px solid var(--cal-grid-line);
+}
+:host(.cal-tl--vertical) .cal-tl__hrow:last-child {
+  border-inline-end: 0;
+}
+:host(.cal-tl--vertical) .cal-tl__hcell {
+  inset-inline: 0;
+  inset-block: auto;
+  inset-block-start: var(--hc-start);
+  block-size: var(--hc-size);
+  inline-size: auto;
+  border-inline-start: 0;
+  border-block-start: 1px solid var(--cal-grid-line);
+}
+:host(.cal-tl--vertical) .cal-tl__hcell--now {
+  box-shadow: inset -2px 0 0 var(--cal-accent);
+}
+:host(.cal-tl--vertical) .cal-tl__corner {
+  inset-inline-start: 0;
+}
+
+/* Resource headers become the top row cells (frozen top). */
+:host(.cal-tl--vertical) .cal-tl__rhead {
+  position: sticky;
+  inset-block-start: 0;
+  inset-inline-start: auto;
+  block-size: auto;
+  inline-size: var(--cal-tl-lane-extent);
+  padding-inline: 0.5rem;
+  padding-block: 0.2rem;
+  border-inline-end: 1px solid var(--cal-grid-line);
+  border-block-end: 1px solid var(--cal-line-strong);
+  justify-content: center;
+}
+
+/* Lanes become columns; the hour gridlines run horizontally. */
+:host(.cal-tl--vertical) .cal-tl__row {
+  block-size: auto;
+  inline-size: var(--cal-tl-lane-extent);
+  border-block-end: 0;
+  border-inline-end: 1px solid var(--cal-grid-line);
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0,
+    transparent calc(var(--cal-tl-hour-w, 60px) - 1px),
+    var(--cal-grid-line) calc(var(--cal-tl-hour-w, 60px) - 1px),
+    var(--cal-grid-line) var(--cal-tl-hour-w, 60px)
+  );
+}
+
+/* Events: time → block axis, sub-lane → inline axis. Allow the card to wrap. */
+:host(.cal-tl--vertical) .cal-tl__event {
+  inset-inline-start: var(--ev-lane);
+  inline-size: var(--ev-lane-size);
+  inset-block-start: var(--ev-start);
+  block-size: var(--ev-size);
+  align-items: flex-start;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+/* Off-hours / block-out shading: horizontal bands. */
+:host(.cal-tl--vertical) .cal-tl__shade {
+  inset-inline: 0;
+  inset-block: auto;
+  inset-block-start: var(--band-start);
+  block-size: var(--band-size);
+  inline-size: auto;
+}
+
+/* Create-ghost: a vertical band spanning the dragged time range. */
+:host(.cal-tl--vertical) .cal-tl__create-ghost {
+  inset-inline: 3px;
+  inset-block: auto;
+  inset-block-start: var(--ev-start);
+  block-size: var(--ev-size);
+  inline-size: auto;
+}
+
+/* Now-line: horizontal, across all columns. */
+:host(.cal-tl--vertical) .cal-tl__now {
+  inset-block: auto;
+  inset-inline: 0;
+  inset-block-start: var(--now-pos);
+  border-inline-start: 0;
+  border-block-start: 2px solid var(--cal-now-line);
+}
+
+/* Resize handles move to the block (time) edges. */
+:host(.cal-tl--vertical) .cal-tl__resize {
+  inset-inline: 0;
+  inset-block: auto;
+  inline-size: auto;
+  block-size: 7px;
+  cursor: ns-resize;
+}
+:host(.cal-tl--vertical) .cal-tl__resize--start {
+  inset-block-start: -1px;
+}
+:host(.cal-tl--vertical) .cal-tl__resize--end {
+  inset-inline-end: 0;
+  inset-block-end: -1px;
 }
 
 @media (prefers-reduced-motion: reduce) {

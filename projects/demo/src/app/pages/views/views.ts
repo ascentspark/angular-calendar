@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import {
   CalAgendaView,
   CalMonthView,
@@ -41,6 +41,12 @@ export class ViewsPage {
   protected readonly resources = SAMPLE_RESOURCES;
   protected readonly jobs = SAMPLE_JOBS;
   protected readonly statusColors = STATUS_COLORS;
+
+  /** Live "Switch Layout" toggle for the timeline example (horizontal ↔ vertical). */
+  protected readonly tlOrientation = signal<'horizontal' | 'vertical'>('horizontal');
+  protected toggleTimelineOrientation(): void {
+    this.tlOrientation.update((o) => (o === 'vertical' ? 'horizontal' : 'vertical'));
+  }
 
   protected readonly sections: PageSection[] = [
     { id: 'month', label: 'Month' },
@@ -93,7 +99,11 @@ export class ViewsPage {
     {
       label: 'template.html',
       lang: 'html',
-      code: `<cal-timeline-view
+      code: `<!-- orientation="horizontal" (default): resources as rows, time on X.
+     orientation="vertical": resources as columns, time down the Y axis.
+     In vertical mode laneHeight is the sub-lane WIDTH (per overlapping card). -->
+<cal-timeline-view
+  [orientation]="orientation"
   [events]="jobs"
   [resources]="resources"
   [viewDate]="viewDate"
@@ -101,6 +111,7 @@ export class ViewsPage {
   [dayStartMinutes]="420"
   [dayEndMinutes]="1140"
   [headerGroupings]="['day', 'hour']"
+  [laneHeight]="orientation === 'vertical' ? 150 : 34"
   [statusColors]="statusColors"
   (eventChanged)="onChange($event)"
 />`,

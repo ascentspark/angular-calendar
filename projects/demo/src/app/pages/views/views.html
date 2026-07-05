@@ -58,12 +58,19 @@
   <cal-doc-example
     anchor="timeline"
     title="Timeline (resource scheduler)"
-    description="A dispatch board: resources as lanes (flat or a collapsible tree), time across the top. Drag blocks to reschedule or reassign; drop unassigned work onto a lane."
+    description="A dispatch board: resources as lanes, time across the top — or flip orientation to vertical for resources as columns with time running down (a “Team Lead View”). Drag blocks to reschedule or reassign; drop unassigned work onto a lane."
     [sources]="timelineSrc"
   >
+    <div class="tl-toolbar">
+      <button type="button" class="tl-switch" (click)="toggleTimelineOrientation()">
+        Switch layout → {{ tlOrientation() === 'vertical' ? 'horizontal' : 'vertical' }}
+      </button>
+      <span class="tl-orient">orientation: <code>{{ tlOrientation() }}</code></span>
+    </div>
     <div class="demo-frame demo-frame--tall">
       @defer (on viewport) {
         <cal-timeline-view
+          [orientation]="tlOrientation()"
           [events]="jobs"
           [resources]="resources"
           [viewDate]="viewDate"
@@ -71,6 +78,7 @@
           [dayStartMinutes]="420"
           [dayEndMinutes]="1140"
           [headerGroupings]="['day', 'hour']"
+          [laneHeight]="tlOrientation() === 'vertical' ? 150 : 34"
           [statusColors]="statusColors"
         />
       } @placeholder {
