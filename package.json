@@ -32,23 +32,23 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@angular/build": "^20.0.0",
-    "@angular/cli": "^20.0.0",
+    "@angular/build": "^20.3.31",
+    "@angular/cli": "^20.3.31",
     "@angular/compiler-cli": "^20.0.0",
     "@axe-core/playwright": "^4.12.1",
-    "@eslint/js": "^9.0.0",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.61.1",
     "@types/express": "^5.0.1",
-    "@types/node": "^26.0.1",
-    "@vitest/coverage-v8": "^3.2.0",
+    "@types/node": "^26.1.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "angular-eslint": "^20.0.0",
-    "eslint": "^9.0.0",
+    "eslint": "^10.6.0",
     "fast-check": "4.8.0",
     "jsdom": "^29.1.1",
     "ng-packagr": "^20.0.0",
     "prettier": "^3.9.4",
     "typescript": "~5.9.0",
-    "typescript-eslint": "8.62.1",
-    "vitest": "^3.2.0"
+    "typescript-eslint": "8.63.0",
+    "vitest": "^4.1.10"
   }
 }
