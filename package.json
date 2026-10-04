@@ -22,7 +22,7 @@
     "@angular/forms": "^22.0.0",
     "@angular/platform-browser": "^22.0.0",
     "@angular/platform-server": "22.0.4",
-    "@angular/router": "^22.0.0",
+    "@angular/router": "^22.2.0",
     "@angular/ssr": "22.0.4",
     "date-fns": "4.4.0",
     "date-fns-tz": "3.2.0",
